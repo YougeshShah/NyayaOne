@@ -1,0 +1,120 @@
+import { AppError } from "../../../common/errors/AppError";
+import { hashPassword, comparePassword } from "../../../common/utils/password";
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../../common/utils/jwt";
+import { authRepository } from "../repository/auth.repository";
+import { RegisterLawFirmInput, LoginInput } from "../dto/auth.dto";
+
+const REFRESH_TOKEN_TTL_DAYS = 7;
+
+export const authService = {
+  /**
+   * A law firm self-registers along with its first admin user.
+   * The firm starts as PENDING and must be approved by TrailBlaze Tech (Company)
+   * before the admin/lawyers can fully operate — see LawFirm.status.
+   */
+  async registerLawFirm(input: RegisterLawFirmInput) {
+    const existing = await authRepository.findUserByEmail(input.adminEmail);
+    if (existing) {
+      throw AppError.conflict("An account with this email already exists");
+    }
+
+    const passwordHash = await hashPassword(input.password);
+
+    const { lawFirm, admin } = await authRepository.createLawFirmWithAdmin({
+      lawFirmName: input.lawFirmName,
+      lawFirmEmail: input.lawFirmEmail,
+      adminFullName: input.adminFullName,
+      adminEmail: input.adminEmail,
+      adminPhone: input.adminPhone,
+      passwordHash,
+    });
+
+    return {
+      lawFirm: { id: lawFirm.id, name: lawFirm.name, status: lawFirm.status },
+      admin: { id: admin.id, fullName: admin.fullName, email: admin.email },
+      message: "Registration submitted. Your firm is pending approval from TrailBlaze Tech.",
+    };
+  },
+
+  async login(input: LoginInput) {
+    const user = await authRepository.findUserByEmail(input.email);
+    if (!user) {
+      throw AppError.unauthorized("Invalid email or password");
+    }
+
+    const passwordMatches = await comparePassword(input.password, user.passwordHash);
+    if (!passwordMatches) {
+      throw AppError.unauthorized("Invalid email or password");
+    }
+
+    if (user.status === "SUSPENDED") {
+      throw AppError.forbidden("Your account has been suspended. Contact support.");
+    }
+
+    // Law firm tenants must be ACTIVE (approved by Company) before staff can log in,
+    // except the law firm admin, who needs to be able to check status.
+    if (user.lawFirm && user.lawFirm.status !== "ACTIVE" && user.accountType !== "LAW_FIRM_ADMIN") {
+      throw AppError.forbidden("Your law firm account is not yet active");
+    }
+
+    const accessToken = signAccessToken({
+      userId: user.id,
+      accountType: user.accountType,
+      lawFirmId: user.lawFirmId,
+      roleId: user.roleId,
+    });
+
+    const refreshToken = signRefreshToken(user.id);
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
+    await authRepository.storeRefreshToken(user.id, refreshToken, expiresAt);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        accountType: user.accountType,
+        lawFirmId: user.lawFirmId,
+        lawFirmStatus: user.lawFirm?.status ?? null,
+      },
+    };
+  },
+
+  async refresh(refreshToken: string) {
+    let decoded: { userId: string };
+    try {
+      decoded = verifyRefreshToken(refreshToken);
+    } catch {
+      throw AppError.unauthorized("Invalid or expired refresh token");
+    }
+
+    const stored = await authRepository.findRefreshToken(refreshToken);
+    if (!stored || stored.revoked || stored.expiresAt < new Date()) {
+      throw AppError.unauthorized("Refresh token is no longer valid");
+    }
+
+    const user = await authRepository.findUserById(decoded.userId);
+    if (!user) {
+      throw AppError.unauthorized("User no longer exists");
+    }
+
+    const accessToken = signAccessToken({
+      userId: user.id,
+      accountType: user.accountType,
+      lawFirmId: user.lawFirmId,
+      roleId: user.roleId,
+    });
+
+    return { accessToken };
+  },
+
+  async logout(refreshToken: string) {
+    const stored = await authRepository.findRefreshToken(refreshToken);
+    if (stored && !stored.revoked) {
+      await authRepository.revokeRefreshToken(refreshToken);
+    }
+    return { message: "Logged out successfully" };
+  },
+};

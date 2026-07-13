@@ -1,0 +1,22 @@
+import { z } from "zod";
+
+export const registerLawFirmSchema = z.object({
+  lawFirmName: z.string().min(2, "Law firm name is required"),
+  lawFirmEmail: z.string().email(),
+  adminFullName: z.string().min(2, "Admin name is required"),
+  adminEmail: z.string().email(),
+  adminPhone: z.string().min(7).optional(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+export type RegisterLawFirmInput = z.infer<typeof registerLawFirmSchema>;
+
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1, "Password is required"),
+});
+export type LoginInput = z.infer<typeof loginSchema>;
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, "Refresh token is required"),
+});
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;

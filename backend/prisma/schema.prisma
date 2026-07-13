@@ -1,0 +1,481 @@
+// ============================================================
+// NyayaOne — Prisma Schema
+// Multi-Tenant Legal Technology Platform (Phase 1 - MVP)
+// Owner: TrailBlaze Tech
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------------
+
+// Top-level account type. Determines which "world" a user belongs to.
+enum AccountType {
+  COMPANY // TrailBlaze Tech staff (Super Admin, Library Manager, etc.)
+  LAW_FIRM_ADMIN // Owner/Admin of a law firm tenant
+  LAWYER
+  STAFF // Receptionist, Legal Assistant, Intern
+  CLIENT
+}
+
+enum LawFirmStatus {
+  PENDING // awaiting company approval
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum CaseStatus {
+  OPEN
+  ONGOING
+  ON_HOLD
+  CLOSED
+  DISMISSED
+}
+
+enum CasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum HearingStatus {
+  SCHEDULED
+  COMPLETED
+  ADJOURNED
+  CANCELLED
+}
+
+enum DocumentCategory {
+  CASE_FILING
+  EVIDENCE
+  COURT_ORDER
+  AGREEMENT
+  CORRESPONDENCE
+  IDENTIFICATION
+  OTHER
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  SMS
+  IN_APP
+}
+
+enum NotificationAudience {
+  ALL_LAWYERS
+  SPECIFIC_LAW_FIRM
+  ALL_STUDENTS
+  ALL_CLIENTS
+  INDIVIDUAL_USER
+}
+
+enum LibraryResourceType {
+  CONSTITUTION
+  ACT
+  REGULATION
+  RULE
+  CIRCULAR
+  GOVERNMENT_NOTICE
+  GAZETTE
+  SUPREME_COURT_DECISION
+  HIGH_COURT_DECISION
+  ARTICLE
+  RESEARCH_PAPER
+  JOURNAL
+  TEMPLATE
+  LEGAL_FORM
+}
+
+// ------------------------------------------------------------
+// COMPANY (TrailBlaze Tech) — Platform Owner
+// ------------------------------------------------------------
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g. "Super Admin", "Library Manager"
+  description String?
+  isSystem    Boolean  @default(false) // true = built-in role, cannot be deleted
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g. "lawfirm.approve", "case.view.own"
+  description String?
+  module      String // e.g. "LawFirm", "Case", "Library"
+  roles       RolePermission[]
+  createdAt   DateTime @default(now())
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
+
+  @@unique([roleId, permissionId])
+}
+
+// ------------------------------------------------------------
+// LAW FIRM (Tenant)
+// ------------------------------------------------------------
+
+model LawFirm {
+  id              String        @id @default(uuid())
+  name            String
+  registrationNo  String?       @unique
+  status          LawFirmStatus @default(PENDING)
+  address         String?
+  phone           String?
+  email           String?       @unique
+  approvedAt      DateTime?
+  approvedBy      String? // User id of company staff who approved
+
+  users           User[]
+  clients         Client[]
+  cases           Case[]
+  documents       Document[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+}
+
+// ------------------------------------------------------------
+// USER (Company Staff, Lawyer, Firm Staff, Client)
+// ------------------------------------------------------------
+
+model User {
+  id            String       @id @default(uuid())
+  accountType   AccountType
+  fullName      String
+  email         String       @unique
+  phone         String?      @unique
+  passwordHash  String
+  status        UserStatus   @default(PENDING_VERIFICATION)
+
+  // Multi-tenant scoping. Null for COMPANY accounts.
+  lawFirm       LawFirm?     @relation(fields: [lawFirmId], references: [id])
+  lawFirmId     String?
+
+  // RBAC — used mainly for COMPANY accounts with custom roles.
+  role          Role?        @relation(fields: [roleId], references: [id])
+  roleId        String?
+
+  // Lawyer-specific professional details
+  barRegistrationNo String?
+  specialization    String?
+
+  // Relations
+  casesAsLawyer     CaseLawyer[]
+  hearingsCreated   Hearing[]        @relation("HearingCreatedBy")
+  documentsUploaded Document[]       @relation("DocumentUploadedBy")
+  clientProfile     Client?          @relation("ClientUserLink")
+  notifications     UserNotification[]
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([lawFirmId])
+  @@index([accountType])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ------------------------------------------------------------
+// CLIENT (belongs to a Law Firm; may optionally have login access)
+// ------------------------------------------------------------
+
+model Client {
+  id             String   @id @default(uuid())
+  lawFirm        LawFirm  @relation(fields: [lawFirmId], references: [id])
+  lawFirmId      String
+
+  // Optional linked login account (Client Mobile App access)
+  user           User?    @relation("ClientUserLink", fields: [userId], references: [id])
+  userId         String?  @unique
+
+  fullName       String
+  phone          String?
+  email          String?
+  address        String?
+  identificationType String? // Citizenship, Passport, etc.
+  identificationNo   String?
+  notes          String?
+
+  cases          CaseClient[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([lawFirmId])
+}
+
+// ------------------------------------------------------------
+// COURT (managed only by Company / TrailBlaze Tech)
+// ------------------------------------------------------------
+
+model Court {
+  id        String   @id @default(uuid())
+  name      String // e.g. "Kathmandu District Court"
+  type      String // e.g. "Supreme Court", "High Court", "District Court" — extensible, not enum
+  province  String? // e.g. "Bagmati", "Koshi" — null for national-level courts (Supreme Court, national tribunals)
+  location  String?
+  isActive  Boolean  @default(true)
+
+  cases     Case[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([province])
+}
+
+// ------------------------------------------------------------
+// CASE
+// ------------------------------------------------------------
+
+model Case {
+  id              String       @id @default(uuid())
+  lawFirm         LawFirm      @relation(fields: [lawFirmId], references: [id])
+  lawFirmId       String
+
+  caseNumber      String
+  caseTitle       String
+  court           Court        @relation(fields: [courtId], references: [id])
+  courtId         String
+
+  opposingParty   String?
+  opposingLawyer  String?
+  courtSubject    String?
+  category        String?
+  filingDate      DateTime?
+  judge           String?
+
+  status          CaseStatus   @default(OPEN)
+  priority        CasePriority @default(MEDIUM)
+  remarks         String?
+
+  clients         CaseClient[]
+  lawyers         CaseLawyer[]
+  hearings        Hearing[]
+  documents       Document[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([lawFirmId, caseNumber])
+  @@index([lawFirmId, status])
+}
+
+// Many-to-many: a case can have multiple clients, a client can have multiple cases
+model CaseClient {
+  id       String @id @default(uuid())
+  case     Case   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  caseId   String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+
+  @@unique([caseId, clientId])
+}
+
+// Many-to-many: a case can have multiple lawyers assigned (lead + associates)
+model CaseLawyer {
+  id       String  @id @default(uuid())
+  case     Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  caseId   String
+  lawyer   User    @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+  lawyerId String
+  isLead   Boolean @default(false)
+
+  @@unique([caseId, lawyerId])
+}
+
+// ------------------------------------------------------------
+// HEARING (with automatic reminder scheduling)
+// ------------------------------------------------------------
+
+model Hearing {
+  id            String        @id @default(uuid())
+  case          Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  caseId        String
+
+  hearingDate   DateTime
+  courtName     String?
+  judge         String?
+  remarks       String?
+  status        HearingStatus @default(SCHEDULED)
+  nextHearingId String?       @unique
+  nextHearing   Hearing?      @relation("HearingChain", fields: [nextHearingId], references: [id])
+  previousHearing Hearing?    @relation("HearingChain")
+
+  createdBy     User          @relation("HearingCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+
+  reminders     HearingReminder[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([caseId])
+  @@index([hearingDate])
+}
+
+// System-generated reminders. Created automatically by backend, never by the lawyer manually.
+model HearingReminder {
+  id           String   @id @default(uuid())
+  hearing      Hearing  @relation(fields: [hearingId], references: [id], onDelete: Cascade)
+  hearingId    String
+  remindAt     DateTime // computed: 48h/24h/day-of/2h before hearingDate
+  label        String // "48_HOURS_BEFORE" | "24_HOURS_BEFORE" | "HEARING_DAY" | "2_HOURS_BEFORE"
+  sent         Boolean  @default(false)
+  sentAt       DateTime?
+
+  createdAt    DateTime @default(now())
+
+  @@index([remindAt, sent])
+}
+
+// ------------------------------------------------------------
+// DOCUMENT
+// ------------------------------------------------------------
+
+model Document {
+  id           String           @id @default(uuid())
+  lawFirm      LawFirm          @relation(fields: [lawFirmId], references: [id])
+  lawFirmId    String
+
+  case         Case?            @relation(fields: [caseId], references: [id])
+  caseId       String?
+
+  fileName     String
+  fileUrl      String // storage-driver-agnostic path/url
+  fileType     String // pdf, image, docx
+  fileSizeKb   Int?
+  category     DocumentCategory @default(OTHER)
+
+  uploadedBy   User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  uploadedById String
+
+  createdAt    DateTime         @default(now())
+
+  @@index([lawFirmId])
+  @@index([caseId])
+}
+
+// ------------------------------------------------------------
+// LEGAL LIBRARY (Company-managed only)
+// ------------------------------------------------------------
+
+model LibraryResource {
+  id          String              @id @default(uuid())
+  title       String
+  type        LibraryResourceType
+  category    String?
+  actName     String?
+  section     String?
+  chapter     String?
+  keywords    String[] // for search
+  fileUrl     String?
+  content     String? // for text-based resources (articles etc.)
+  isDownloadable Boolean          @default(true)
+
+  publishedBy String // User id of company content manager
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([type])
+  @@index([category])
+}
+
+// ------------------------------------------------------------
+// NOTIFICATIONS (Company announcements + system notifications)
+// ------------------------------------------------------------
+
+model Notification {
+  id         String                 @id @default(uuid())
+  title      String
+  body       String
+  audience   NotificationAudience
+  targetId   String? // lawFirmId or userId depending on audience
+  channel    NotificationChannel    @default(IN_APP)
+
+  createdBy  String // User id (company staff)
+  createdAt  DateTime               @default(now())
+
+  recipients UserNotification[]
+}
+
+// Join table tracking per-user read/delivery state
+model UserNotification {
+  id             String       @id @default(uuid())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  notificationId String
+
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  deliveredAt    DateTime?
+
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, notificationId])
+  @@index([userId, isRead])
+}
+
+// ------------------------------------------------------------
+// AUDIT LOG
+// ------------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  action     String // e.g. "LAW_FIRM_APPROVED", "CASE_CREATED"
+  entityType String // e.g. "LawFirm", "Case"
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+}

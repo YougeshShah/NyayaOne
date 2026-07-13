@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nyayaone_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nyayaone
+      POSTGRES_PASSWORD: nyayaone_dev_password
+      POSTGRES_DB: nyayaone_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - nyayaone_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nyayaone -d nyayaone_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  nyayaone_pg_data:
+    driver: local

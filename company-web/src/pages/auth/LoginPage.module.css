@@ -1,0 +1,32 @@
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e3a5f 0%, #12233a 100%);
+  padding: 16px;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  border-radius: 16px;
+}
+
+.logoWrap {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.brandTitle {
+  color: #1e3a5f;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.brandSubtitle {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}

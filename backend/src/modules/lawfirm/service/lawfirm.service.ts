@@ -1,0 +1,143 @@
+import { AppError } from "../../../common/errors/AppError";
+import { lawFirmRepository } from "../repository/lawfirm.repository";
+import { ListLawFirmsQuery } from "../dto/lawfirm.dto";
+
+export const lawFirmService = {
+  async list(query: ListLawFirmsQuery) {
+    const skip = (query.page - 1) * query.limit;
+
+    const { items, total } = await lawFirmRepository.findMany({
+      status: query.status,
+      search: query.search,
+      skip,
+      take: query.limit,
+    });
+
+    return {
+      items: items.map((firm) => ({
+        id: firm.id,
+        name: firm.name,
+        email: firm.email,
+        status: firm.status,
+        registrationNo: firm.registrationNo,
+        stats: {
+          totalUsers: firm._count.users,
+          totalClients: firm._count.clients,
+          totalCases: firm._count.cases,
+        },
+        createdAt: firm.createdAt,
+      })),
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.ceil(total / query.limit),
+      },
+    };
+  },
+
+  async getById(id: string) {
+    const firm = await lawFirmRepository.findById(id);
+    if (!firm) {
+      throw AppError.notFound("Law firm not found");
+    }
+    return firm;
+  },
+
+  /**
+   * Approve a PENDING law firm. Only PENDING firms can be approved.
+   * Approval activates the firm — its admin/lawyers can now fully use the platform.
+   */
+  async approve(id: string, approvedByUserId: string) {
+    const firm = await lawFirmRepository.findById(id);
+    if (!firm) {
+      throw AppError.notFound("Law firm not found");
+    }
+    if (firm.status !== "PENDING") {
+      throw AppError.badRequest(`Only PENDING law firms can be approved. Current status: ${firm.status}`);
+    }
+
+    const updated = await lawFirmRepository.updateStatus(id, "ACTIVE", approvedByUserId);
+
+    await lawFirmRepository.createAuditLog({
+      userId: approvedByUserId,
+      action: "LAW_FIRM_APPROVED",
+      entityId: id,
+      metadata: { firmName: firm.name },
+    });
+
+    return updated;
+  },
+
+  /**
+   * Suspend an ACTIVE law firm. Suspended firms lose access until reactivated.
+   */
+  async suspend(id: string, suspendedByUserId: string, reason?: string) {
+    const firm = await lawFirmRepository.findById(id);
+    if (!firm) {
+      throw AppError.notFound("Law firm not found");
+    }
+    if (firm.status !== "ACTIVE") {
+      throw AppError.badRequest(`Only ACTIVE law firms can be suspended. Current status: ${firm.status}`);
+    }
+
+    const updated = await lawFirmRepository.updateStatus(id, "SUSPENDED");
+
+    await lawFirmRepository.createAuditLog({
+      userId: suspendedByUserId,
+      action: "LAW_FIRM_SUSPENDED",
+      entityId: id,
+      metadata: { firmName: firm.name, reason: reason ?? null },
+    });
+
+    return updated;
+  },
+
+  /**
+   * Reactivate a previously SUSPENDED law firm.
+   */
+  async activate(id: string, activatedByUserId: string) {
+    const firm = await lawFirmRepository.findById(id);
+    if (!firm) {
+      throw AppError.notFound("Law firm not found");
+    }
+    if (firm.status !== "SUSPENDED") {
+      throw AppError.badRequest(`Only SUSPENDED law firms can be reactivated. Current status: ${firm.status}`);
+    }
+
+    const updated = await lawFirmRepository.updateStatus(id, "ACTIVE");
+
+    await lawFirmRepository.createAuditLog({
+      userId: activatedByUserId,
+      action: "LAW_FIRM_REACTIVATED",
+      entityId: id,
+      metadata: { firmName: firm.name },
+    });
+
+    return updated;
+  },
+
+  /**
+   * Reject a PENDING law firm registration.
+   */
+  async reject(id: string, rejectedByUserId: string, reason?: string) {
+    const firm = await lawFirmRepository.findById(id);
+    if (!firm) {
+      throw AppError.notFound("Law firm not found");
+    }
+    if (firm.status !== "PENDING") {
+      throw AppError.badRequest(`Only PENDING law firms can be rejected. Current status: ${firm.status}`);
+    }
+
+    const updated = await lawFirmRepository.updateStatus(id, "REJECTED");
+
+    await lawFirmRepository.createAuditLog({
+      userId: rejectedByUserId,
+      action: "LAW_FIRM_REJECTED",
+      entityId: id,
+      metadata: { firmName: firm.name, reason: reason ?? null },
+    });
+
+    return updated;
+  },
+};
