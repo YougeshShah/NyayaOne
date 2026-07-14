@@ -12,5 +12,6 @@ router.get("/", clientController.list);
 router.get("/:id", clientController.getById);
 router.post("/", clientController.create);
 router.patch("/:id", clientController.update);
+router.post("/:id/invite", authorize("LAW_FIRM_ADMIN", "LAWYER"), clientController.invite);
 
 export default router;

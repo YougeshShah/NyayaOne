@@ -51,4 +51,26 @@ export const clientRepository = {
   updateScoped(id: string, lawFirmId: string, data: Prisma.ClientUpdateInput) {
     return prisma.client.updateMany({ where: { id, lawFirmId }, data });
   },
+
+  findUserByEmail(email: string) {
+    return prisma.user.findUnique({ where: { email } });
+  },
+
+  linkUserToClient(clientId: string, userId: string) {
+    return prisma.client.update({ where: { id: clientId }, data: { userId } });
+  },
+
+  createPortalUser(data: { lawFirmId: string; fullName: string; email: string; phone?: string; passwordHash: string }) {
+    return prisma.user.create({
+      data: {
+        accountType: "CLIENT",
+        lawFirmId: data.lawFirmId,
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        passwordHash: data.passwordHash,
+        status: "ACTIVE",
+      },
+    });
+  },
 };

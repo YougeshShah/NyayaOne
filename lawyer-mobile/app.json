@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "NyayaOne Lawyer",
+    "slug": "nyayaone-lawyer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "nyayaone-lawyer",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F4C3A"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trailblazetech.nyayaone.lawyer"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F4C3A"
+      },
+      "package": "com.trailblazetech.nyayaone.lawyer",
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0F4C3A"
+        }
+      ],
+      "expo-splash-screen",
+      "expo-font",
+      "expo-status-bar"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://192.168.1.102:5000/api/v1",
+      "router": {},
+      "eas": {
+        "projectId": "5138b5f9-3bb1-4851-84b3-b830f353e437"
+      }
+    }
+  }
+}

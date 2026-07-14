@@ -29,7 +29,7 @@ export function LawFirmsPage() {
     page: 1,
   });
 
-  const { approve, suspend, activate } = useLawFirmActions();
+  const { approve, suspend, activate, reject } = useLawFirmActions();
 
   return (
     <Box>
@@ -102,9 +102,14 @@ export function LawFirmsPage() {
                 <TableCell align="center">{firm.stats.totalCases}</TableCell>
                 <TableCell align="right">
                   {firm.status === "PENDING" && (
-                    <Button size="small" variant="contained" onClick={() => approve.mutate(firm.id)} disabled={approve.isPending}>
-                      Approve
-                    </Button>
+                    <>
+                      <Button size="small" variant="contained" onClick={() => approve.mutate(firm.id)} disabled={approve.isPending} sx={{ mr: 1 }}>
+                        Approve
+                      </Button>
+                      <Button size="small" color="error" variant="outlined" onClick={() => reject.mutate({ id: firm.id })} disabled={reject.isPending}>
+                        Reject
+                      </Button>
+                    </>
                   )}
                   {firm.status === "ACTIVE" && (
                     <Button

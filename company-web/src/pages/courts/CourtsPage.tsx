@@ -19,12 +19,14 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/EditOutlined";
 import { useForm } from "react-hook-form";
 import { useCourts, useCourtActions, useCourtProvinces, useCourtTypes } from "../../hooks/useCourts";
-import { CreateCourtPayload } from "../../types/court.types";
+import { Court, CreateCourtPayload } from "../../types/court.types";
 
 export function CourtsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCourt, setEditingCourt] = useState<Court | null>(null);
   const [province, setProvince] = useState("ALL");
   const [type, setType] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -38,18 +40,36 @@ export function CourtsPage() {
   });
   const { data: provinces } = useCourtProvinces();
   const { data: types } = useCourtTypes();
-  const { create, deactivate, activate } = useCourtActions();
+  const { create, update, deactivate, activate } = useCourtActions();
 
   const { register, handleSubmit, reset, formState } = useForm<CreateCourtPayload>();
 
-  const onCreate = (values: CreateCourtPayload) => {
-    create.mutate(values, {
-      onSuccess: () => {
-        reset();
-        setDialogOpen(false);
-      },
-    });
+  const openCreateDialog = () => {
+    setEditingCourt(null);
+    reset({ name: "", type: "", province: "", location: "" });
+    setDialogOpen(true);
   };
+
+  const openEditDialog = (court: Court) => {
+    setEditingCourt(court);
+    reset({ name: court.name, type: court.type, province: court.province || "", location: court.location || "" });
+    setDialogOpen(true);
+  };
+
+  const onSubmit = (values: CreateCourtPayload) => {
+    if (editingCourt) {
+      update.mutate({ id: editingCourt.id, payload: values }, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      create.mutate(values, {
+        onSuccess: () => {
+          reset();
+          setDialogOpen(false);
+        },
+      });
+    }
+  };
+
+  const isSaving = create.isPending || update.isPending;
 
   return (
     <Box>
@@ -62,7 +82,7 @@ export function CourtsPage() {
             {data?.pagination.total ?? 0} courts registered
           </Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateDialog}>
           Add Court
         </Button>
       </Box>
@@ -140,6 +160,9 @@ export function CourtsPage() {
                   />
                 </TableCell>
                 <TableCell align="right">
+                  <Button size="small" startIcon={<EditIcon fontSize="small" />} onClick={() => openEditDialog(court)} sx={{ mr: 1 }}>
+                    Edit
+                  </Button>
                   {court.isActive ? (
                     <Button size="small" color="error" variant="outlined" onClick={() => deactivate.mutate(court.id)}>
                       Deactivate
@@ -157,17 +180,19 @@ export function CourtsPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Add New Court</DialogTitle>
-        <Box component="form" onSubmit={handleSubmit(onCreate)}>
+        <DialogTitle>{editingCourt ? "Edit Court" : "Add New Court"}</DialogTitle>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               label="Court Name"
+              required
               fullWidth
               {...register("name", { required: true })}
               error={!!formState.errors.name}
             />
             <TextField
               label="Court Type"
+              required
               placeholder="e.g. Supreme Court, District Court, Labour Court"
               fullWidth
               {...register("type", { required: true })}
@@ -183,8 +208,8 @@ export function CourtsPage() {
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={create.isPending}>
-              {create.isPending ? "Saving..." : "Save Court"}
+            <Button type="submit" variant="contained" disabled={isSaving}>
+              {isSaving ? "Saving..." : editingCourt ? "Save Changes" : "Save Court"}
             </Button>
           </DialogActions>
         </Box>

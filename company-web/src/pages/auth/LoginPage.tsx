@@ -3,6 +3,7 @@ import { Alert, Box, Button, Paper, TextField, Typography } from "@mui/material"
 import styles from "./LoginPage.module.css";
 import { useLogin } from "../../hooks/useAuth";
 import { LoginPayload } from "../../types/auth.types";
+import { PasswordField } from "../../components/common/PasswordField";
 
 export function LoginPage() {
   const { register, handleSubmit, formState } = useForm<LoginPayload>();
@@ -32,6 +33,7 @@ export function LoginPage() {
           <TextField
             label="Email"
             type="email"
+            required
             fullWidth
             margin="normal"
             {...register("email", { required: true })}
@@ -39,9 +41,9 @@ export function LoginPage() {
             helperText={formState.errors.email ? "Email is required" : ""}
           />
 
-          <TextField
+          <PasswordField
             label="Password"
-            type="password"
+            required
             fullWidth
             margin="normal"
             {...register("password", { required: true })}

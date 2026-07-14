@@ -117,4 +117,26 @@ export const authService = {
     }
     return { message: "Logged out successfully" };
   },
+
+  /**
+   * Self-service password change — requires the current password as proof of
+   * identity even though the request is already authenticated (defense in depth,
+   * e.g. protects against a stolen unlocked device / session).
+   */
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await authRepository.findUserById(userId);
+    if (!user) {
+      throw AppError.unauthorized("User no longer exists");
+    }
+
+    const matches = await comparePassword(currentPassword, user.passwordHash);
+    if (!matches) {
+      throw AppError.badRequest("Current password is incorrect");
+    }
+
+    const newHash = await hashPassword(newPassword);
+    await authRepository.updatePassword(userId, newHash);
+
+    return { message: "Password changed successfully" };
+  },
 };

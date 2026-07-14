@@ -65,4 +65,8 @@ export const authRepository = {
       data: { revoked: true },
     });
   },
+
+  updatePassword(userId: string, passwordHash: string) {
+    return prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  },
 };

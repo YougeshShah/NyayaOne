@@ -14,6 +14,11 @@ export type CreateClientInput = z.infer<typeof createClientSchema>;
 export const updateClientSchema = createClientSchema.partial();
 export type UpdateClientInput = z.infer<typeof updateClientSchema>;
 
+export const inviteClientSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+export type InviteClientInput = z.infer<typeof inviteClientSchema>;
+
 export const listClientsQuerySchema = z.object({
   search: z.string().optional(),
   page: z.coerce.number().int().positive().default(1),

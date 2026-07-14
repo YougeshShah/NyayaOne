@@ -1,0 +1,45 @@
+.sidebar {
+  width: var(--sidebar-width, 260px);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background-color: #0a3327;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.logoArea {
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.navLink:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.navLinkActive {
+  background-color: #0f4c3a;
+  color: #ffffff;
+  border-right: 3px solid #b8860b;
+}
+
+.mainContent {
+  margin-left: var(--sidebar-width, 260px);
+  min-height: 100vh;
+  background-color: #f4f6f8;
+}

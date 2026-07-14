@@ -32,6 +32,11 @@ export function useCourtActions() {
     onSuccess: invalidate,
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateCourtPayload> }) => courtApi.update(id, payload),
+    onSuccess: invalidate,
+  });
+
   const deactivate = useMutation({
     mutationFn: (id: string) => courtApi.deactivate(id),
     onSuccess: invalidate,
@@ -42,5 +47,5 @@ export function useCourtActions() {
     onSuccess: invalidate,
   });
 
-  return { create, deactivate, activate };
+  return { create, update, deactivate, activate };
 }
