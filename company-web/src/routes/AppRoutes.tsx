@@ -6,6 +6,7 @@ import { CourtsPage } from "../pages/courts/CourtsPage";
 import { NotificationsPage } from "../pages/notifications/NotificationsPage";
 import { AuditLogsPage } from "../pages/audit-logs/AuditLogsPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
+import { CompanyStaffPage } from "../pages/company-staff/CompanyStaffPage";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
@@ -22,6 +23,7 @@ export function AppRoutes() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/audit-logs" element={<AuditLogsPage />} />
           <Route path="/library" element={<LibraryPage />} />
+          <Route path="/company-staff" element={<CompanyStaffPage />} />
         </Route>
       </Route>
 

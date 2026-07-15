@@ -5,6 +5,7 @@ import GavelIcon from "@mui/icons-material/GavelOutlined";
 import NotificationsIcon from "@mui/icons-material/NotificationsOutlined";
 import HistoryIcon from "@mui/icons-material/HistoryOutlined";
 import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
+import BadgeIcon from "@mui/icons-material/BadgeOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import { Avatar, Box, IconButton, Toolbar, Typography } from "@mui/material";
 import styles from "./DashboardLayout.module.css";
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" /> },
   { to: "/notifications", label: "Notifications", icon: <NotificationsIcon fontSize="small" /> },
   { to: "/audit-logs", label: "Audit Logs", icon: <HistoryIcon fontSize="small" /> },
+  { to: "/company-staff", label: "Company Staff", icon: <BadgeIcon fontSize="small" /> },
 ];
 
 export function DashboardLayout() {
