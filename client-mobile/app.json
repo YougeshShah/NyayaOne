@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "NyayaOne Client",
+    "slug": "nyayaone-client",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "nyayaone-client",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1565C0"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trailblazetech.nyayaone.client"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1565C0"
+      },
+      "package": "com.trailblazetech.nyayaone.client",
+      "permissions": [
+        "NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1565C0"
+        }
+      ],
+      "expo-splash-screen",
+      "expo-font",
+      "expo-status-bar",
+      "expo-sharing"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://192.168.1.102:5000/api/v1",
+      "router": {},
+      "eas": {
+        "projectId": "4e05af6e-c16a-4a7c-a2cf-da54d4327383"
+      }
+    }
+  }
+}

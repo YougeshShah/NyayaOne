@@ -47,6 +47,26 @@ export const documentUpload = multer({
   limits: { fileSize: MAX_FILE_SIZE_BYTES },
 });
 
+// Library resources (Acts, Gazette PDFs, etc.) — Company-managed, not tenant-scoped,
+// so files go under a flat uploads/library/ folder instead of per-lawFirmId.
+const libraryStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "library");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}-${uuidv4()}${ext}`);
+  },
+});
+
+export const libraryUpload = multer({
+  storage: libraryStorage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE_BYTES },
+});
+
 export function mapMulterError(err: unknown): AppError {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {

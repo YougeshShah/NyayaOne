@@ -4,6 +4,7 @@ import PeopleIcon from "@mui/icons-material/PeopleOutlined";
 import GavelIcon from "@mui/icons-material/GavelOutlined";
 import EventIcon from "@mui/icons-material/EventOutlined";
 import BadgeIcon from "@mui/icons-material/BadgeOutlined";
+import AssessmentIcon from "@mui/icons-material/AssessmentOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import { Avatar, Box, IconButton, Toolbar, Typography } from "@mui/material";
 import styles from "./DashboardLayout.module.css";
@@ -19,6 +20,7 @@ export function DashboardLayout() {
     { to: "/cases", label: "Cases", icon: <GavelIcon fontSize="small" /> },
     { to: "/hearings", label: "Hearings", icon: <EventIcon fontSize="small" /> },
     { to: "/clients", label: "Clients", icon: <PeopleIcon fontSize="small" /> },
+    { to: "/reports", label: "Reports", icon: <AssessmentIcon fontSize="small" /> },
     ...(user?.accountType === "LAW_FIRM_ADMIN"
       ? [{ to: "/users", label: "Lawyers & Staff", icon: <BadgeIcon fontSize="small" /> }]
       : []),

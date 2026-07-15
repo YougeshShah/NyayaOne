@@ -2,6 +2,9 @@ import { NavLink, Outlet } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
 import BusinessIcon from "@mui/icons-material/BusinessOutlined";
 import GavelIcon from "@mui/icons-material/GavelOutlined";
+import NotificationsIcon from "@mui/icons-material/NotificationsOutlined";
+import HistoryIcon from "@mui/icons-material/HistoryOutlined";
+import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import { Avatar, Box, IconButton, Toolbar, Typography } from "@mui/material";
 import styles from "./DashboardLayout.module.css";
@@ -12,6 +15,9 @@ const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: <DashboardIcon fontSize="small" /> },
   { to: "/law-firms", label: "Law Firms", icon: <BusinessIcon fontSize="small" /> },
   { to: "/courts", label: "Courts", icon: <GavelIcon fontSize="small" /> },
+  { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" /> },
+  { to: "/notifications", label: "Notifications", icon: <NotificationsIcon fontSize="small" /> },
+  { to: "/audit-logs", label: "Audit Logs", icon: <HistoryIcon fontSize="small" /> },
 ];
 
 export function DashboardLayout() {

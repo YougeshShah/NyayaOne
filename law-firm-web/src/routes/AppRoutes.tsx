@@ -6,6 +6,7 @@ import { CasesPage } from "../pages/cases/CasesPage";
 import { CaseDetailPage } from "../pages/cases/CaseDetailPage";
 import { HearingsPage } from "../pages/hearings/HearingsPage";
 import { UsersPage } from "../pages/users/UsersPage";
+import { ReportsPage } from "../pages/reports/ReportsPage";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
@@ -22,6 +23,7 @@ export function AppRoutes() {
           <Route path="/cases/:id" element={<CaseDetailPage />} />
           <Route path="/hearings" element={<HearingsPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
         </Route>
       </Route>
 

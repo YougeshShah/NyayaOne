@@ -8,6 +8,10 @@ import caseRoutes from "./modules/case/routes/case.routes";
 import hearingRoutes from "./modules/hearing/routes/hearing.routes";
 import documentRoutes from "./modules/document/routes/document.routes";
 import clientPortalRoutes from "./modules/client-portal/routes/client-portal.routes";
+import reportRoutes from "./modules/report/routes/report.routes";
+import notificationRoutes from "./modules/notification/routes/notification.routes";
+import auditLogRoutes from "./modules/audit-log/routes/audit-log.routes";
+import libraryRoutes from "./modules/library/routes/library.routes";
 
 const router = Router();
 
@@ -25,8 +29,9 @@ router.use("/cases", caseRoutes);
 router.use("/hearings", hearingRoutes);
 router.use("/documents", documentRoutes);
 router.use("/client-portal", clientPortalRoutes);
-
-// Future modules will be mounted here as they are built:
-// router.use("/notifications", notificationRoutes);
+router.use("/reports", reportRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/audit-logs", auditLogRoutes);
+router.use("/library", libraryRoutes);
 
 export default router;
