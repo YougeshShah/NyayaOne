@@ -6,6 +6,10 @@ export const createHearingSchema = z.object({
   courtName: z.string().optional(),
   judge: z.string().optional(),
   remarks: z.string().optional(),
+  // Testing aid: schedules an extra reminder ~2 minutes from now so push
+  // notification delivery can be verified without waiting for the real
+  // 48h/24h/2h schedule. Never used in production hearing creation.
+  sendTestReminder: z.coerce.boolean().optional().default(false),
 });
 export type CreateHearingInput = z.infer<typeof createHearingSchema>;
 

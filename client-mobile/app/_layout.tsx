@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { useAuthStore } from "../src/store/authStore";
+import { registerForPushNotifications } from "../src/utils/pushNotifications";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -24,10 +25,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (isAuthenticated && (inAuthGroup || !segments[0])) {
       router.replace("/(tabs)/dashboard");
     }
   }, [isAuthenticated, hasHydrated, segments]);
+
+  // Also re-register on app reopen (e.g. after a device restart / token refresh),
+  // not just right after login — covers the case where the session was already persisted.
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated) {
+      registerForPushNotifications().catch(() => {});
+    }
+  }, [hasHydrated, isAuthenticated]);
 
   return <>{children}</>;
 }

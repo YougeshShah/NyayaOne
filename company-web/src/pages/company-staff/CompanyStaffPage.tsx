@@ -28,7 +28,7 @@ export function CompanyStaffPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data, isLoading } = useCompanyStaff({ page: 1 });
   const { data: roles } = useRoles();
-  const { create, updateStatus } = useCompanyStaffActions();
+  const { create, updateStatus, updateRole } = useCompanyStaffActions();
 
   const { register, handleSubmit, reset, formState } = useForm<CreateCompanyStaffPayload>();
 
@@ -87,7 +87,22 @@ export function CompanyStaffPage() {
               <TableRow key={s.id} hover>
                 <TableCell>{s.fullName}</TableCell>
                 <TableCell>{s.email}</TableCell>
-                <TableCell>{s.role?.name || "—"}</TableCell>
+                <TableCell>
+                  <TextField
+                    select
+                    size="small"
+                    variant="standard"
+                    value={s.role?.id || ""}
+                    onChange={(e) => updateRole.mutate({ id: s.id, roleId: e.target.value })}
+                    sx={{ minWidth: 140 }}
+                  >
+                    {roles?.map((r) => (
+                      <MenuItem key={r.id} value={r.id}>
+                        {r.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={s.status} />
                 </TableCell>

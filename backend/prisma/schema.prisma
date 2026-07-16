@@ -189,6 +189,9 @@ model User {
   barRegistrationNo String?
   specialization    String?
 
+  // Expo push notification token — registered from the mobile app after login.
+  pushToken     String?
+
   // Relations
   casesAsLawyer     CaseLawyer[]
   hearingsCreated   Hearing[]        @relation("HearingCreatedBy")

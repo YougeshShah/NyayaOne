@@ -21,10 +21,15 @@ export function useLibraryActions() {
     onSuccess: invalidate,
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: LibraryResourceFormValues }) => libraryApi.update(id, values),
+    onSuccess: invalidate,
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => libraryApi.remove(id),
     onSuccess: invalidate,
   });
 
-  return { create, remove };
+  return { create, update, remove };
 }

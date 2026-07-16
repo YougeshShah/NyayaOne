@@ -26,4 +26,5 @@ export interface CreateHearingPayload {
   courtName?: string;
   judge?: string;
   remarks?: string;
+  sendTestReminder?: boolean;
 }

@@ -67,6 +67,10 @@ export const hearingService = {
 
     const reminders = computeReminders(input.hearingDate);
 
+    if (input.sendTestReminder) {
+      reminders.push({ label: "TEST_REMINDER_2MIN", remindAt: new Date(Date.now() + 2 * 60 * 1000) });
+    }
+
     return hearingRepository.createWithReminders({
       caseId: input.caseId,
       hearingDate: input.hearingDate,

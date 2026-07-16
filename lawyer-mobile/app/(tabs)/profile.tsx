@@ -6,6 +6,7 @@ import { useLogout } from "../../src/hooks/useAuth";
 import { useChangePassword } from "../../src/hooks/useDomainData";
 import { Card } from "../../src/components/Card";
 import { colors, spacing, radius } from "../../src/theme/theme";
+import { registerForPushNotifications, sendTestPush } from "../../src/utils/pushNotifications";
 
 export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
@@ -13,6 +14,24 @@ export default function ProfileScreen() {
   const changePassword = useChangePassword();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const handleTestPush = async () => {
+    setSendingTest(true);
+    try {
+      const token = await registerForPushNotifications();
+      if (!token) {
+        Alert.alert("Not available", "Push notifications require a physical device with notifications enabled.");
+        return;
+      }
+      await sendTestPush(token);
+      Alert.alert("Sent", "Test notification sent — it should arrive within a few seconds.");
+    } catch {
+      Alert.alert("Error", "Could not send test notification.");
+    } finally {
+      setSendingTest(false);
+    }
+  };
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -65,6 +84,12 @@ export default function ProfileScreen() {
       <TouchableOpacity style={styles.actionButton} onPress={() => setModalOpen(true)}>
         <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
         <Text style={styles.actionButtonText}>Change Password</Text>
+        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.actionButton} onPress={handleTestPush} disabled={sendingTest}>
+        <Ionicons name="notifications-outline" size={20} color={colors.primary} />
+        <Text style={styles.actionButtonText}>{sendingTest ? "Sending..." : "Send Test Notification"}</Text>
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
       </TouchableOpacity>
 

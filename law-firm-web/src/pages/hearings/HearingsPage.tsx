@@ -17,6 +17,8 @@ import {
   TextField,
   Typography,
   Alert,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useForm, Controller } from "react-hook-form";
@@ -134,6 +136,10 @@ export function HearingsPage() {
             <TextField label="Court Name (optional override)" fullWidth {...register("courtName")} />
             <TextField label="Judge" fullWidth {...register("judge")} />
             <TextField label="Remarks" fullWidth multiline rows={2} {...register("remarks")} />
+            <FormControlLabel
+              control={<Checkbox {...register("sendTestReminder")} />}
+              label="Also send a test push reminder in ~2 minutes (for verifying notifications work)"
+            />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>

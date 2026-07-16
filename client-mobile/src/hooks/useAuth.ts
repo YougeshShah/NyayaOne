@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { authApi } from "../api/auth.api";
 import { useAuthStore } from "../store/authStore";
 import { LoginPayload } from "../types";
+import { registerForPushNotifications } from "../utils/pushNotifications";
 
 export function useLogin() {
   const setSession = useAuthStore((s) => s.setSession);
@@ -16,6 +17,7 @@ export function useLogin() {
       }
       setSession(data);
       router.replace("/(tabs)/dashboard");
+      registerForPushNotifications().catch(() => {});
     },
   });
 }

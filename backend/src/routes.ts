@@ -13,6 +13,7 @@ import notificationRoutes from "./modules/notification/routes/notification.route
 import auditLogRoutes from "./modules/audit-log/routes/audit-log.routes";
 import libraryRoutes from "./modules/library/routes/library.routes";
 import companyStaffRoutes from "./modules/company-staff/routes/company-staff.routes";
+import pushRoutes from "./modules/push/routes/push.routes";
 
 const router = Router();
 
@@ -35,5 +36,6 @@ router.use("/notifications", notificationRoutes);
 router.use("/audit-logs", auditLogRoutes);
 router.use("/library", libraryRoutes);
 router.use("/company-staff", companyStaffRoutes);
+router.use("/push", pushRoutes);
 
 export default router;

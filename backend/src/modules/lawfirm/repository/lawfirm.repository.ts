@@ -1,5 +1,6 @@
 import { prisma } from "../../../database/prisma";
 import { LawFirmStatus, Prisma } from "@prisma/client";
+
 type AuditMetadata = Record<string, unknown>;
 
 export const lawFirmRepository = {

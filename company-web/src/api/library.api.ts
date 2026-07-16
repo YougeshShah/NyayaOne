@@ -48,6 +48,13 @@ export const libraryApi = {
     return data.data;
   },
 
+  async update(id: string, values: LibraryResourceFormValues): Promise<LibraryResource> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<LibraryResource>>(`/library/${id}`, toFormData(values), {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data;
+  },
+
   async remove(id: string): Promise<void> {
     await apiClient.delete(`/library/${id}`);
   },

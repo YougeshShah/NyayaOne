@@ -2,6 +2,7 @@ import app from "./app";
 import { env } from "./config/env";
 import { logger } from "./common/utils/logger";
 import { prisma } from "./database/prisma";
+import { startReminderScheduler } from "./jobs/reminderScheduler";
 
 async function bootstrap() {
   try {
@@ -13,6 +14,8 @@ async function bootstrap() {
       logger.info(`NyayaOne API running on http://localhost:${env.port}/api/${env.apiVersion}`);
       logger.info(`Environment: ${env.nodeEnv}`);
     });
+
+    startReminderScheduler();
   } catch (error) {
     logger.error("Failed to start server");
     logger.error(error instanceof Error ? error.stack || error.message : String(error));

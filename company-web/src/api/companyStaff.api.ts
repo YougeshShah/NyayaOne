@@ -22,4 +22,9 @@ export const companyStaffApi = {
     const { data } = await apiClient.patch<ApiSuccessResponse<CompanyStaff>>(`/company-staff/${id}/status`, { status });
     return data.data;
   },
+
+  async updateRole(id: string, roleId: string): Promise<CompanyStaff> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<CompanyStaff>>(`/company-staff/${id}/role`, { roleId });
+    return data.data;
+  },
 };

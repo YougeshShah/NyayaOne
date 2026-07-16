@@ -24,5 +24,10 @@ export function useCompanyStaffActions() {
     onSuccess: invalidate,
   });
 
-  return { create, updateStatus };
+  const updateRole = useMutation({
+    mutationFn: ({ id, roleId }: { id: string; roleId: string }) => companyStaffApi.updateRole(id, roleId),
+    onSuccess: invalidate,
+  });
+
+  return { create, updateStatus, updateRole };
 }
