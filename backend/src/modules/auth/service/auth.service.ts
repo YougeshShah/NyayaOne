@@ -139,4 +139,31 @@ export const authService = {
 
     return { message: "Password changed successfully" };
   },
+
+  /**
+   * Self-service profile edit. Lawyer-specific fields (bar registration,
+   * specialization) are only persisted if the account is actually a LAWYER —
+   * silently ignored otherwise, rather than erroring, since a client/staff
+   * account simply doesn't have those fields.
+   */
+  async updateMyProfile(
+    userId: string,
+    input: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string }
+  ) {
+    const user = await authRepository.findUserById(userId);
+    if (!user) {
+      throw AppError.unauthorized("User no longer exists");
+    }
+
+    const data: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string } = {
+      fullName: input.fullName,
+      phone: input.phone,
+    };
+    if (user.accountType === "LAWYER") {
+      data.barRegistrationNo = input.barRegistrationNo;
+      data.specialization = input.specialization;
+    }
+
+    return authRepository.updateMyProfile(userId, data);
+  },
 };

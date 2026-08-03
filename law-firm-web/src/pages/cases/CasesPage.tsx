@@ -208,7 +208,7 @@ export function CasesPage() {
                   options={clients?.items ?? []}
                   getOptionLabel={(o) => o.fullName}
                   onChange={(_, val) => field.onChange(val.map((v) => v.id))}
-                  renderInput={(params) => <TextField {...params} label="Clients" required error={!!formState.errors.clientIds} />}
+                  renderInput={(params) => <TextField {...params} label="Clients" error={!!formState.errors.clientIds} />}
                 />
               )}
             />
@@ -223,7 +223,7 @@ export function CasesPage() {
                   options={lawyers?.items ?? []}
                   getOptionLabel={(o) => o.fullName}
                   onChange={(_, val) => field.onChange(val.map((v) => v.id))}
-                  renderInput={(params) => <TextField {...params} label="Assigned Lawyers" required error={!!formState.errors.lawyerIds} />}
+                  renderInput={(params) => <TextField {...params} label="Assigned Lawyers" error={!!formState.errors.lawyerIds} />}
                 />
               )}
             />

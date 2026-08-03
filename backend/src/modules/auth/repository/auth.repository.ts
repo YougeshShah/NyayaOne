@@ -69,4 +69,20 @@ export const authRepository = {
   updatePassword(userId: string, passwordHash: string) {
     return prisma.user.update({ where: { id: userId }, data: { passwordHash } });
   },
+
+  updateMyProfile(userId: string, data: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string }) {
+    return prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        accountType: true,
+        barRegistrationNo: true,
+        specialization: true,
+      },
+    });
+  },
 };

@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useAuthStore } from "../../src/store/authStore";
 import { useLogout } from "../../src/hooks/useAuth";
 import { useChangePassword } from "../../src/hooks/useDomainData";
 import { Card } from "../../src/components/Card";
 import { colors, spacing, radius } from "../../src/theme/theme";
 import { registerForPushNotifications, sendTestPush } from "../../src/utils/pushNotifications";
+import { useTranslation } from "../../src/i18n/LanguageContext";
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const changePassword = useChangePassword();
+  const { t, language, setLanguage } = useTranslation();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
@@ -77,25 +81,37 @@ export default function ProfileScreen() {
       </View>
 
       <Card style={{ marginBottom: spacing.md }}>
-        <InfoRow label="Role" value="Lawyer" />
-        <InfoRow label="Account Status" value={user?.lawFirmStatus || "—"} />
+        <InfoRow label={t("role")} value="Lawyer" />
+        <InfoRow label={t("accountStatus")} value={user?.lawFirmStatus || "—"} />
       </Card>
+
+      <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/edit-profile")}>
+        <Ionicons name="person-outline" size={20} color={colors.primary} />
+        <Text style={styles.actionButtonText}>Edit Profile</Text>
+        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.actionButton} onPress={() => setLanguage(language === "en" ? "ne" : "en")}>
+        <Ionicons name="language-outline" size={20} color={colors.primary} />
+        <Text style={styles.actionButtonText}>{t("language")}</Text>
+        <Text style={styles.langValue}>{language === "en" ? "English" : "नेपाली"}</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.actionButton} onPress={() => setModalOpen(true)}>
         <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>Change Password</Text>
+        <Text style={styles.actionButtonText}>{t("changePassword")}</Text>
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.actionButton} onPress={handleTestPush} disabled={sendingTest}>
         <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>{sendingTest ? "Sending..." : "Send Test Notification"}</Text>
+        <Text style={styles.actionButtonText}>{sendingTest ? "Sending..." : t("sendTestNotification")}</Text>
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Ionicons name="log-out-outline" size={20} color="#fff" />
-        <Text style={styles.logoutText}>Logout</Text>
+        <Text style={styles.logoutText}>{t("logout")}</Text>
       </TouchableOpacity>
 
       <Modal visible={modalOpen} transparent animationType="slide" onRequestClose={() => setModalOpen(false)}>
@@ -192,6 +208,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   actionButtonText: { flex: 1, fontSize: 14, fontWeight: "600", color: colors.textPrimary },
+  langValue: { fontSize: 13, color: colors.textSecondary, fontWeight: "600" },
   logoutButton: {
     flexDirection: "row",
     justifyContent: "center",

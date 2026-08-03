@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } 
 import { useRouter } from "expo-router";
 import { useState, useCallback } from "react";
 import { useCases, useTodayHearings, useUpcomingHearings } from "../../src/hooks/useDomainData";
+import { useTranslation } from "../../src/i18n/LanguageContext";
 import { useAuthStore } from "../../src/store/authStore";
 import { Card } from "../../src/components/Card";
 import { StatusBadge } from "../../src/components/StatusBadge";
@@ -9,6 +10,7 @@ import { colors, spacing } from "../../src/theme/theme";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function DashboardScreen() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -27,17 +29,17 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-      <Text style={styles.greeting}>Welcome back,</Text>
+      <Text style={styles.greeting}>{t('welcomeBack')}</Text>
       <Text style={styles.name}>{user?.fullName}</Text>
 
       <View style={styles.statsRow}>
         <Card style={styles.statCard}>
           <Text style={styles.statValue}>{allCases?.pagination.total ?? "—"}</Text>
-          <Text style={styles.statLabel}>Total Cases</Text>
+          <Text style={styles.statLabel}>{t("totalCases")}</Text>
         </Card>
         <Card style={styles.statCard}>
           <Text style={styles.statValue}>{openCases?.pagination.total ?? "—"}</Text>
-          <Text style={styles.statLabel}>Open Cases</Text>
+          <Text style={styles.statLabel}>{t("openCases")}</Text>
         </Card>
         <Card style={styles.statCard}>
           <Text style={styles.statValue}>{todayHearings?.length ?? "—"}</Text>
@@ -45,10 +47,10 @@ export default function DashboardScreen() {
         </Card>
       </View>
 
-      <Text style={styles.sectionTitle}>Today's Hearings</Text>
+      <Text style={styles.sectionTitle}>{t("todaysHearings")}</Text>
       {(!todayHearings || todayHearings.length === 0) && (
         <Card style={{ marginBottom: spacing.md }}>
-          <Text style={styles.emptyText}>No hearings scheduled today.</Text>
+          <Text style={styles.emptyText}>{t("noHearingsToday")}</Text>
         </Card>
       )}
       {todayHearings?.map((h) => (
@@ -67,10 +69,10 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       ))}
 
-      <Text style={styles.sectionTitle}>Upcoming Hearings</Text>
+      <Text style={styles.sectionTitle}>{t("upcomingHearings")}</Text>
       {(!upcomingHearings || upcomingHearings.length === 0) && (
         <Card style={{ marginBottom: spacing.md }}>
-          <Text style={styles.emptyText}>No upcoming hearings.</Text>
+          <Text style={styles.emptyText}>{t("noUpcomingHearings")}</Text>
         </Card>
       )}
       {upcomingHearings?.slice(0, 5).map((h) => (

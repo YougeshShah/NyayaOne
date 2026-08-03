@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { authService } from "../service/auth.service";
-import { registerLawFirmSchema, loginSchema, refreshTokenSchema, changePasswordSchema } from "../dto/auth.dto";
+import { registerLawFirmSchema, loginSchema, refreshTokenSchema, changePasswordSchema, updateMyProfileSchema } from "../dto/auth.dto";
 import { AppError } from "../../../common/errors/AppError";
 
 export const authController = {
@@ -33,5 +33,12 @@ export const authController = {
     const input = changePasswordSchema.parse(req.body);
     const result = await authService.changePassword(req.auth.userId, input.currentPassword, input.newPassword);
     res.status(200).json({ success: true, data: result });
+  },
+
+  async updateMyProfile(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const input = updateMyProfileSchema.parse(req.body);
+    const result = await authService.updateMyProfile(req.auth.userId, input);
+    res.status(200).json({ success: true, message: "Profile updated successfully", data: result });
   },
 };

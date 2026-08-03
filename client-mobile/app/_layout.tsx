@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { useAuthStore } from "../src/store/authStore";
 import { registerForPushNotifications } from "../src/utils/pushNotifications";
+import { LanguageProvider } from "../src/i18n/LanguageContext";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -44,14 +45,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthGate>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="case/[id]" options={{ headerShown: true, title: "Case Details" }} />
-        </Stack>
-      </AuthGate>
+      <LanguageProvider>
+        <AuthGate>
+          <StatusBar style="light" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="case/[id]" options={{ headerShown: true, title: "Case Details" }} />
+            <Stack.Screen name="edit-profile" options={{ headerShown: true, title: "Edit Profile", presentation: "modal" }} />
+          </Stack>
+        </AuthGate>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

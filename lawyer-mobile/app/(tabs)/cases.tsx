@@ -1,14 +1,17 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { useCases } from "../../src/hooks/useDomainData";
 import { Card } from "../../src/components/Card";
 import { StatusBadge } from "../../src/components/StatusBadge";
 import { colors, spacing, priorityColor } from "../../src/theme/theme";
+import { useTranslation } from "../../src/i18n/LanguageContext";
 import { CaseListItem } from "../../src/types";
 
 export default function CasesScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const { data, isLoading } = useCases({ search: search || undefined });
 
@@ -23,7 +26,7 @@ export default function CasesScreen() {
         <Text style={styles.courtName}>{item.court.name}</Text>
         <View style={styles.bottomRow}>
           <StatusBadge status={item.status} />
-          <Text style={styles.hearingCount}>{item._count.hearings} hearing(s)</Text>
+          <Text style={styles.hearingCount}>{item._count.hearings} {t("hearingsCount")}</Text>
         </View>
       </Card>
     </TouchableOpacity>
@@ -33,7 +36,7 @@ export default function CasesScreen() {
     <View style={styles.container}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search case number or title..."
+        placeholder={t("searchCases")}
         placeholderTextColor="#9CA3AF"
         value={search}
         onChangeText={setSearch}
@@ -45,12 +48,15 @@ export default function CasesScreen() {
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         ListEmptyComponent={
           !isLoading ? (
-            <Text style={styles.emptyText}>No cases found.</Text>
+            <Text style={styles.emptyText}>{t("noCasesFound")}</Text>
           ) : (
-            <Text style={styles.emptyText}>Loading...</Text>
+            <Text style={styles.emptyText}>{t("loading")}</Text>
           )
         }
       />
+      <TouchableOpacity style={styles.fab} onPress={() => router.push("/case/create")}>
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -75,4 +81,20 @@ const styles = StyleSheet.create({
   bottomRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   hearingCount: { fontSize: 12, color: colors.textSecondary },
   emptyText: { textAlign: "center", color: colors.textSecondary, marginTop: spacing.xl },
+  fab: {
+    position: "absolute",
+    right: spacing.md,
+    bottom: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
 });

@@ -14,6 +14,8 @@ import auditLogRoutes from "./modules/audit-log/routes/audit-log.routes";
 import libraryRoutes from "./modules/library/routes/library.routes";
 import companyStaffRoutes from "./modules/company-staff/routes/company-staff.routes";
 import pushRoutes from "./modules/push/routes/push.routes";
+import subscriptionRoutes from "./modules/subscription/routes/subscription.routes";
+import documentTemplateRoutes from "./modules/document-template/routes/document-template.routes";
 
 const router = Router();
 
@@ -37,5 +39,7 @@ router.use("/audit-logs", auditLogRoutes);
 router.use("/library", libraryRoutes);
 router.use("/company-staff", companyStaffRoutes);
 router.use("/push", pushRoutes);
+router.use("/subscriptions", subscriptionRoutes);
+router.use("/document-templates", documentTemplateRoutes);
 
 export default router;

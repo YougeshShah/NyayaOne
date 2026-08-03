@@ -6,6 +6,8 @@ import NotificationsIcon from "@mui/icons-material/NotificationsOutlined";
 import HistoryIcon from "@mui/icons-material/HistoryOutlined";
 import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
 import BadgeIcon from "@mui/icons-material/BadgeOutlined";
+import PaymentIcon from "@mui/icons-material/PaymentsOutlined";
+import DescriptionIcon from "@mui/icons-material/DescriptionOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import { Avatar, Box, IconButton, Toolbar, Typography } from "@mui/material";
 import styles from "./DashboardLayout.module.css";
@@ -17,9 +19,11 @@ const NAV_ITEMS = [
   { to: "/law-firms", label: "Law Firms", icon: <BusinessIcon fontSize="small" /> },
   { to: "/courts", label: "Courts", icon: <GavelIcon fontSize="small" /> },
   { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" /> },
+  { to: "/document-templates", label: "Document Templates", icon: <DescriptionIcon fontSize="small" /> },
   { to: "/notifications", label: "Notifications", icon: <NotificationsIcon fontSize="small" /> },
   { to: "/audit-logs", label: "Audit Logs", icon: <HistoryIcon fontSize="small" /> },
   { to: "/company-staff", label: "Company Staff", icon: <BadgeIcon fontSize="small" /> },
+  { to: "/subscriptions", label: "Subscriptions", icon: <PaymentIcon fontSize="small" /> },
 ];
 
 export function DashboardLayout() {

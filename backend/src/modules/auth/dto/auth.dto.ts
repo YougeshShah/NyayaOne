@@ -26,3 +26,12 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(8, "New password must be at least 8 characters"),
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const updateMyProfileSchema = z.object({
+  fullName: z.string().min(2).optional(),
+  phone: z.string().min(7).optional(),
+  // Lawyer-only fields — ignored for other account types by the service layer
+  barRegistrationNo: z.string().optional(),
+  specialization: z.string().optional(),
+});
+export type UpdateMyProfileInput = z.infer<typeof updateMyProfileSchema>;

@@ -157,6 +157,7 @@ model LawFirm {
   clients         Client[]
   cases           Case[]
   documents       Document[]
+  subscription    FirmSubscription?
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -481,4 +482,73 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([userId])
+}
+
+// ------------------------------------------------------------
+// DOCUMENT TEMPLATES (auto-fill from case/client data)
+// Company manages the master templates (e.g. "Marriage Registration
+// Application", "Power of Attorney"). A lawyer picks a template + a case,
+// and the system fills in {{placeholders}} from that case's real data —
+// so the lawyer never retypes the same boilerplate by hand.
+// ------------------------------------------------------------
+
+model DocumentTemplate {
+  id           String   @id @default(uuid())
+  title        String
+  category     String? // e.g. "Family Law", "Property", "Criminal"
+  description  String?
+  bodyTemplate String // free text with {{placeholders}} — see template.service.ts for the supported list
+  isActive     Boolean  @default(true)
+
+  createdBy    String // User id (Company staff)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+// NOTE: This models plan definitions and firm-plan assignment only.
+// Actual payment gateway processing (eSewa/Khalti/card) is NOT included —
+// that requires real merchant credentials and is handled outside this schema.
+// A Company staff member manually marks a subscription ACTIVE after
+// confirming payment through whatever channel the firm used.
+// ------------------------------------------------------------
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model SubscriptionPlan {
+  id            String    @id @default(uuid())
+  name          String    @unique // "Free", "Basic", "Professional", "Enterprise"
+  description   String?
+  priceMonthly  Int? // NPR, stored as whole rupees; null = custom/contact-us pricing (Enterprise)
+  maxLawyers    Int? // null = unlimited
+  maxCases      Int? // null = unlimited
+  maxStorageMb  Int? // null = unlimited
+  isActive      Boolean   @default(true)
+
+  subscriptions FirmSubscription[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model FirmSubscription {
+  id         String              @id @default(uuid())
+  lawFirm    LawFirm             @relation(fields: [lawFirmId], references: [id])
+  lawFirmId  String              @unique
+
+  plan       SubscriptionPlan    @relation(fields: [planId], references: [id])
+  planId     String
+
+  status     SubscriptionStatus  @default(TRIAL)
+  startedAt  DateTime            @default(now())
+  expiresAt  DateTime?
+
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([planId])
+  @@index([status])
 }

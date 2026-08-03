@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "616350549685",
+    "project_id": "nyayaone-48068",
+    "storage_bucket": "nyayaone-48068.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616350549685:android:c76e41154bd5cc9aa920fc",
+        "android_client_info": {
+          "package_name": "com.trailblazetech.nyayaone.client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPvjQ4vS8aJ4SBKG_l6BmC3yaaBmZc06I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616350549685:android:2fb12af19d24f341a920fc",
+        "android_client_info": {
+          "package_name": "com.trailblazetech.nyayaone.lawyer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPvjQ4vS8aJ4SBKG_l6BmC3yaaBmZc06I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

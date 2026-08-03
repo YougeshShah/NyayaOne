@@ -1,0 +1,4 @@
+# Service account / credential keys — never commit
+*firebase-adminsdk*.json
+*.pem
+*.key

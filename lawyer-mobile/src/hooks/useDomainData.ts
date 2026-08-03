@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { caseApi, hearingApi, clientApi, UpdateHearingPayload } from "../api/domain.api";
-import { authExtraApi } from "../api/authExtra.api";
+import { caseApi, hearingApi, clientApi, courtApi, userApi, UpdateHearingPayload, CreateCasePayload, CreateHearingPayload, CreateClientPayload } from "../api/domain.api";
+import { authExtraApi, UpdateProfilePayload } from "../api/authExtra.api";
+import { useAuthStore } from "../store/authStore";
 import { CaseStatus } from "../types";
 
 export function useCases(params: { status?: CaseStatus; search?: string } = {}) {
@@ -44,9 +45,56 @@ export function useClients(search?: string) {
   return useQuery({ queryKey: ["clients", search], queryFn: () => clientApi.list({ search }) });
 }
 
+export function useCreateClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateClientPayload) => clientApi.create(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+}
+
+export function useCourts(search?: string) {
+  return useQuery({ queryKey: ["courts", search], queryFn: () => courtApi.list({ search }) });
+}
+
+export function useLawyers() {
+  return useQuery({ queryKey: ["lawyers"], queryFn: () => userApi.listLawyers() });
+}
+
+export function useCreateCase() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateCasePayload) => caseApi.create(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cases"] }),
+  });
+}
+
+export function useCreateHearing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateHearingPayload) => hearingApi.create(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hearings-today"] });
+      queryClient.invalidateQueries({ queryKey: ["hearings-upcoming"] });
+      queryClient.invalidateQueries({ queryKey: ["hearings-all"] });
+      queryClient.invalidateQueries({ queryKey: ["cases"] });
+    },
+  });
+}
+
 export function useChangePassword() {
   return useMutation({
     mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
       authExtraApi.changePassword(currentPassword, newPassword),
+  });
+}
+
+export function useUpdateProfile() {
+  const updateUser = useAuthStore((s) => s.updateUser);
+  return useMutation({
+    mutationFn: (payload: UpdateProfilePayload) => authExtraApi.updateProfile(payload),
+    onSuccess: (data) => {
+      updateUser({ fullName: data.fullName, phone: data.phone || undefined });
+    },
   });
 }

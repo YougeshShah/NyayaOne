@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "nyayaone-client",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1565C0"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -20,6 +15,7 @@
       "bundleIdentifier": "com.trailblazetech.nyayaone.client"
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1565C0"
@@ -39,7 +35,14 @@
           "color": "#1565C0"
         }
       ],
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#1565C0"
+        }
+      ],
       "expo-font",
       "expo-status-bar",
       "expo-sharing"

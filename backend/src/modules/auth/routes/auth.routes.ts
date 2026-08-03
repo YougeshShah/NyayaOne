@@ -12,5 +12,6 @@ router.post("/logout", authController.logout);
 
 // Authenticated
 router.patch("/change-password", authenticate, authController.changePassword);
+router.patch("/me", authenticate, authController.updateMyProfile);
 
 export default router;

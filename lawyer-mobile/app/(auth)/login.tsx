@@ -3,12 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingVi
 import { Ionicons } from "@expo/vector-icons";
 import { useLogin } from "../../src/hooks/useAuth";
 import { colors, spacing, radius } from "../../src/theme/theme";
+import { useTranslation } from "../../src/i18n/LanguageContext";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const loginMutation = useLogin();
+  const { t, language, setLanguage } = useTranslation();
 
   const handleLogin = () => {
     if (!email || !password) {
@@ -27,13 +29,17 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <TouchableOpacity style={styles.langToggle} onPress={() => setLanguage(language === "en" ? "ne" : "en")}>
+        <Text style={styles.langToggleText}>{language === "en" ? "नेपाली" : "English"}</Text>
+      </TouchableOpacity>
+
       <View style={styles.logoWrap}>
         <Text style={styles.brand}>NyayaOne</Text>
-        <Text style={styles.subBrand}>Lawyer App</Text>
+        <Text style={styles.subBrand}>{t("lawyerApp")}</Text>
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>{t("email")}</Text>
         <TextInput
           style={styles.input}
           value={email}
@@ -44,7 +50,7 @@ export default function LoginScreen() {
           placeholderTextColor="#9CA3AF"
         />
 
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>{t("password")}</Text>
         <View style={styles.passwordRow}>
           <TextInput
             style={[styles.input, { flex: 1, marginBottom: 0 }]}
@@ -60,7 +66,7 @@ export default function LoginScreen() {
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loginMutation.isPending}>
-          <Text style={styles.buttonText}>{loginMutation.isPending ? "Signing in..." : "Sign In"}</Text>
+          <Text style={styles.buttonText}>{loginMutation.isPending ? t("signingIn") : t("signIn")}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -75,6 +81,8 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   logoWrap: { alignItems: "center", marginBottom: spacing.xl },
+  langToggle: { position: "absolute", top: 50, right: spacing.lg, padding: spacing.sm },
+  langToggleText: { color: "#fff", fontWeight: "700", fontSize: 13 },
   brand: { fontSize: 32, fontWeight: "800", color: "#fff" },
   subBrand: { fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 4 },
   form: {

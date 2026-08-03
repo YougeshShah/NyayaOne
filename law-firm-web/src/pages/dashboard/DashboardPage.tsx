@@ -1,10 +1,11 @@
-import { Grid, Paper, Typography, Box, List, ListItem, ListItemText, Chip } from "@mui/material";
+import { Grid, Paper, Typography, Box, List, ListItem, ListItemText, Chip, LinearProgress } from "@mui/material";
 import GavelIcon from "@mui/icons-material/GavelOutlined";
 import PeopleIcon from "@mui/icons-material/PeopleOutlined";
 import EventIcon from "@mui/icons-material/EventOutlined";
 import { useCases } from "../../hooks/useCases";
 import { useClients } from "../../hooks/useClients";
 import { useTodayHearings, useUpcomingHearings } from "../../hooks/useHearings";
+import { useMyFirmSubscription } from "../../hooks/useSubscription";
 
 interface StatCardProps {
   label: string;
@@ -48,12 +49,63 @@ export function DashboardPage() {
   const { data: clients } = useClients({ page: 1 });
   const { data: todayHearings } = useTodayHearings();
   const { data: upcomingHearings } = useUpcomingHearings();
+  const { data: subscription } = useMyFirmSubscription();
+
+  const daysRemaining = subscription?.expiresAt
+    ? Math.max(0, Math.ceil((new Date(subscription.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
         Overview
       </Typography>
+
+      {subscription && (
+        <Paper elevation={0} sx={{ p: 2.5, mb: 3, border: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Current Plan
+            </Typography>
+            <Typography variant="h6" fontWeight={700}>
+              {subscription.plan.name}{" "}
+              <Chip
+                size="small"
+                label={subscription.status}
+                color={subscription.status === "ACTIVE" ? "success" : subscription.status === "TRIAL" ? "warning" : "error"}
+                sx={{ ml: 1 }}
+              />
+            </Typography>
+            {daysRemaining !== null && (
+              <Typography variant="caption" color={daysRemaining <= 7 ? "error" : "text.secondary"}>
+                {daysRemaining > 0 ? `${daysRemaining} day(s) remaining` : "Expired"}
+              </Typography>
+            )}
+          </Box>
+          <Box sx={{ minWidth: 220 }}>
+            <Typography variant="caption" color="text.secondary">
+              Lawyers: {subscription.usage.lawyers.used} / {subscription.usage.lawyers.limit ?? "∞"}
+            </Typography>
+            {subscription.usage.lawyers.limit && (
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(100, (subscription.usage.lawyers.used / subscription.usage.lawyers.limit) * 100)}
+                sx={{ height: 6, borderRadius: 3, mb: 1 }}
+              />
+            )}
+            <Typography variant="caption" color="text.secondary">
+              Cases: {subscription.usage.cases.used} / {subscription.usage.cases.limit ?? "∞"}
+            </Typography>
+            {subscription.usage.cases.limit && (
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(100, (subscription.usage.cases.used / subscription.usage.cases.limit) * 100)}
+                sx={{ height: 6, borderRadius: 3 }}
+              />
+            )}
+          </Box>
+        </Paper>
+      )}
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>

@@ -22,8 +22,10 @@ import {
 import UploadFileIcon from "@mui/icons-material/UploadFileOutlined";
 import DownloadIcon from "@mui/icons-material/DownloadOutlined";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { useCaseDetail } from "../../hooks/useCases";
 import { useCaseDocuments, useUploadDocument, useDeleteDocument, useDownloadDocument } from "../../hooks/useDocuments";
+import { useDocumentTemplates, useGenerateDocument } from "../../hooks/useDocumentTemplates";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { PriorityBadge } from "../../components/common/PriorityBadge";
 import { DocumentCategory } from "../../types/document.types";
@@ -47,6 +49,9 @@ export function CaseDetailPage() {
   const downloadDoc = useDownloadDocument();
 
   const [category, setCategory] = useState<DocumentCategory>("OTHER");
+  const { data: templates } = useDocumentTemplates();
+  const generateDoc = useGenerateDocument();
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,6 +141,47 @@ export function CaseDetailPage() {
                 <StatusBadge status={h.status} />
               </Box>
             ))}
+          </Paper>
+
+          {/* GENERATE DOCUMENT FROM TEMPLATE */}
+          <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb", mb: 3 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+              Generate Document
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Auto-fills a pre-approved template with this case's client and court details.
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <TextField
+                select
+                size="small"
+                label="Template"
+                value={selectedTemplateId}
+                onChange={(e) => setSelectedTemplateId(e.target.value)}
+                sx={{ minWidth: 260 }}
+              >
+                {templates?.items.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.title}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button
+                variant="contained"
+                startIcon={<DescriptionOutlinedIcon />}
+                disabled={!selectedTemplateId || generateDoc.isPending}
+                onClick={() =>
+                  caseData &&
+                  generateDoc.mutate({
+                    templateId: selectedTemplateId,
+                    caseId: caseData.id,
+                    clientId: caseData.clients[0]?.client.id,
+                  })
+                }
+              >
+                {generateDoc.isPending ? "Generating..." : "Generate PDF"}
+              </Button>
+            </Box>
           </Paper>
 
           {/* DOCUMENTS */}

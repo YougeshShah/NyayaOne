@@ -25,6 +25,7 @@ export interface AuthUser {
   accountType: AccountType;
   lawFirmId: string | null;
   lawFirmStatus: string | null;
+  phone?: string;
 }
 
 export interface LoginPayload {
