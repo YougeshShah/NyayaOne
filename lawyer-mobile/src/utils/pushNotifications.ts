@@ -9,6 +9,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -23,37 +25,44 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+  try {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
 
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
 
-  if (finalStatus !== "granted") {
-    console.log("Push notification permission not granted.");
+    if (finalStatus !== "granted") {
+      console.log("Push notification permission not granted.");
+      return null;
+    }
+
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+      });
+    }
+
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    console.log("Registering push notifications — projectId:", projectId || "(none found in app config!)");
+
+    const tokenResponse = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    const pushToken = tokenResponse.data;
+    console.log("Got Expo push token:", pushToken);
+
+    await apiClient.post("/push/register", { pushToken });
+    console.log("Push token registered with backend successfully.");
+
+    return pushToken;
+  } catch (err) {
+    // Previously this error was silently swallowed by the caller's .catch(() => {}) —
+    // logging it here is the only way to actually see what's going wrong.
+    console.log("registerForPushNotifications FAILED:", err);
     return null;
   }
-
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-    });
-  }
-
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-  const tokenResponse = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
-  const pushToken = tokenResponse.data;
-
-  try {
-    await apiClient.post("/push/register", { pushToken });
-  } catch (err) {
-    console.log("Failed to register push token with backend:", err);
-  }
-
-  return pushToken;
 }
 
 export async function sendTestPush(pushToken: string) {

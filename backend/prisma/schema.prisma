@@ -90,8 +90,15 @@ enum NotificationAudience {
 enum LibraryResourceType {
   CONSTITUTION
   ACT
-  REGULATION
-  RULE
+  ORDINANCE // अध्यादेश — was missing entirely before
+  REGULATION // नियमावली
+  RULE // नियम
+  FORMATION_ORDER // (गठन) आदेश — was missing
+  POLICY // नीति — was missing
+  INTERNATIONAL_TREATY // अन्तर्राष्ट्रिय सन्धि सम्झौता — was missing
+  HISTORICAL_DOCUMENT // ऐतिहासिक दस्तावेज — was missing
+  ANNUAL_REPORT // बार्षिक प्रतिवेदन — was missing
+  RTI_DISCLOSURE // सूचनाको हक बमोजिम सार्वजनिक गरिएको — was missing
   CIRCULAR
   GOVERNMENT_NOTICE
   GAZETTE
@@ -175,6 +182,7 @@ model User {
   fullName      String
   email         String       @unique
   phone         String?      @unique
+  avatarUrl     String?
   passwordHash  String
   status        UserStatus   @default(PENDING_VERIFICATION)
 
@@ -235,6 +243,7 @@ model Client {
   userId         String?  @unique
 
   fullName       String
+  fullNameNepali String? // Devanagari-script name — used in generated legal documents when present, falls back to fullName otherwise
   phone          String?
   email          String?
   address        String?
@@ -255,17 +264,18 @@ model Client {
 // ------------------------------------------------------------
 
 model Court {
-  id        String   @id @default(uuid())
-  name      String // e.g. "Kathmandu District Court"
-  type      String // e.g. "Supreme Court", "High Court", "District Court" — extensible, not enum
-  province  String? // e.g. "Bagmati", "Koshi" — null for national-level courts (Supreme Court, national tribunals)
-  location  String?
-  isActive  Boolean  @default(true)
+  id         String   @id @default(uuid())
+  name       String // e.g. "Kathmandu District Court"
+  nepaliName String? // e.g. "काठमाडौं जिल्ला अदालत" — shown when Nepali is selected, falls back to name
+  type       String // e.g. "Supreme Court", "High Court", "District Court" — extensible, not enum
+  province   String? // e.g. "Bagmati", "Koshi" — null for national-level courts (Supreme Court, national tribunals)
+  location   String?
+  isActive   Boolean  @default(true)
 
-  cases     Case[]
+  cases      Case[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([type])
   @@index([province])
@@ -411,13 +421,14 @@ model LibraryResource {
   id          String              @id @default(uuid())
   title       String
   type        LibraryResourceType
-  category    String?
+  category    String? // free-text subcategory, e.g. "हालसालैका ऐन", "खण्ड अनुसार", "वर्णानुक्रम अनुसारको सूची"
+  isRepealed  Boolean             @default(false) // खारेज भएको — Law Commission marks existing law as repealed rather than using a separate type
   actName     String?
   section     String?
   chapter     String?
   keywords    String[] // for search
   fileUrl     String?
-  content     String? // for text-based resources (articles etc.)
+  content     String? // extracted text (from PDF or typed article) — searched for full-text search inside documents
   isDownloadable Boolean          @default(true)
 
   publishedBy String // User id of company content manager
@@ -426,6 +437,7 @@ model LibraryResource {
 
   @@index([type])
   @@index([category])
+  @@index([isRepealed])
 }
 
 // ------------------------------------------------------------
@@ -497,7 +509,13 @@ model DocumentTemplate {
   title        String
   category     String? // e.g. "Family Law", "Property", "Criminal"
   description  String?
-  bodyTemplate String // free text with {{placeholders}} — see template.service.ts for the supported list
+  bodyTemplate String // free text with {{fieldKey}} placeholders
+  // Dynamic form definition — an array of field objects, e.g.:
+  // [{ "key": "petitionerName", "label": "Petitioner's Name", "type": "text",
+  //    "autoFillSource": "client.fullName", "required": true }, ...]
+  // autoFillSource is optional — omit it for fields the lawyer must type manually.
+  // See document-template.service.ts for the full list of supported autoFillSource paths.
+  fields       Json?
   isActive     Boolean  @default(true)
 
   createdBy    String // User id (Company staff)

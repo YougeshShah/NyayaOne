@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import path from "path";
 import { authService } from "../service/auth.service";
 import { registerLawFirmSchema, loginSchema, refreshTokenSchema, changePasswordSchema, updateMyProfileSchema } from "../dto/auth.dto";
 import { AppError } from "../../../common/errors/AppError";
@@ -40,5 +41,13 @@ export const authController = {
     const input = updateMyProfileSchema.parse(req.body);
     const result = await authService.updateMyProfile(req.auth.userId, input);
     res.status(200).json({ success: true, message: "Profile updated successfully", data: result });
+  },
+
+  async uploadAvatar(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    if (!req.file) throw AppError.badRequest("No image file was uploaded");
+    const avatarUrl = path.join("avatars", req.file.filename);
+    const result = await authService.updateAvatar(req.auth.userId, avatarUrl);
+    res.status(200).json({ success: true, message: "Profile photo updated", data: result });
   },
 };

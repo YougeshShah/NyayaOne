@@ -32,7 +32,7 @@ export const libraryController = {
     if (!req.auth) throw AppError.unauthorized();
     const input = createLibraryResourceSchema.parse(req.body);
     const fileUrl = req.file ? path.join("library", req.file.filename) : undefined;
-    const result = await libraryService.create(input, req.auth.userId, fileUrl);
+    const result = await libraryService.create(input, req.auth.userId, fileUrl, req.file?.path);
     res.status(201).json({ success: true, message: "Resource published successfully", data: result });
   },
 
@@ -40,7 +40,7 @@ export const libraryController = {
     const { id } = libraryResourceIdParamSchema.parse(req.params);
     const input = updateLibraryResourceSchema.parse(req.body);
     const fileUrl = req.file ? path.join("library", req.file.filename) : undefined;
-    const result = await libraryService.update(id, input, fileUrl);
+    const result = await libraryService.update(id, input, fileUrl, req.file?.path);
     res.status(200).json({ success: true, message: "Resource updated successfully", data: result });
   },
 

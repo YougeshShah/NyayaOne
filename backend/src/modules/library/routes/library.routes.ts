@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { libraryController } from "../controller/library.controller";
 import { authenticate } from "../../../common/middleware/authenticate";
 import { authorize } from "../../../common/middleware/authorize";
+import { requirePermission } from "../../../common/middleware/requirePermission";
 import { libraryUpload, mapMulterError } from "../../../common/middleware/upload";
 
 const router = Router();
@@ -21,8 +22,8 @@ const uploadMiddleware = (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-router.post("/", authenticate, authorize("COMPANY"), uploadMiddleware, libraryController.create);
-router.patch("/:id", authenticate, authorize("COMPANY"), uploadMiddleware, libraryController.update);
-router.delete("/:id", authenticate, authorize("COMPANY"), libraryController.remove);
+router.post("/", authenticate, authorize("COMPANY"), requirePermission("library.manage"), uploadMiddleware, libraryController.create);
+router.patch("/:id", authenticate, authorize("COMPANY"), requirePermission("library.manage"), uploadMiddleware, libraryController.update);
+router.delete("/:id", authenticate, authorize("COMPANY"), requirePermission("library.manage"), libraryController.remove);
 
 export default router;

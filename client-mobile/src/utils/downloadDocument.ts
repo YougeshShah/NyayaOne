@@ -1,4 +1,4 @@
-import * as FileSystem from "expo-file-system";
+import { Paths, File, DownloadTask } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import Constants from "expo-constants";
 import { useAuthStore } from "../store/authStore";
@@ -10,26 +10,29 @@ const API_BASE_URL = (Constants.expoConfig?.extra?.apiBaseUrl as string) || "htt
  * directly to the device's cache using expo-file-system, then opens the native
  * share/open sheet. This is the correct mobile pattern — web's blob+<a download>
  * trick doesn't apply in React Native.
+ *
+ * Uses the SDK 57 File/Directory/DownloadTask API — the older string-path
+ * (FileSystem.cacheDirectory + createDownloadResumable) API was removed.
  */
 export async function downloadAndShareDocument(documentId: string, fileName: string) {
   const token = useAuthStore.getState().accessToken;
-  const fileUri = FileSystem.cacheDirectory + fileName;
+  const destination = new File(Paths.cache, fileName);
 
-  const downloadResumable = FileSystem.createDownloadResumable(
+  const task = new DownloadTask(
     `${API_BASE_URL}/client-portal/documents/${documentId}/download`,
-    fileUri,
+    destination,
     { headers: token ? { Authorization: `Bearer ${token}` } : {} }
   );
 
-  const result = await downloadResumable.downloadAsync();
-  if (!result) {
+  const downloadedFile = await task.downloadAsync();
+  if (!downloadedFile) {
     throw new Error("Download failed");
   }
 
   const canShare = await Sharing.isAvailableAsync();
   if (canShare) {
-    await Sharing.shareAsync(result.uri);
+    await Sharing.shareAsync(downloadedFile.uri);
   }
 
-  return result.uri;
+  return downloadedFile.uri;
 }

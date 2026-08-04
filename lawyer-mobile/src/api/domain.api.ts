@@ -82,6 +82,7 @@ export const hearingApi = {
 
 export interface CreateClientPayload {
   fullName: string;
+  fullNameNepali?: string;
   phone?: string;
   email?: string;
   address?: string;

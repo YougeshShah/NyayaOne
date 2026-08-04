@@ -83,7 +83,6 @@ export const translations = {
     // Create forms
     caseNumber: "Case Number",
     caseTitle: "Case Title",
-    court: "Court",
     clients2: "Clients",
     assignedLawyers: "Assigned Lawyers",
     selectCourt: "Select a court",

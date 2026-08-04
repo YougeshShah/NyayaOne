@@ -1,9 +1,16 @@
 import { Request, Response } from "express";
 import { lawFirmService } from "../service/lawfirm.service";
-import { listLawFirmsQuerySchema, lawFirmIdParamSchema, suspendLawFirmSchema } from "../dto/lawfirm.dto";
+import { listLawFirmsQuerySchema, lawFirmIdParamSchema, suspendLawFirmSchema, createLawFirmSchema } from "../dto/lawfirm.dto";
 import { AppError } from "../../../common/errors/AppError";
 
 export const lawFirmController = {
+  async create(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const input = createLawFirmSchema.parse(req.body);
+    const result = await lawFirmService.create(input, req.auth.userId);
+    res.status(201).json({ success: true, message: "Law firm created and activated", data: result });
+  },
+
   async list(req: Request, res: Response) {
     const query = listLawFirmsQuerySchema.parse(req.query);
     const result = await lawFirmService.list(query);

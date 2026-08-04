@@ -14,7 +14,7 @@ export const notificationController = {
     const result = await notificationService.send(input, req.auth.userId);
     res.status(201).json({
       success: true,
-      message: `Notification sent to ${result.recipientCount} recipient(s)`,
+      message: `Notification sent to ${result.recipientCount} recipient(s) — ${result.pushedCount} received a push notification (rest don't have push enabled yet)`,
       data: result.notification,
     });
   },

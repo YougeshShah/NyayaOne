@@ -19,16 +19,16 @@ export const documentTemplateRepository = {
     return prisma.documentTemplate.findUnique({ where: { id } });
   },
 
-  create(data: { title: string; category?: string; description?: string; bodyTemplate: string; createdBy: string }) {
-    return prisma.documentTemplate.create({ data });
+  create(data: { title: string; category?: string; description?: string; bodyTemplate: string; fields: unknown; createdBy: string }) {
+    return prisma.documentTemplate.create({ data: data as Prisma.DocumentTemplateCreateInput });
   },
 
   update(id: string, data: Prisma.DocumentTemplateUpdateInput) {
     return prisma.documentTemplate.update({ where: { id }, data });
   },
 
-  // Fetches everything needed to fill placeholders — scoped by lawFirmId so a
-  // lawyer can only generate documents from their own firm's case data.
+  // Fetches everything needed to resolve autoFillSource values — scoped by
+  // lawFirmId so a lawyer can only generate documents from their own firm's case data.
   findCaseForGeneration(caseId: string, lawFirmId: string) {
     return prisma.case.findFirst({
       where: { id: caseId, lawFirmId },

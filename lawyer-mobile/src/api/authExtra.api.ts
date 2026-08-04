@@ -15,6 +15,7 @@ export interface UpdatedProfile {
   accountType: string;
   barRegistrationNo: string | null;
   specialization: string | null;
+  avatarUrl?: string | null;
 }
 
 export const authExtraApi = {
@@ -25,6 +26,19 @@ export const authExtraApi = {
 
   async updateProfile(payload: UpdateProfilePayload): Promise<UpdatedProfile> {
     const { data } = await apiClient.patch("/auth/me", payload);
+    return data.data;
+  },
+
+  async uploadAvatar(fileUri: string): Promise<{ id: string; avatarUrl: string }> {
+    const formData = new FormData();
+    const fileName = fileUri.split("/").pop() || "avatar.jpg";
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+    formData.append("avatar", { uri: fileUri, name: fileName, type: mimeType } as any);
+
+    const { data } = await apiClient.post("/auth/me/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return data.data;
   },
 };

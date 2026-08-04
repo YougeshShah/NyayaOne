@@ -5,24 +5,30 @@ import GavelIcon from "@mui/icons-material/GavelOutlined";
 import EventIcon from "@mui/icons-material/EventOutlined";
 import BadgeIcon from "@mui/icons-material/BadgeOutlined";
 import AssessmentIcon from "@mui/icons-material/AssessmentOutlined";
+import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
-import { Avatar, Box, IconButton, Toolbar, Typography } from "@mui/material";
+import LanguageIcon from "@mui/icons-material/LanguageOutlined";
+import { Avatar, Box, Button, IconButton, Toolbar, Typography } from "@mui/material";
 import styles from "./DashboardLayout.module.css";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
+import { useTranslation } from "../../i18n/LanguageContext";
+import { getAvatarUrl } from "../../api/profile.api";
 
 export function DashboardLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
+  const { t, language, setLanguage } = useTranslation();
 
   const navItems = [
-    { to: "/dashboard", label: "Dashboard", icon: <DashboardIcon fontSize="small" /> },
-    { to: "/cases", label: "Cases", icon: <GavelIcon fontSize="small" /> },
-    { to: "/hearings", label: "Hearings", icon: <EventIcon fontSize="small" /> },
-    { to: "/clients", label: "Clients", icon: <PeopleIcon fontSize="small" /> },
-    { to: "/reports", label: "Reports", icon: <AssessmentIcon fontSize="small" /> },
+    { to: "/dashboard", label: t("dashboard"), icon: <DashboardIcon fontSize="small" /> },
+    { to: "/cases", label: t("cases"), icon: <GavelIcon fontSize="small" /> },
+    { to: "/hearings", label: t("hearings"), icon: <EventIcon fontSize="small" /> },
+    { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" /> },
+    { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" /> },
+    { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" /> },
     ...(user?.accountType === "LAW_FIRM_ADMIN"
-      ? [{ to: "/users", label: "Lawyers & Staff", icon: <BadgeIcon fontSize="small" /> }]
+      ? [{ to: "/users", label: t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" /> }]
       : []),
   ];
 
@@ -54,6 +60,13 @@ export function DashboardLayout() {
 
       <div className={styles.mainContent}>
         <Toolbar sx={{ bgcolor: "#fff", borderBottom: "1px solid #e5e7eb", justifyContent: "flex-end", gap: 2 }}>
+          <Button
+            size="small"
+            startIcon={<LanguageIcon fontSize="small" />}
+            onClick={() => setLanguage(language === "en" ? "ne" : "en")}
+          >
+            {language === "en" ? "नेपाली" : "English"}
+          </Button>
           <Box sx={{ textAlign: "right" }}>
             <Typography variant="body2" fontWeight={600}>
               {user?.fullName}
@@ -62,8 +75,12 @@ export function DashboardLayout() {
               {user?.accountType.replace(/_/g, " ")}
             </Typography>
           </Box>
-          <Avatar sx={{ bgcolor: "primary.main" }}>{user?.fullName?.charAt(0) ?? "U"}</Avatar>
-          <IconButton onClick={logout} title="Logout">
+          <NavLink to="/profile" style={{ textDecoration: "none" }}>
+            <Avatar src={getAvatarUrl(user?.avatarUrl)} sx={{ bgcolor: "primary.main", cursor: "pointer" }}>
+              {user?.fullName?.charAt(0) ?? "U"}
+            </Avatar>
+          </NavLink>
+          <IconButton onClick={logout} title={t("logout")}>
             <LogoutIcon />
           </IconButton>
         </Toolbar>

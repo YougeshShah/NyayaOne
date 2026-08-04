@@ -67,6 +67,34 @@ export const libraryUpload = multer({
   limits: { fileSize: MAX_FILE_SIZE_BYTES },
 });
 
+// Profile photos — small, image-only, own folder so they're easy to serve/cache separately.
+const AVATAR_MAX_SIZE_BYTES = 3 * 1024 * 1024; // 3MB — a profile photo never needs to be huge
+const avatarStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "avatars");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.auth?.userId || "user"}-${Date.now()}${ext}`);
+  },
+});
+
+function avatarFileFilter(req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  const imageTypes = new Set(["image/jpeg", "image/png", "image/jpg", "image/webp"]);
+  if (!imageTypes.has(file.mimetype)) {
+    return cb(new Error("Profile photo must be an image (JPG, PNG, or WEBP)"));
+  }
+  cb(null, true);
+}
+
+export const avatarUpload = multer({
+  storage: avatarStorage,
+  fileFilter: avatarFileFilter,
+  limits: { fileSize: AVATAR_MAX_SIZE_BYTES },
+});
+
 export function mapMulterError(err: unknown): AppError {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {

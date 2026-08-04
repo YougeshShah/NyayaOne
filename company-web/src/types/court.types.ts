@@ -1,6 +1,7 @@
 export interface Court {
   id: string;
   name: string;
+  nepaliName: string | null;
   type: string;
   province: string | null;
   location: string | null;
@@ -11,6 +12,7 @@ export interface Court {
 
 export interface CreateCourtPayload {
   name: string;
+  nepaliName?: string;
   type: string;
   province?: string;
   location?: string;

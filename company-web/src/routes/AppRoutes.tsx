@@ -9,6 +9,7 @@ import { LibraryPage } from "../pages/library/LibraryPage";
 import { CompanyStaffPage } from "../pages/company-staff/CompanyStaffPage";
 import { SubscriptionsPage } from "../pages/subscriptions/SubscriptionsPage";
 import { DocumentTemplatesPage } from "../pages/document-templates/DocumentTemplatesPage";
+import { ProfilePage } from "../pages/profile/ProfilePage";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
@@ -28,6 +29,7 @@ export function AppRoutes() {
           <Route path="/company-staff" element={<CompanyStaffPage />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
           <Route path="/document-templates" element={<DocumentTemplatesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
 

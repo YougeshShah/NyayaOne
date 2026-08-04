@@ -166,4 +166,8 @@ export const authService = {
 
     return authRepository.updateMyProfile(userId, data);
   },
+
+  async updateAvatar(userId: string, avatarUrl: string) {
+    return authRepository.updateAvatar(userId, avatarUrl);
+  },
 };

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { lawFirmApi } from "../api/lawfirm.api";
+import { lawFirmApi, CreateLawFirmPayload } from "../api/lawfirm.api";
 import { LawFirmStatus } from "../types/lawfirm.types";
 
 export function useLawFirms(params: { status?: LawFirmStatus; search?: string; page?: number }) {
@@ -45,5 +45,10 @@ export function useLawFirmActions() {
     onSuccess: invalidate,
   });
 
-  return { approve, suspend, activate, reject };
+  const create = useMutation({
+    mutationFn: (payload: CreateLawFirmPayload) => lawFirmApi.create(payload),
+    onSuccess: invalidate,
+  });
+
+  return { approve, suspend, activate, reject, create };
 }

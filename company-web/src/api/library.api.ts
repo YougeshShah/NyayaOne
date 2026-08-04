@@ -6,6 +6,7 @@ export interface LibraryResourceFormValues {
   title: string;
   type: LibraryResourceType;
   category?: string;
+  isRepealed?: boolean;
   actName?: string;
   section?: string;
   chapter?: string;
@@ -19,6 +20,7 @@ function toFormData(values: LibraryResourceFormValues): FormData {
   const formData = new FormData();
   formData.append("title", values.title);
   formData.append("type", values.type);
+  formData.append("isRepealed", String(!!values.isRepealed));
   if (values.category) formData.append("category", values.category);
   if (values.actName) formData.append("actName", values.actName);
   if (values.section) formData.append("section", values.section);

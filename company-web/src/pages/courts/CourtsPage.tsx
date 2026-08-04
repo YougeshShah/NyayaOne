@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -23,8 +24,11 @@ import EditIcon from "@mui/icons-material/EditOutlined";
 import { useForm } from "react-hook-form";
 import { useCourts, useCourtActions, useCourtProvinces, useCourtTypes } from "../../hooks/useCourts";
 import { Court, CreateCourtPayload } from "../../types/court.types";
+import { getCourtTypeLabel, getProvinceLabel, getCourtTypeGroup } from "../../i18n/courtLabels";
+import { useTranslation } from "../../i18n/LanguageContext";
 
 export function CourtsPage() {
+  const { t, language } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCourt, setEditingCourt] = useState<Court | null>(null);
   const [province, setProvince] = useState("ALL");
@@ -46,13 +50,13 @@ export function CourtsPage() {
 
   const openCreateDialog = () => {
     setEditingCourt(null);
-    reset({ name: "", type: "", province: "", location: "" });
+    reset({ name: "", nepaliName: "", type: "", province: "", location: "" });
     setDialogOpen(true);
   };
 
   const openEditDialog = (court: Court) => {
     setEditingCourt(court);
-    reset({ name: court.name, type: court.type, province: court.province || "", location: court.location || "" });
+    reset({ name: court.name, nepaliName: court.nepaliName || "", type: court.type, province: court.province || "", location: court.location || "" });
     setDialogOpen(true);
   };
 
@@ -76,38 +80,41 @@ export function CourtsPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>
-            Court Management
+            {t("courtManagement")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {data?.pagination.total ?? 0} courts registered
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateDialog}>
-          Add Court
+          {t("addCourt")}
         </Button>
       </Box>
 
       <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <TextField select label="Province" size="small" value={province} onChange={(e) => setProvince(e.target.value)} sx={{ minWidth: 180 }}>
-          <MenuItem value="ALL">All Provinces</MenuItem>
+        <TextField select label={t("province")} size="small" value={province} onChange={(e) => setProvince(e.target.value)} sx={{ minWidth: 180 }}>
+          <MenuItem value="ALL">{t("allProvinces")}</MenuItem>
           {provinces?.map((p) => (
             <MenuItem key={p} value={p}>
-              {p}
+              {getProvinceLabel(p, language)}
             </MenuItem>
           ))}
         </TextField>
 
-        <TextField select label="Court Type" size="small" value={type} onChange={(e) => setType(e.target.value)} sx={{ minWidth: 200 }}>
-          <MenuItem value="ALL">All Types</MenuItem>
-          {types?.map((t) => (
-            <MenuItem key={t} value={t}>
-              {t}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 220 }}
+          options={["ALL", ...(types ?? [])]}
+          groupBy={(opt) => (opt === "ALL" ? "" : getCourtTypeGroup(opt, language))}
+          getOptionLabel={(opt) => (opt === "ALL" ? t("allTypes") : getCourtTypeLabel(opt, language))}
+          value={type}
+          onChange={(_, val) => setType(val || "ALL")}
+          disableClearable
+          renderInput={(params) => <TextField {...params} label={t("courtType")} />}
+        />
 
         <TextField
-          label="Search by name or location"
+          label={t("searchByNameOrLocation")}
           size="small"
           fullWidth
           value={search}
@@ -119,12 +126,12 @@ export function CourtsPage() {
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Court Name</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Province</TableCell>
-              <TableCell>Location</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t("courtName")}</TableCell>
+              <TableCell>{t("type")}</TableCell>
+              <TableCell>{t("province")}</TableCell>
+              <TableCell>{t("location")}</TableCell>
+              <TableCell>{t("status")}</TableCell>
+              <TableCell align="right">{t("actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -146,15 +153,15 @@ export function CourtsPage() {
 
             {data?.items.map((court) => (
               <TableRow key={court.id} hover>
-                <TableCell>{court.name}</TableCell>
+                <TableCell>{language === "ne" && court.nepaliName ? court.nepaliName : court.name}</TableCell>
                 <TableCell>
-                  <Chip label={court.type} size="small" variant="outlined" />
+                  <Chip label={getCourtTypeLabel(court.type, language)} size="small" variant="outlined" />
                 </TableCell>
-                <TableCell>{court.province || "—"}</TableCell>
+                <TableCell>{getProvinceLabel(court.province, language) || "—"}</TableCell>
                 <TableCell>{court.location || "—"}</TableCell>
                 <TableCell>
                   <Chip
-                    label={court.isActive ? "Active" : "Inactive"}
+                    label={court.isActive ? t("active") : t("inactive")}
                     color={court.isActive ? "success" : "default"}
                     size="small"
                   />
@@ -165,11 +172,11 @@ export function CourtsPage() {
                   </Button>
                   {court.isActive ? (
                     <Button size="small" color="error" variant="outlined" onClick={() => deactivate.mutate(court.id)}>
-                      Deactivate
+                      {t("deactivate")}
                     </Button>
                   ) : (
                     <Button size="small" variant="contained" onClick={() => activate.mutate(court.id)}>
-                      Activate
+                      {t("activate")}
                     </Button>
                   )}
                 </TableCell>
@@ -180,18 +187,24 @@ export function CourtsPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{editingCourt ? "Edit Court" : "Add New Court"}</DialogTitle>
+        <DialogTitle>{editingCourt ? t("editCourt") : t("addCourt")}</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
-              label="Court Name"
+              label={t("courtName")}
               required
               fullWidth
               {...register("name", { required: true })}
               error={!!formState.errors.name}
             />
             <TextField
-              label="Court Type"
+              label="Court Name (Nepali)"
+              fullWidth
+              helperText="Shown when Nepali is selected — falls back to the English name if left blank"
+              {...register("nepaliName")}
+            />
+            <TextField
+              label={t("courtType")}
               required
               placeholder="e.g. Supreme Court, District Court, Labour Court"
               fullWidth
@@ -204,12 +217,12 @@ export function CourtsPage() {
               fullWidth
               {...register("province")}
             />
-            <TextField label="Location (optional)" fullWidth {...register("location")} />
+            <TextField label={t("locationOptional")} fullWidth {...register("location")} />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setDialogOpen(false)}>{t("cancel")}</Button>
             <Button type="submit" variant="contained" disabled={isSaving}>
-              {isSaving ? "Saving..." : editingCourt ? "Save Changes" : "Save Court"}
+              {isSaving ? t("saving") : t("saveChanges")}
             </Button>
           </DialogActions>
         </Box>

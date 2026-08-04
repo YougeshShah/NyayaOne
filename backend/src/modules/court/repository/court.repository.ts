@@ -45,11 +45,11 @@ export const courtRepository = {
     return prisma.court.findFirst({ where: { name, type } });
   },
 
-  create(data: { name: string; type: string; location?: string }) {
+  create(data: { name: string; nepaliName?: string; type: string; province?: string; location?: string }) {
     return prisma.court.create({ data });
   },
 
-  update(id: string, data: { name?: string; type?: string; location?: string }) {
+  update(id: string, data: { name?: string; nepaliName?: string; type?: string; province?: string; location?: string }) {
     return prisma.court.update({ where: { id }, data });
   },
 

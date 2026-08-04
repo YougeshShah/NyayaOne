@@ -2,6 +2,7 @@ import { Router } from "express";
 import { notificationController } from "../controller/notification.controller";
 import { authenticate } from "../../../common/middleware/authenticate";
 import { authorize } from "../../../common/middleware/authorize";
+import { requirePermission } from "../../../common/middleware/requirePermission";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get("/my", notificationController.myNotifications);
 router.patch("/my/:id/read", notificationController.markRead);
 
 // Only Company (TrailBlaze Tech) can broadcast notifications and view the sent log.
-router.post("/", authorize("COMPANY"), notificationController.send);
+router.post("/", authorize("COMPANY"), requirePermission("notification.broadcast"), notificationController.send);
 router.get("/", authorize("COMPANY"), notificationController.listSent);
 
 export default router;

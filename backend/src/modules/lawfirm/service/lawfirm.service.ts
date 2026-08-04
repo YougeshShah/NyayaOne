@@ -1,8 +1,35 @@
 import { AppError } from "../../../common/errors/AppError";
+import { hashPassword } from "../../../common/utils/password";
 import { lawFirmRepository } from "../repository/lawfirm.repository";
-import { ListLawFirmsQuery } from "../dto/lawfirm.dto";
+import { ListLawFirmsQuery, CreateLawFirmInput } from "../dto/lawfirm.dto";
 
 export const lawFirmService = {
+  async create(input: CreateLawFirmInput, createdByUserId: string) {
+    const existing = await lawFirmRepository.findUserByEmail(input.adminEmail);
+    if (existing) {
+      throw AppError.conflict("An account with this admin email already exists");
+    }
+
+    const passwordHash = await hashPassword(input.password);
+    const { lawFirm, admin } = await lawFirmRepository.createWithAdmin({
+      lawFirmName: input.lawFirmName,
+      lawFirmEmail: input.lawFirmEmail,
+      adminFullName: input.adminFullName,
+      adminEmail: input.adminEmail,
+      adminPhone: input.adminPhone,
+      passwordHash,
+    });
+
+    await lawFirmRepository.createAuditLog({
+      userId: createdByUserId,
+      action: "LAW_FIRM_CREATED_MANUALLY",
+      entityId: lawFirm.id,
+      metadata: { lawFirmName: lawFirm.name, adminEmail: admin.email },
+    });
+
+    return { lawFirm, admin: { id: admin.id, fullName: admin.fullName, email: admin.email } };
+  },
+
   async list(query: ListLawFirmsQuery) {
     const skip = (query.page - 1) * query.limit;
 

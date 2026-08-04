@@ -2,7 +2,24 @@ import { apiClient } from "./client";
 import { ApiSuccessResponse, PaginatedResult } from "../types/api.types";
 import { LawFirmListItem, LawFirmDetail, LawFirmStatus } from "../types/lawfirm.types";
 
+export interface CreateLawFirmPayload {
+  lawFirmName: string;
+  lawFirmEmail: string;
+  adminFullName: string;
+  adminEmail: string;
+  adminPhone?: string;
+  password: string;
+}
+
 export const lawFirmApi = {
+  async create(payload: CreateLawFirmPayload) {
+    const { data } = await apiClient.post<ApiSuccessResponse<{ lawFirm: LawFirmListItem; admin: { id: string; fullName: string; email: string } }>>(
+      "/law-firms",
+      payload
+    );
+    return data.data;
+  },
+
   async list(params: { status?: LawFirmStatus; search?: string; page?: number; limit?: number }) {
     const { data } = await apiClient.get<ApiSuccessResponse<PaginatedResult<LawFirmListItem>>>("/law-firms", {
       params,

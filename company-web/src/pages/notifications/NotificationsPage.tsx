@@ -68,7 +68,14 @@ export function NotificationsPage() {
         )}
         {sendNotification.isError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {(sendNotification.error as any)?.response?.data?.message || "Failed to send notification"}
+            {(() => {
+              const respData = (sendNotification.error as any)?.response?.data;
+              const fieldErrors = respData?.errors as { field: string; message: string }[] | undefined;
+              if (fieldErrors && fieldErrors.length > 0) {
+                return fieldErrors.map((e) => `${e.field}: ${e.message}`).join(" — ");
+              }
+              return respData?.message || "Failed to send notification";
+            })()}
           </Alert>
         )}
 

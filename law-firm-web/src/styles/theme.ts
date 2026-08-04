@@ -16,7 +16,7 @@ export const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
+    fontFamily: '"Inter", "Noto Sans Devanagari", "Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
     h4: { fontWeight: 700 },
     h5: { fontWeight: 600 },
     h6: { fontWeight: 600 },

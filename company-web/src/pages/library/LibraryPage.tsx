@@ -1,7 +1,10 @@
 import { useState } from "react";
 import {
+  Alert,
+  Autocomplete,
   Box,
   Button,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -28,12 +31,21 @@ import { useForm, Controller } from "react-hook-form";
 import { useLibraryResources, useLibraryActions } from "../../hooks/useLibrary";
 import { LibraryResourceFormValues } from "../../api/library.api";
 import { LibraryResourceType } from "../../types/library.types";
+import { useTranslation } from "../../i18n/LanguageContext";
+import { getGroupedTypeOptions, getLibraryTypeLabel } from "../../i18n/libraryTaxonomy";
 
 const RESOURCE_TYPES: LibraryResourceType[] = [
   "CONSTITUTION",
   "ACT",
+  "ORDINANCE",
   "REGULATION",
   "RULE",
+  "FORMATION_ORDER",
+  "POLICY",
+  "INTERNATIONAL_TREATY",
+  "HISTORICAL_DOCUMENT",
+  "ANNUAL_REPORT",
+  "RTI_DISCLOSURE",
   "CIRCULAR",
   "GOVERNMENT_NOTICE",
   "GAZETTE",
@@ -46,7 +58,13 @@ const RESOURCE_TYPES: LibraryResourceType[] = [
   "LEGAL_FORM",
 ];
 
+// Common subcategory labels seen on Nepal Law Commission's own site —
+// offered as suggestions for the free-text "category" field, not enforced.
+const SUGGESTED_CATEGORIES = ["हालसालैका ऐन", "खण्ड अनुसार", "खण्ड बाहेकका ऐन", "वर्णानुक्रम अनुसारको सूची"];
+
 export function LibraryPage() {
+  const { t, language } = useTranslation();
+  const groupedTypeOptions = getGroupedTypeOptions(language);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<import("../../types/library.types").LibraryResource | null>(null);
   const [type, setType] = useState("ALL");
@@ -76,6 +94,7 @@ export function LibraryPage() {
       title: r.title,
       type: r.type,
       category: r.category || "",
+      isRepealed: r.isRepealed,
       actName: r.actName || "",
       section: r.section || "",
       chapter: r.chapter || "",
@@ -122,19 +141,22 @@ export function LibraryPage() {
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateDialog}>
-          Publish Resource
+          {t("publishResource")}
         </Button>
       </Box>
 
       <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <TextField select label="Type" size="small" value={type} onChange={(e) => setType(e.target.value)} sx={{ minWidth: 220 }}>
-          <MenuItem value="ALL">All Types</MenuItem>
-          {RESOURCE_TYPES.map((t) => (
-            <MenuItem key={t} value={t}>
-              {t.replace(/_/g, " ")}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 260 }}
+          options={["ALL", ...groupedTypeOptions.map((o) => o.type)]}
+          groupBy={(opt) => (opt === "ALL" ? "" : groupedTypeOptions.find((o) => o.type === opt)?.group || "")}
+          getOptionLabel={(opt) => (opt === "ALL" ? t("allTypes") : getLibraryTypeLabel(opt as any, language))}
+          value={type}
+          onChange={(_, val) => setType(val || "ALL")}
+          disableClearable
+          renderInput={(params) => <TextField {...params} label={t("type")} />}
+        />
         <TextField label="Search title, act name, or keyword" size="small" fullWidth value={search} onChange={(e) => setSearch(e.target.value)} />
       </Box>
 
@@ -142,11 +164,11 @@ export function LibraryPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell align="center">Downloadable</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t("title")}</TableCell>
+              <TableCell>{t("type")}</TableCell>
+              <TableCell>{t("category")}</TableCell>
+              <TableCell align="center">{t("downloadable")}</TableCell>
+              <TableCell align="right">{t("actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -168,16 +190,16 @@ export function LibraryPage() {
               <TableRow key={r.id} hover>
                 <TableCell>{r.title}</TableCell>
                 <TableCell>
-                  <Chip size="small" label={r.type.replace(/_/g, " ")} variant="outlined" />
+                  <Chip size="small" label={getLibraryTypeLabel(r.type, language)} variant="outlined" />
                 </TableCell>
                 <TableCell>{r.category || "—"}</TableCell>
-                <TableCell align="center">{r.isDownloadable ? "Yes" : "No"}</TableCell>
+                <TableCell align="center">{r.isDownloadable ? t("yes") : t("no")}</TableCell>
                 <TableCell align="right">
                   <Button size="small" startIcon={<EditIcon fontSize="small" />} onClick={() => openEditDialog(r)} sx={{ mr: 1 }}>
-                    Edit
+                    {t("edit")}
                   </Button>
                   <Button size="small" color="error" startIcon={<DeleteIcon fontSize="small" />} onClick={() => remove.mutate(r.id)}>
-                    Delete
+                    {t("delete")}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -187,21 +209,39 @@ export function LibraryPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{editingResource ? "Edit Library Resource" : "Publish Library Resource"}</DialogTitle>
+        <DialogTitle>{editingResource ? t("editResource") : t("publishResource")}</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField label="Title" required fullWidth {...register("title", { required: true })} error={!!formState.errors.title} />
-            <TextField select label="Type" required fullWidth defaultValue="ACT" {...register("type", { required: true })}>
-              {RESOURCE_TYPES.map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t.replace(/_/g, " ")}
-                </MenuItem>
-              ))}
-            </TextField>
+            <TextField label={t("title")} required fullWidth {...register("title", { required: true })} error={!!formState.errors.title} />
+            <Controller
+              name="type"
+              control={control}
+              defaultValue="ACT"
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Autocomplete
+                  options={groupedTypeOptions.map((o) => o.type)}
+                  groupBy={(opt) => groupedTypeOptions.find((o) => o.type === opt)?.group || ""}
+                  getOptionLabel={(opt) => getLibraryTypeLabel(opt as any, language)}
+                  value={field.value || "ACT"}
+                  onChange={(_, val) => field.onChange(val)}
+                  renderInput={(params) => <TextField {...params} label={t("type")} required error={!!formState.errors.type} />}
+                />
+              )}
+            />
             <Box sx={{ display: "flex", gap: 2 }}>
-              <TextField label="Category" fullWidth {...register("category")} />
+              <TextField
+                label={t("category")}
+                fullWidth
+                {...register("category")}
+                helperText={`Suggestions: ${SUGGESTED_CATEGORIES.join(", ")}`}
+              />
               <TextField label="Act Name" fullWidth {...register("actName")} />
             </Box>
+            <FormControlLabel
+              control={<Checkbox {...register("isRepealed")} />}
+              label="Repealed (खारेज भएको) — this law/document is no longer in force"
+            />
             <Box sx={{ display: "flex", gap: 2 }}>
               <TextField label="Section" fullWidth {...register("section")} />
               <TextField label="Chapter" fullWidth {...register("chapter")} />
@@ -232,7 +272,7 @@ export function LibraryPage() {
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={isSaving}>
-              {isSaving ? "Saving..." : editingResource ? "Save Changes" : "Publish"}
+              {isSaving ? t("saving") : editingResource ? t("saveChanges") : t("publishResource")}
             </Button>
           </DialogActions>
         </Box>

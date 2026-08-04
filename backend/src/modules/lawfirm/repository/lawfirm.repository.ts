@@ -1,5 +1,5 @@
 import { prisma } from "../../../database/prisma";
-import { LawFirmStatus, Prisma } from "@prisma/client";
+import { LawFirmStatus, Prisma, AccountType } from "@prisma/client";
 
 type AuditMetadata = Record<string, unknown>;
 
@@ -65,6 +65,44 @@ export const lawFirmRepository = {
         entityId: params.entityId,
         metadata: params.metadata as Prisma.InputJsonValue | undefined,
       },
+    });
+  },
+
+  findUserByEmail(email: string) {
+    return prisma.user.findUnique({ where: { email } });
+  },
+
+  /**
+   * Company staff manually onboards a law firm — unlike self-registration
+   * (which starts PENDING and needs approval), a firm created directly by
+   * Company is trusted immediately and goes straight to ACTIVE.
+   */
+  async createWithAdmin(params: {
+    lawFirmName: string;
+    lawFirmEmail: string;
+    adminFullName: string;
+    adminEmail: string;
+    adminPhone?: string;
+    passwordHash: string;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const lawFirm = await tx.lawFirm.create({
+        data: { name: params.lawFirmName, email: params.lawFirmEmail, status: "ACTIVE" },
+      });
+
+      const admin = await tx.user.create({
+        data: {
+          accountType: AccountType.LAW_FIRM_ADMIN,
+          fullName: params.adminFullName,
+          email: params.adminEmail,
+          phone: params.adminPhone,
+          passwordHash: params.passwordHash,
+          status: "ACTIVE",
+          lawFirmId: lawFirm.id,
+        },
+      });
+
+      return { lawFirm, admin };
     });
   },
 };

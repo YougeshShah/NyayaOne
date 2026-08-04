@@ -1,12 +1,17 @@
 import { AppError } from "../../../common/errors/AppError";
 import { notificationRepository } from "../repository/notification.repository";
+import { pushRepository } from "../../push/repository/push.repository";
+import { prisma } from "../../../database/prisma";
 import { SendNotificationInput, ListNotificationsQuery } from "../dto/notification.dto";
 
 export const notificationService = {
   /**
    * Company staff sends an announcement. One Notification record is created,
    * then fanned out to every matching recipient as a UserNotification row
-   * (tracks per-user read state independently).
+   * (tracks per-user read state independently) AND as an actual push
+   * notification to their phone (previously this only wrote DB rows for the
+   * in-app inbox — recipients never got a phone notification for company
+   * broadcasts, only for hearing reminders, since that's a separate code path).
    */
   async send(input: SendNotificationInput, createdBy: string) {
     const recipientIds = await notificationRepository.resolveRecipientUserIds(input.audience, input.targetId);
@@ -25,7 +30,17 @@ export const notificationService = {
 
     await notificationRepository.bulkCreateUserNotifications(notification.id, recipientIds);
 
-    return { notification, recipientCount: recipientIds.length };
+    // Fire the actual push — fetch tokens for every recipient that has one registered.
+    const recipients = await prisma.user.findMany({
+      where: { id: { in: recipientIds }, pushToken: { not: null } },
+      select: { pushToken: true },
+    });
+    const pushMessages = recipients
+      .filter((r) => r.pushToken)
+      .map((r) => ({ to: r.pushToken as string, title: input.title, body: input.body, data: { type: "COMPANY_ANNOUNCEMENT" } }));
+    await pushRepository.sendPushBatch(pushMessages);
+
+    return { notification, recipientCount: recipientIds.length, pushedCount: pushMessages.length };
   },
 
   async listSent(query: ListNotificationsQuery) {

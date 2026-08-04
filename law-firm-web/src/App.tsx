@@ -4,6 +4,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { theme } from "./styles/theme";
 import { AppRoutes } from "./routes/AppRoutes";
+import { LanguageProvider } from "./i18n/LanguageContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,9 +17,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <LanguageProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

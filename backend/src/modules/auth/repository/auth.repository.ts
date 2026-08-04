@@ -82,7 +82,16 @@ export const authRepository = {
         accountType: true,
         barRegistrationNo: true,
         specialization: true,
+        avatarUrl: true,
       },
+    });
+  },
+
+  updateAvatar(userId: string, avatarUrl: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      select: { id: true, avatarUrl: true },
     });
   },
 };

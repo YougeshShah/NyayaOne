@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -127,6 +128,18 @@ export function CompanyStaffPage() {
         <DialogTitle>Add Company Staff</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onCreate)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {create.isError && (
+              <Alert severity="error">
+                {(() => {
+                  const respData = (create.error as any)?.response?.data;
+                  const fieldErrors = respData?.errors as { field: string; message: string }[] | undefined;
+                  if (fieldErrors && fieldErrors.length > 0) {
+                    return fieldErrors.map((e) => `${e.field}: ${e.message}`).join(" — ");
+                  }
+                  return respData?.message || "Failed to add staff member";
+                })()}
+              </Alert>
+            )}
             <TextField label="Full Name" required fullWidth {...register("fullName", { required: true })} error={!!formState.errors.fullName} />
             <TextField label="Email" type="email" required fullWidth {...register("email", { required: true })} error={!!formState.errors.email} />
             <TextField label="Phone" fullWidth {...register("phone")} />

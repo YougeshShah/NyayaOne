@@ -27,6 +27,8 @@ import { useCases, useCreateCase, useUpdateCase } from "../../hooks/useCases";
 import { useClients } from "../../hooks/useClients";
 import { useFirmUsers } from "../../hooks/useFirmUsers";
 import { useCourtsList } from "../../hooks/useCourtsList";
+import { useTranslation } from "../../i18n/LanguageContext";
+import { getCourtDisplayName } from "../../i18n/courtLabels";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { PriorityBadge } from "../../components/common/PriorityBadge";
 import { CreateCasePayload, CaseStatus, CaseListItem } from "../../types/case.types";
@@ -36,6 +38,7 @@ const STATUS_OPTIONS: (CaseStatus | "ALL")[] = ["ALL", "OPEN", "ONGOING", "ON_HO
 const STATUS_EDIT_OPTIONS: CaseStatus[] = ["OPEN", "ONGOING", "ON_HOLD", "CLOSED", "DISMISSED"];
 
 export function CasesPage() {
+  const { language } = useTranslation();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<CaseListItem | null>(null);
   const [status, setStatus] = useState<CaseStatus | "ALL">("ALL");
@@ -191,7 +194,7 @@ export function CasesPage() {
                     return a.name.localeCompare(b.name);
                   })}
                   groupBy={(o) => o.province || "National Level"}
-                  getOptionLabel={(o) => `${o.name} (${o.type})`}
+                  getOptionLabel={(o) => `${getCourtDisplayName(o, language)} (${o.type})`}
                   onChange={(_, val) => field.onChange(val?.id ?? "")}
                   renderInput={(params) => <TextField {...params} label="Court" required error={!!formState.errors.courtId} />}
                 />

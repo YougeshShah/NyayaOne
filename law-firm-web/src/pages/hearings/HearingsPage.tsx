@@ -24,13 +24,18 @@ import AddIcon from "@mui/icons-material/Add";
 import { useForm, Controller } from "react-hook-form";
 import { useHearings, useCreateHearing } from "../../hooks/useHearings";
 import { useCases } from "../../hooks/useCases";
+import { useCourtsList } from "../../hooks/useCourtsList";
+import { useTranslation } from "../../i18n/LanguageContext";
+import { getCourtDisplayName } from "../../i18n/courtLabels";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { CreateHearingPayload } from "../../types/hearing.types";
 
 export function HearingsPage() {
+  const { language } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data, isLoading } = useHearings({ page: 1, limit: 100 });
   const { data: cases } = useCases({ page: 1, limit: 100 } as any);
+  const { data: courts } = useCourtsList();
   const createHearing = useCreateHearing();
 
   const { register, handleSubmit, reset, control, formState } = useForm<CreateHearingPayload>();
@@ -133,7 +138,26 @@ export function HearingsPage() {
               error={!!formState.errors.hearingDate}
             />
 
-            <TextField label="Court Name (optional override)" fullWidth {...register("courtName")} />
+            <Controller
+              name="courtName"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  options={[...(courts?.items ?? [])].sort((a, b) => {
+                    const provA = a.province || "ZZZ National Level";
+                    const provB = b.province || "ZZZ National Level";
+                    if (provA !== provB) return provA.localeCompare(provB);
+                    return a.name.localeCompare(b.name);
+                  })}
+                  groupBy={(o) => o.province || "National Level"}
+                  getOptionLabel={(o) => (typeof o === "string" ? o : `${getCourtDisplayName(o, language)} (${o.type})`)}
+                  freeSolo
+                  onChange={(_, val) => field.onChange(typeof val === "string" ? val : val?.name ?? "")}
+                  onInputChange={(_, val) => field.onChange(val)}
+                  renderInput={(params) => <TextField {...params} label="Court (optional override — defaults to the case's court)" />}
+                />
+              )}
+            />
             <TextField label="Judge" fullWidth {...register("judge")} />
             <TextField label="Remarks" fullWidth multiline rows={2} {...register("remarks")} />
             <FormControlLabel

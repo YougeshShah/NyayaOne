@@ -42,7 +42,7 @@ export function ClientsPage() {
 
   const openCreateDialog = () => {
     setEditingClient(null);
-    reset({ fullName: "", phone: "", email: "", address: "", identificationType: "", identificationNo: "", notes: "" });
+    reset({ fullName: "", fullNameNepali: "", phone: "", email: "", address: "", identificationType: "", identificationNo: "", notes: "" });
     setDialogOpen(true);
   };
 
@@ -50,6 +50,7 @@ export function ClientsPage() {
     setEditingClient(client);
     reset({
       fullName: client.fullName,
+      fullNameNepali: client.fullNameNepali || "",
       phone: client.phone || "",
       email: client.email || "",
       address: client.address || "",
@@ -177,6 +178,12 @@ export function ClientsPage() {
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField label="Full Name" required fullWidth {...register("fullName", { required: true })} error={!!formState.errors.fullName} />
+            <TextField
+              label="Full Name (Nepali)"
+              fullWidth
+              helperText="Used in generated legal documents when filled in — falls back to the English name otherwise"
+              {...register("fullNameNepali")}
+            />
             <TextField label="Phone" fullWidth {...register("phone")} />
             <TextField label="Email" fullWidth helperText="Required if you want to grant mobile app access later" {...register("email")} />
             <TextField label="Address" fullWidth {...register("address")} />

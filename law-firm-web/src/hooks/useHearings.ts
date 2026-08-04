@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { hearingApi } from "../api/hearing.api";
 import { CreateHearingPayload } from "../types/hearing.types";
 
-export function useHearings(params: { caseId?: string; page?: number }) {
+export function useHearings(params: { caseId?: string; page?: number; limit?: number }) {
   return useQuery({
     queryKey: ["hearings", params],
     queryFn: () => hearingApi.list(params),

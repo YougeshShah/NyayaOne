@@ -39,3 +39,13 @@ export function useUpdateProfile() {
     },
   });
 }
+
+export function useUploadAvatar() {
+  const updateUser = useAuthStore((s) => s.updateUser);
+  return useMutation({
+    mutationFn: (fileUri: string) => authExtraApi.uploadAvatar(fileUri),
+    onSuccess: (data) => {
+      updateUser({ avatarUrl: data.avatarUrl });
+    },
+  });
+}

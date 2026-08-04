@@ -3,8 +3,15 @@ import { z } from "zod";
 const resourceTypes = [
   "CONSTITUTION",
   "ACT",
+  "ORDINANCE",
   "REGULATION",
   "RULE",
+  "FORMATION_ORDER",
+  "POLICY",
+  "INTERNATIONAL_TREATY",
+  "HISTORICAL_DOCUMENT",
+  "ANNUAL_REPORT",
+  "RTI_DISCLOSURE",
   "CIRCULAR",
   "GOVERNMENT_NOTICE",
   "GAZETTE",
@@ -21,6 +28,7 @@ export const createLibraryResourceSchema = z.object({
   title: z.string().min(2, "Title is required"),
   type: z.enum(resourceTypes),
   category: z.string().optional(),
+  isRepealed: z.coerce.boolean().default(false),
   actName: z.string().optional(),
   section: z.string().optional(),
   chapter: z.string().optional(),
@@ -40,7 +48,8 @@ export type UpdateLibraryResourceInput = z.infer<typeof updateLibraryResourceSch
 export const listLibraryResourcesQuerySchema = z.object({
   type: z.enum(resourceTypes).optional(),
   category: z.string().optional(),
-  search: z.string().optional(), // matches title, actName, or keywords
+  isRepealed: z.coerce.boolean().optional(),
+  search: z.string().optional(), // matches title, actName, keywords, AND full document content (PDF text)
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });

@@ -46,6 +46,61 @@ async function main() {
     });
   }
 
+  // --- Additional company staff roles, each with a sensible permission subset ---
+  // (Previously only "Super Admin" existed — every new staff member had to be
+  // given full access since there was nothing else to assign, which defeats
+  // the point of role-based access. These give real, limited-scope options.)
+  const roleDefs: { name: string; description: string; permissionKeys: string[] }[] = [
+    {
+      name: "Staff",
+      description: "General company staff — basic platform operations",
+      permissionKeys: ["lawfirm.approve", "court.manage", "auditlog.view"],
+    },
+    {
+      name: "Library Manager",
+      description: "Manages the legal library and document templates",
+      permissionKeys: ["library.manage"],
+    },
+    {
+      name: "Content Manager",
+      description: "Manages notifications and published content",
+      permissionKeys: ["notification.broadcast", "library.manage"],
+    },
+    {
+      name: "Customer Support",
+      description: "Handles law firm approvals and support requests",
+      permissionKeys: ["lawfirm.approve", "lawfirm.suspend"],
+    },
+    {
+      name: "Finance",
+      description: "Manages subscriptions and billing-related operations",
+      permissionKeys: ["auditlog.view"],
+    },
+    {
+      name: "Operations",
+      description: "Manages courts, law firms, and day-to-day platform operations",
+      permissionKeys: ["lawfirm.approve", "lawfirm.suspend", "court.manage", "auditlog.view"],
+    },
+  ];
+
+  for (const roleDef of roleDefs) {
+    const role = await prisma.role.upsert({
+      where: { name: roleDef.name },
+      update: {},
+      create: { name: roleDef.name, description: roleDef.description, isSystem: false },
+    });
+    for (const key of roleDef.permissionKeys) {
+      const perm = allPermissions.find((p) => p.key === key);
+      if (!perm) continue;
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionId: { roleId: role.id, permissionId: perm.id } },
+        update: {},
+        create: { roleId: role.id, permissionId: perm.id },
+      });
+    }
+  }
+  console.log("Additional roles seeded: Staff, Library Manager, Content Manager, Customer Support, Finance, Operations.");
+
   // --- First Super Admin user ---
   const adminEmail = "admin@trailblazetech.com";
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });

@@ -11,6 +11,7 @@ export default function CreateClientScreen() {
   const createClient = useCreateClient();
 
   const [fullName, setFullName] = useState("");
+  const [fullNameNepali, setFullNameNepali] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
@@ -26,6 +27,7 @@ export default function CreateClientScreen() {
     createClient.mutate(
       {
         fullName,
+        fullNameNepali: fullNameNepali || undefined,
         phone: phone || undefined,
         email: email || undefined,
         address: address || undefined,
@@ -49,6 +51,9 @@ export default function CreateClientScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <Text style={styles.label}>Full Name *</Text>
       <TextInput style={styles.input} value={fullName} onChangeText={setFullName} placeholderTextColor="#9CA3AF" />
+
+      <Text style={styles.label}>Full Name (Nepali) — used in generated documents</Text>
+      <TextInput style={styles.input} value={fullNameNepali} onChangeText={setFullNameNepali} placeholderTextColor="#9CA3AF" />
 
       <Text style={styles.label}>Phone</Text>
       <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor="#9CA3AF" />

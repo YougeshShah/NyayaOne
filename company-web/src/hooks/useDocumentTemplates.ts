@@ -5,8 +5,8 @@ export function useDocumentTemplates() {
   return useQuery({ queryKey: ["document-templates"], queryFn: () => documentTemplateApi.list() });
 }
 
-export function useTemplatePlaceholders() {
-  return useQuery({ queryKey: ["template-placeholders"], queryFn: () => documentTemplateApi.placeholders() });
+export function useAutofillSources() {
+  return useQuery({ queryKey: ["autofill-sources"], queryFn: () => documentTemplateApi.autofillSources() });
 }
 
 export function useDocumentTemplateActions() {
@@ -24,5 +24,9 @@ export function useDocumentTemplateActions() {
     onSuccess: invalidate,
   });
 
-  return { create, update };
+  const analyzeSample = useMutation({
+    mutationFn: (text: string) => documentTemplateApi.analyzeSample(text),
+  });
+
+  return { create, update, analyzeSample };
 }

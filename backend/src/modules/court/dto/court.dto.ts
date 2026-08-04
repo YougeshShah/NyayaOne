@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const createCourtSchema = z.object({
   name: z.string().min(2, "Court name is required"),
+  nepaliName: z.string().optional(), // Devanagari name — shown when Nepali is selected, falls back to name
   type: z.string().min(2, "Court type is required"), // e.g. "Supreme Court", "District Court" — free text, extensible
   province: z.string().optional(), // null for national-level courts
   location: z.string().optional(),
@@ -10,6 +11,7 @@ export type CreateCourtInput = z.infer<typeof createCourtSchema>;
 
 export const updateCourtSchema = z.object({
   name: z.string().min(2).optional(),
+  nepaliName: z.string().optional(),
   type: z.string().min(2).optional(),
   province: z.string().optional(),
   location: z.string().optional(),

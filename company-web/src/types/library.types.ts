@@ -1,8 +1,15 @@
 export type LibraryResourceType =
   | "CONSTITUTION"
   | "ACT"
+  | "ORDINANCE"
   | "REGULATION"
   | "RULE"
+  | "FORMATION_ORDER"
+  | "POLICY"
+  | "INTERNATIONAL_TREATY"
+  | "HISTORICAL_DOCUMENT"
+  | "ANNUAL_REPORT"
+  | "RTI_DISCLOSURE"
   | "CIRCULAR"
   | "GOVERNMENT_NOTICE"
   | "GAZETTE"
@@ -19,6 +26,7 @@ export interface LibraryResource {
   title: string;
   type: LibraryResourceType;
   category: string | null;
+  isRepealed: boolean;
   actName: string | null;
   section: string | null;
   chapter: string | null;
