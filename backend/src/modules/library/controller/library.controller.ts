@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import path from "path";
+import { z } from "zod";
 import { libraryService } from "../service/library.service";
 import {
   createLibraryResourceSchema,
@@ -18,7 +19,11 @@ export const libraryController = {
       throw AppError.badRequest("courseId is required");
     }
     const studentId = req.auth.accountType === "STUDENT" ? req.auth.userId : null;
-    const result = await libraryService.list(query, studentId);
+    const isInstitutionStaff = req.auth.accountType === "LAW_FIRM_ADMIN" || req.auth.accountType === "LAWYER" || req.auth.accountType === "STAFF";
+    const result = await libraryService.list(query, studentId, {
+      studentLawFirmId: req.auth.accountType === "STUDENT" ? req.auth.lawFirmId : undefined,
+      forLawFirmId: isInstitutionStaff && query.courseId ? req.auth.lawFirmId ?? undefined : undefined,
+    });
     res.status(200).json({ success: true, data: result });
   },
 
@@ -39,6 +44,20 @@ export const libraryController = {
     const fileUrl = req.file ? path.join("library", req.file.filename) : undefined;
     const result = await libraryService.create(input, req.auth.userId, fileUrl, req.file?.path);
     res.status(201).json({ success: true, message: "Resource published successfully", data: result });
+  },
+
+  async createInstitutionResource(req: Request, res: Response) {
+    if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
+    const input = z
+      .object({
+        title: z.string().min(2, "Title is required"),
+        subjectId: z.string().uuid("Subject is required"),
+        content: z.string().min(1, "Content is required"),
+        isFreeDemo: z.coerce.boolean().default(false),
+      })
+      .parse(req.body);
+    const result = await libraryService.createInstitutionResource(input, req.auth.userId, req.auth.lawFirmId);
+    res.status(201).json({ success: true, message: "Resource published to your students", data: result });
   },
 
   async update(req: Request, res: Response) {

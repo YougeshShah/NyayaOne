@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Alert, Box, Button, Paper, TextField, Typography, Link as MuiLink } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { Alert, Box, Button, MenuItem, Paper, TextField, Typography, Link as MuiLink } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useRegister } from "../../hooks/useAuth";
 import { RegisterPayload } from "../../types/auth.types";
+import { publicCourseApi } from "../../api/publicCourse.api";
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const registerMutation = useRegister();
   const [success, setSuccess] = useState(false);
   const { register, handleSubmit, formState } = useForm<RegisterPayload>();
+  const { data: courses } = useQuery({ queryKey: ["public-courses"], queryFn: () => publicCourseApi.list() });
 
   const onSubmit = (values: RegisterPayload) => {
     registerMutation.mutate(values, {
@@ -57,6 +60,18 @@ export function RegisterPage() {
             <TextField label="Full Name" required fullWidth {...register("fullName", { required: true })} error={!!formState.errors.fullName} />
             <TextField label="Email" type="email" required fullWidth {...register("email", { required: true })} error={!!formState.errors.email} />
             <TextField label="Phone (optional)" fullWidth {...register("phone")} />
+
+            {courses && courses.length > 0 && (
+              <TextField select label="What are you preparing for? (optional)" fullWidth defaultValue="" {...register("interestedCourseId")}>
+                <MenuItem value="">Not sure yet — I'll browse</MenuItem>
+                {courses.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+
             <TextField
               label="Password"
               type="password"

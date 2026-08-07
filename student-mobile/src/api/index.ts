@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import { AuthUser, Course, CourseSubscription, McqQuestion, Subject } from "../types";
+import { AuthUser, Course, CourseSubscription, McqQuestion, Subject, MockTest, LiveClass, LibraryResource, Bookmark, ChatMessage } from "../types";
 
 interface ApiSuccess<T> {
   success: true;
@@ -48,6 +48,77 @@ export const mcqApi = {
       `/mcq/${id}/check-answer`,
       { selectedOption }
     );
+    return data.data;
+  },
+};
+
+export const mockTestApi = {
+  async list(courseId: string): Promise<MockTest[]> {
+    const { data } = await apiClient.get<ApiSuccess<MockTest[]>>("/mock-tests", { params: { courseId } });
+    return data.data;
+  },
+  async getById(id: string) {
+    const { data } = await apiClient.get<ApiSuccess<any>>(`/mock-tests/${id}`);
+    return data.data;
+  },
+  async start(mockTestId: string) {
+    const { data } = await apiClient.post<ApiSuccess<{ attemptId: string; totalQuestions: number; durationMinutes: number }>>(
+      `/mock-tests/${mockTestId}/start`
+    );
+    return data.data;
+  },
+  async submit(attemptId: string, answers: { questionId: string; selectedOption: string | null }[]) {
+    const { data } = await apiClient.post<ApiSuccess<{ score: number; totalQuestions: number; percentage: number }>>(
+      `/mock-tests/attempts/${attemptId}/submit`,
+      { answers }
+    );
+    return data.data;
+  },
+};
+
+export const liveClassApi = {
+  async list(courseId: string): Promise<LiveClass[]> {
+    const { data } = await apiClient.get<ApiSuccess<LiveClass[]>>("/live-classes", { params: { courseId, upcomingOnly: true } });
+    return data.data;
+  },
+  async join(id: string) {
+    const { data } = await apiClient.post<ApiSuccess<{ meetingUrl: string }>>(`/live-classes/${id}/join`);
+    return data.data;
+  },
+};
+
+export const libraryApi = {
+  async list(courseId: string): Promise<{ items: LibraryResource[] }> {
+    const { data } = await apiClient.get<ApiSuccess<{ items: LibraryResource[] }>>("/library", { params: { courseId } });
+    return data.data;
+  },
+};
+
+export const bookmarkApi = {
+  async list(): Promise<Bookmark[]> {
+    const { data } = await apiClient.get<ApiSuccess<Bookmark[]>>("/bookmarks");
+    return data.data;
+  },
+  async toggle(resourceType: "LIBRARY" | "MCQ", resourceId: string) {
+    const { data } = await apiClient.post<ApiSuccess<{ bookmarked: boolean }>>("/bookmarks/toggle", { resourceType, resourceId });
+    return data.data;
+  },
+};
+
+export const chatbotApi = {
+  async sendMessage(message: string, history: ChatMessage[], courseId?: string): Promise<string> {
+    const { data } = await apiClient.post<ApiSuccess<{ reply: string }>>("/chatbot/message", { message, history, courseId });
+    return data.data.reply;
+  },
+};
+
+export const profileApi = {
+  async update(payload: { fullName?: string; phone?: string }): Promise<AuthUser> {
+    const { data } = await apiClient.patch<ApiSuccess<AuthUser>>("/auth/me", payload);
+    return data.data;
+  },
+  async changePassword(currentPassword: string, newPassword: string) {
+    const { data } = await apiClient.patch<ApiSuccess<{ message: string }>>("/auth/change-password", { currentPassword, newPassword });
     return data.data;
   },
 };

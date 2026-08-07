@@ -51,7 +51,7 @@ export const authRepository = {
 
 // Phase 2 — students go straight to ACTIVE (no approval workflow), and
   // have no lawFirmId since they're not tied to any firm.
-  createStudent(params: { fullName: string; email: string; phone?: string; passwordHash: string; addedByLawFirmId?: string }) {
+  createStudent(params: { fullName: string; email: string; phone?: string; passwordHash: string; addedByLawFirmId?: string; preferredCourseId?: string }) {
     return prisma.user.create({
       data: {
         accountType: AccountType.STUDENT,
@@ -61,6 +61,7 @@ export const authRepository = {
         passwordHash: params.passwordHash,
         status: "ACTIVE",
         lawFirmId: params.addedByLawFirmId ?? null,
+        preferredCourseId: params.preferredCourseId,
       },
     });
   },

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useMcqList, useCheckAnswer } from "../../src/hooks";
+import { useMcqList, useCheckAnswer, useBookmarks, useToggleBookmark } from "../../src/hooks";
 
 type OptionKey = "A" | "B" | "C" | "D";
 
@@ -10,6 +10,8 @@ export default function PracticeScreen() {
   const { courseId, subjectId } = useLocalSearchParams<{ courseId: string; subjectId?: string }>();
   const { data: questions, isLoading } = useMcqList(courseId, subjectId);
   const checkAnswer = useCheckAnswer();
+  const { data: bookmarks } = useBookmarks();
+  const toggleBookmark = useToggleBookmark();
 
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<OptionKey | null>(null);
@@ -79,7 +81,19 @@ export default function PracticeScreen() {
         {index + 1} / {list.length}
       </Text>
       <View style={styles.card}>
-        <Text style={styles.questionText}>{question.question}</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <Text style={[styles.questionText, { flex: 1 }]}>{question.question}</Text>
+          <TouchableOpacity
+            onPress={() => toggleBookmark.mutate({ resourceType: "MCQ", resourceId: question.id })}
+            style={{ marginLeft: 8 }}
+          >
+            <Ionicons
+              name={bookmarks?.some((b) => b.resourceId === question.id) ? "bookmark" : "bookmark-outline"}
+              size={22}
+              color="#2563EB"
+            />
+          </TouchableOpacity>
+        </View>
         {options.map((opt) => {
           const isSelected = selected === opt.key;
           const isCorrectOpt = feedback && opt.key === feedback.correctOption;

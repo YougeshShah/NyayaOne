@@ -10,6 +10,13 @@ const grantSubscriptionSchema = z.object({
 });
 
 export const courseController = {
+  async listPublic(req: Request, res: Response) {
+    const result = await courseService.list(true);
+    // Strip anything not needed pre-signup — just enough for a picker.
+    const minimal = result.map((c: any) => ({ id: c.id, name: c.name, category: c.category }));
+    res.status(200).json({ success: true, data: minimal });
+  },
+
   async list(req: Request, res: Response) {
     const activeOnly = req.auth?.accountType !== "COMPANY"; // Company sees inactive courses too, for management
     const result = await courseService.list(activeOnly);

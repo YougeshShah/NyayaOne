@@ -26,4 +26,10 @@ router.post("/", authenticate, authorize("COMPANY"), requirePermission("library.
 router.patch("/:id", authenticate, authorize("COMPANY"), requirePermission("library.manage"), uploadMiddleware, libraryController.update);
 router.delete("/:id", authenticate, authorize("COMPANY"), requirePermission("library.manage"), libraryController.remove);
 
+// Institution's own staff — a simpler, text-only path (no PDF upload) so
+// an institute can publish their own notes/materials without needing
+// TrailBlaze's document-management tooling. Scoped to their own tenant
+// automatically (see controller).
+router.post("/institution", authenticate, authorize("LAW_FIRM_ADMIN"), libraryController.createInstitutionResource);
+
 export default router;

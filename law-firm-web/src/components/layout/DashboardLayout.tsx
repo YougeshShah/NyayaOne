@@ -34,6 +34,7 @@ export function DashboardLayout() {
     { to: "/roles", label: "Roles & Permissions", icon: <BadgeIcon fontSize="small" />, module: null },
     { to: "/students", label: "Students", icon: <BadgeIcon fontSize="small" />, module: "student_platform" },
     { to: "/live-classes", label: "Live Classes", icon: <BadgeIcon fontSize="small" />, module: "live_classes" },
+    { to: "/resources", label: "Resources", icon: <BadgeIcon fontSize="small" />, module: "student_platform" },
     ...(user?.accountType === "LAW_FIRM_ADMIN"
       ? [{ to: "/users", label: t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" />, module: "case_management" }]
       : []),

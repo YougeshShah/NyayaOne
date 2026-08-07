@@ -16,7 +16,11 @@ export const mcqController = {
     if (studentId && !query.courseId) {
       throw AppError.badRequest("courseId is required");
     }
-    const result = await mcqService.list(query, studentId);
+    const isInstitutionStaff = req.auth.accountType === "LAW_FIRM_ADMIN" || req.auth.accountType === "LAWYER" || req.auth.accountType === "STAFF";
+    const result = await mcqService.list(query, studentId, {
+      studentLawFirmId: studentId ? req.auth.lawFirmId : undefined,
+      forLawFirmId: isInstitutionStaff && query.courseId ? req.auth.lawFirmId ?? undefined : undefined,
+    });
     res.status(200).json({ success: true, data: result });
   },
 
@@ -44,6 +48,26 @@ export const mcqController = {
     if (!req.auth) throw AppError.unauthorized();
     const input = createMcqSchema.parse(req.body);
     const result = await mcqService.create(input, req.auth.userId);
+    res.status(201).json({ success: true, data: result });
+  },
+
+  async createInstitution(req: Request, res: Response) {
+    if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
+    const input = z
+      .object({
+        question: z.string().min(3),
+        optionA: z.string().min(1),
+        optionB: z.string().min(1),
+        optionC: z.string().min(1),
+        optionD: z.string().min(1),
+        correctOption: z.enum(["A", "B", "C", "D"]),
+        explanation: z.string().optional(),
+        subjectId: z.string().uuid(),
+        courseId: z.string().uuid(),
+        isFreeDemo: z.coerce.boolean().default(false),
+      })
+      .parse(req.body);
+    const result = await mcqService.createInstitution(input, req.auth.userId, req.auth.lawFirmId);
     res.status(201).json({ success: true, data: result });
   },
 

@@ -19,6 +19,7 @@ import TimerIcon from "@mui/icons-material/TimerOutlined";
 import LockIcon from "@mui/icons-material/LockOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircleOutline";
 import VideocamIcon from "@mui/icons-material/VideocamOutlined";
+import MenuBookIconOutlined from "@mui/icons-material/MenuBookOutlined";
 import { useCourse, useSubjects, useMockTests, useMySubscriptions } from "../../hooks/useCourse";
 import { useLiveClasses, usePastLiveClasses, useJoinLiveClass } from "../../hooks/useLiveClass";
 import { SubscribeDialog } from "../../components/common/SubscribeDialog";
@@ -73,13 +74,18 @@ export function CourseDetailPage() {
             </Typography>
           )}
         </Box>
-        {isSubscribed ? (
-          <Chip icon={<CheckCircleIcon />} label="Subscribed" color="success" />
-        ) : (
-          <Button variant="contained" color="secondary" onClick={() => setSubscribeOpen(true)}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Button variant="outlined" startIcon={<MenuBookIconOutlined />} onClick={() => navigate(`/courses/${courseId}/library`)}>
+            Library
+          </Button>
+          {isSubscribed ? (
+            <Chip icon={<CheckCircleIcon />} label="Subscribed" color="success" />
+          ) : (
+            <Button variant="contained" color="secondary" onClick={() => setSubscribeOpen(true)}>
             Subscribe to Unlock Everything
           </Button>
         )}
+      </Box>
       </Box>
 
       {!isSubscribed && (

@@ -7,6 +7,8 @@ export const mcqRepository = {
     subjectId?: string;
     examType?: ExamType;
     difficulty?: Difficulty;
+    studentLawFirmId?: string | null;
+    forLawFirmId?: string;
     skip: number;
     take: number;
   }) {
@@ -15,6 +17,11 @@ export const mcqRepository = {
       ...(params.subjectId ? { subjectId: params.subjectId } : {}),
       ...(params.examType ? { examType: params.examType } : {}),
       ...(params.difficulty ? { difficulty: params.difficulty } : {}),
+      ...(params.forLawFirmId
+        ? { hostLawFirmId: params.forLawFirmId } // Institution staff view — only their own questions
+        : params.studentLawFirmId !== undefined
+        ? { OR: [{ hostLawFirmId: null }, { hostLawFirmId: params.studentLawFirmId }] } // Student view
+        : {}),
     };
 
     const [items, total] = await Promise.all([

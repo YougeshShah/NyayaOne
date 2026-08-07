@@ -9,6 +9,8 @@ export const libraryRepository = {
     search?: string;
     courseId?: string;
     subjectId?: string;
+    studentLawFirmId?: string | null;
+    forLawFirmId?: string;
     skip: number;
     take: number;
   }) {
@@ -18,6 +20,11 @@ export const libraryRepository = {
       ...(params.isRepealed !== undefined ? { isRepealed: params.isRepealed } : {}),
       ...(params.subjectId ? { subjectId: params.subjectId } : {}),
       ...(params.courseId ? { subject: { courseId: params.courseId } } : {}),
+      ...(params.forLawFirmId
+        ? { hostLawFirmId: params.forLawFirmId } // Institution staff view — only their own uploads
+        : params.studentLawFirmId !== undefined && params.courseId
+        ? { OR: [{ hostLawFirmId: null }, { hostLawFirmId: params.studentLawFirmId }] } // Student view — platform-wide + own institution's
+        : {}),
       ...(params.search
         ? {
             OR: [

@@ -17,6 +17,7 @@ export const registerStudentSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(7).optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  interestedCourseId: z.string().uuid().optional(), // "what are you preparing for?" — used only to personalize the dashboard on first login
 });
 export type RegisterStudentInput = z.infer<typeof registerStudentSchema>;
 

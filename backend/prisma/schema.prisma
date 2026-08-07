@@ -198,6 +198,8 @@ model LawFirm {
   subscription    FirmSubscription?
   roles           Role[] // this tenant's own custom staff roles
   hostedLiveClasses LiveClass[] // classes this institution's own staff scheduled
+  hostedLibraryResources LibraryResource[] // resources this institution's own staff uploaded
+  hostedMcqQuestions McqQuestion[] // MCQs this institution's own staff wrote
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -227,6 +229,11 @@ model User {
   // RBAC — used mainly for COMPANY accounts with custom roles.
   role          Role?        @relation(fields: [roleId], references: [id])
   roleId        String?
+
+  // Student-only — captured at registration ("what are you preparing
+  // for?"), used purely to personalize the dashboard on first login.
+  // Nullable and unenforced — never gates access to any course.
+  preferredCourseId String?
 
   // Lawyer-specific professional details
   barRegistrationNo String?
@@ -484,6 +491,11 @@ model LibraryResource {
   examType    ExamType?
   difficulty  Difficulty?
   isFreeDemo  Boolean             @default(false) // accessible without a course subscription
+  // Null = published by TrailBlaze (Company), visible to all subscribers of
+  // the linked course. Set = uploaded by a specific institution's own
+  // staff — only that institution's own students can see it.
+  hostLawFirmId String?
+  hostLawFirm    LawFirm?         @relation(fields: [hostLawFirmId], references: [id])
 
   publishedBy String // User id of company content manager
   createdAt   DateTime            @default(now())
@@ -691,6 +703,12 @@ model McqQuestion {
   createdBy String // Company user id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Null = published by TrailBlaze (Company), visible to all subscribers.
+  // Set = written by a specific institution's own staff — only that
+  // institution's own students see it, even for the same course.
+  hostLawFirmId String?
+  hostLawFirm   LawFirm? @relation(fields: [hostLawFirmId], references: [id])
 
   mockTestQuestions MockTestQuestion[]
   testAnswers       TestAnswer[]

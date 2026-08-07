@@ -28,7 +28,7 @@ async function extractPdfText(absoluteFilePath: string): Promise<string | undefi
 }
 
 export const libraryService = {
-  async list(query: ListLibraryResourcesQuery, studentId: string | null = null) {
+  async list(query: ListLibraryResourcesQuery, studentId: string | null = null, opts: { studentLawFirmId?: string | null; forLawFirmId?: string } = {}) {
     const skip = (query.page - 1) * query.limit;
     const { items, total } = await libraryRepository.findMany({
       type: query.type,
@@ -37,6 +37,8 @@ export const libraryService = {
       search: query.search,
       courseId: query.courseId,
       subjectId: query.subjectId,
+      studentLawFirmId: opts.studentLawFirmId,
+      forLawFirmId: opts.forLawFirmId,
       skip,
       take: query.limit,
     });
@@ -77,6 +79,22 @@ export const libraryService = {
       publishedBy,
       content: input.content || extractedText,
     });
+  },
+
+  async createInstitutionResource(
+    input: { title: string; subjectId: string; content: string; isFreeDemo: boolean },
+    publishedBy: string,
+    hostLawFirmId: string
+  ) {
+    return libraryRepository.create({
+      title: input.title,
+      type: "NOTE",
+      subjectId: input.subjectId,
+      content: input.content,
+      isFreeDemo: input.isFreeDemo,
+      publishedBy,
+      hostLawFirmId,
+    } as any);
   },
 
   async update(id: string, input: UpdateLibraryResourceInput, fileUrl?: string, absoluteFilePath?: string) {

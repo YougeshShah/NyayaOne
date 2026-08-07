@@ -5,6 +5,10 @@ import { authorize } from "../../../common/middleware/authorize";
 
 const router = Router();
 
+// Public — no login required. Lets the registration page show a "what are
+// you preparing for?" course picker before an account even exists.
+router.get("/public", courseController.listPublic);
+
 router.use(authenticate);
 
 router.get("/", courseController.list);

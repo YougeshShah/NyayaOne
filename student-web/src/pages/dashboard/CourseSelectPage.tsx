@@ -7,6 +7,7 @@ import QuizIcon from "@mui/icons-material/QuizOutlined";
 import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useCourses, useMySubscriptions } from "../../hooks/useCourse";
+import { useAuthStore } from "../../store/authStore";
 
 const categoryLabel: Record<string, string> = {
   LAW: "Law",
@@ -18,10 +19,19 @@ export function CourseSelectPage() {
   const navigate = useNavigate();
   const { data: courses, isLoading } = useCourses();
   const { data: subscriptions } = useMySubscriptions();
+  const preferredCourseId = useAuthStore((s) => s.user?.preferredCourseId);
 
   const subscribedCourseIds = new Set(
     (subscriptions ?? []).filter((s) => s.status === "ACTIVE" || s.status === "TRIAL").map((s) => s.courseId)
   );
+
+  // The course they said they were preparing for at signup surfaces first
+  // — everything else stays fully browsable underneath, never hidden.
+  const sortedCourses = [...(courses ?? [])].sort((a, b) => {
+    if (a.id === preferredCourseId) return -1;
+    if (b.id === preferredCourseId) return 1;
+    return 0;
+  });
 
   if (isLoading) {
     return (
@@ -41,14 +51,32 @@ export function CourseSelectPage() {
       </Typography>
 
       <Grid container spacing={3}>
-        {courses?.map((course) => {
+        {sortedCourses.map((course) => {
           const isSubscribed = subscribedCourseIds.has(course.id);
+          const isRecommended = course.id === preferredCourseId;
           const subjectCount = course._count?.subjects ?? 0;
           const questionCount = course._count?.mcqQuestions ?? 0;
 
           return (
             <Grid item xs={12} sm={6} md={4} key={course.id}>
-              <Card elevation={0} sx={{ border: "1px solid #E5E7EB", height: "100%", display: "flex", flexDirection: "column" }}>
+              <Card
+                elevation={0}
+                sx={{
+                  border: isRecommended ? "2px solid #2563EB" : "1px solid #E5E7EB",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                }}
+              >
+                {isRecommended && (
+                  <Chip
+                    label="Recommended for you"
+                    color="primary"
+                    size="small"
+                    sx={{ position: "absolute", top: -12, left: 16, fontWeight: 700, zIndex: 1 }}
+                  />
+                )}
                 <CardActionArea onClick={() => navigate(`/courses/${course.id}`)} sx={{ flexGrow: 1, p: 1 }}>
                   <CardContent>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>

@@ -5,6 +5,7 @@ export interface AuthUser {
   phone?: string | null;
   avatarUrl?: string | null;
   accountType: "STUDENT";
+  preferredCourseId?: string | null;
 }
 
 export interface RegisterPayload {
@@ -12,6 +13,7 @@ export interface RegisterPayload {
   email: string;
   phone?: string;
   password: string;
+  interestedCourseId?: string;
 }
 
 export interface LoginPayload {

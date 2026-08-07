@@ -18,4 +18,8 @@ router.post("/", authorize("COMPANY"), mcqController.create);
 router.patch("/:id", authorize("COMPANY"), mcqController.update);
 router.delete("/:id", authorize("COMPANY"), mcqController.remove);
 
+// Institution's own staff — write their own questions, visible only to
+// their own students.
+router.post("/institution", authorize("LAW_FIRM_ADMIN"), mcqController.createInstitution);
+
 export default router;

@@ -12,13 +12,15 @@ function stripAnswerFields<T extends { correctOption?: unknown; explanation?: un
 }
 
 export const mcqService = {
-  async list(query: ListMcqQuery, studentId: string | null) {
+  async list(query: ListMcqQuery, studentId: string | null, opts: { studentLawFirmId?: string | null; forLawFirmId?: string } = {}) {
     const skip = (query.page - 1) * query.limit;
     const { items, total } = await mcqRepository.findMany({
       courseId: query.courseId,
       subjectId: query.subjectId,
       examType: query.examType as any,
       difficulty: query.difficulty as any,
+      studentLawFirmId: opts.studentLawFirmId,
+      forLawFirmId: opts.forLawFirmId,
       skip,
       take: query.limit,
     });
@@ -84,6 +86,39 @@ export const mcqService = {
       subject: { connect: { id: input.subjectId } },
       course: { connect: { id: input.courseId } },
       createdBy,
+    } as any);
+  },
+
+  async createInstitution(
+    input: {
+      question: string;
+      optionA: string;
+      optionB: string;
+      optionC: string;
+      optionD: string;
+      correctOption: "A" | "B" | "C" | "D";
+      explanation?: string;
+      subjectId: string;
+      courseId: string;
+      isFreeDemo: boolean;
+    },
+    createdBy: string,
+    hostLawFirmId: string
+  ) {
+    return mcqRepository.create({
+      question: input.question,
+      optionA: input.optionA,
+      optionB: input.optionB,
+      optionC: input.optionC,
+      optionD: input.optionD,
+      correctOption: input.correctOption,
+      explanation: input.explanation,
+      difficulty: "MEDIUM",
+      isFreeDemo: input.isFreeDemo,
+      subject: { connect: { id: input.subjectId } },
+      course: { connect: { id: input.courseId } },
+      createdBy,
+      hostLawFirm: { connect: { id: hostLawFirmId } },
     } as any);
   },
 

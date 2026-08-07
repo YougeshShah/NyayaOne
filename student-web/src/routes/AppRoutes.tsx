@@ -10,6 +10,7 @@ import { MyProgressPage } from "../pages/progress/MyProgressPage";
 import { BookmarksPage } from "../pages/bookmarks/BookmarksPage";
 import { EsewaCallbackPage } from "../pages/payment/EsewaCallbackPage";
 import { KhaltiCallbackPage } from "../pages/payment/KhaltiCallbackPage";
+import { LibraryPage } from "../pages/library/LibraryPage";
 import { DashboardLayout } from "../components/common/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
@@ -25,6 +26,7 @@ export function AppRoutes() {
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/courses/:courseId/practice" element={<McqPracticePage />} />
           <Route path="/courses/:courseId/mock-test/:mockTestId" element={<SectionedTestTakePage />} />
+          <Route path="/courses/:courseId/library" element={<LibraryPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/progress" element={<MyProgressPage />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />

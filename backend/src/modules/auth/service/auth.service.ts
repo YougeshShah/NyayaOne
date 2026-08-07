@@ -53,6 +53,7 @@ export const authService = {
       phone: input.phone,
       passwordHash,
       addedByLawFirmId,
+      preferredCourseId: input.interestedCourseId,
     });
 
     return {
@@ -115,6 +116,7 @@ export const authService = {
           user.role && user.role.name !== "Super Admin"
             ? user.role.permissions.map((rp: any) => rp.permission.key)
             : null,
+        preferredCourseId: user.preferredCourseId ?? null,
       },
     };
   },

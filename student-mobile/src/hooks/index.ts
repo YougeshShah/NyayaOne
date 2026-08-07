@@ -1,6 +1,7 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { authApi, courseApi, subjectApi, mcqApi } from "../api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authApi, courseApi, subjectApi, mcqApi, mockTestApi, liveClassApi, libraryApi, bookmarkApi, chatbotApi, profileApi } from "../api";
 import { useAuthStore } from "../store/authStore";
+import { ChatMessage } from "../types";
 
 export function useLogin() {
   const setSession = useAuthStore((s) => s.setSession);
@@ -33,5 +34,71 @@ export function useMcqList(courseId: string, subjectId?: string) {
 export function useCheckAnswer() {
   return useMutation({
     mutationFn: ({ id, selectedOption }: { id: string; selectedOption: "A" | "B" | "C" | "D" }) => mcqApi.checkAnswer(id, selectedOption),
+  });
+}
+
+export function useMockTests(courseId: string) {
+  return useQuery({ queryKey: ["mock-tests", courseId], queryFn: () => mockTestApi.list(courseId), enabled: !!courseId });
+}
+
+export function useMockTestDetail(id: string) {
+  return useQuery({ queryKey: ["mock-test", id], queryFn: () => mockTestApi.getById(id), enabled: !!id });
+}
+
+export function useStartAttempt() {
+  return useMutation({ mutationFn: (mockTestId: string) => mockTestApi.start(mockTestId) });
+}
+
+export function useSubmitAttempt() {
+  return useMutation({
+    mutationFn: ({ attemptId, answers }: { attemptId: string; answers: { questionId: string; selectedOption: string | null }[] }) =>
+      mockTestApi.submit(attemptId, answers),
+  });
+}
+
+export function useLiveClasses(courseId: string) {
+  return useQuery({ queryKey: ["live-classes", courseId], queryFn: () => liveClassApi.list(courseId), enabled: !!courseId });
+}
+
+export function useJoinLiveClass() {
+  return useMutation({ mutationFn: (id: string) => liveClassApi.join(id) });
+}
+
+export function useLibrary(courseId: string) {
+  return useQuery({ queryKey: ["library", courseId], queryFn: () => libraryApi.list(courseId), enabled: !!courseId });
+}
+
+export function useBookmarks() {
+  return useQuery({ queryKey: ["bookmarks"], queryFn: () => bookmarkApi.list() });
+}
+
+export function useToggleBookmark() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ resourceType, resourceId }: { resourceType: "LIBRARY" | "MCQ"; resourceId: string }) =>
+      bookmarkApi.toggle(resourceType, resourceId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["bookmarks"] }),
+  });
+}
+
+export function useSendChatMessage() {
+  return useMutation({
+    mutationFn: ({ message, history, courseId }: { message: string; history: ChatMessage[]; courseId?: string }) =>
+      chatbotApi.sendMessage(message, history, courseId),
+  });
+}
+
+export function useUpdateProfile() {
+  const updateUser = useAuthStore((s) => s.updateUser);
+  return useMutation({
+    mutationFn: (payload: { fullName?: string; phone?: string }) => profileApi.update(payload),
+    onSuccess: (data) => updateUser(data),
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      profileApi.changePassword(currentPassword, newPassword),
   });
 }
