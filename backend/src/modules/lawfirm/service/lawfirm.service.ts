@@ -18,6 +18,8 @@ export const lawFirmService = {
       adminEmail: input.adminEmail,
       adminPhone: input.adminPhone,
       passwordHash,
+      tenantType: input.tenantType as any,
+      modulesEnabled: input.modulesEnabled,
     });
 
     await lawFirmRepository.createAuditLog({

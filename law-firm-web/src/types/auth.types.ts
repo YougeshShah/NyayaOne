@@ -9,6 +9,7 @@ export interface AuthUser {
   accountType: AccountType;
   lawFirmId: string | null;
   lawFirmStatus: string | null;
+  modulesEnabled?: string[] | null;
 }
 
 export interface LoginPayload {

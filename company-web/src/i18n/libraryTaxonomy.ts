@@ -26,6 +26,9 @@ export const LIBRARY_TYPE_LABELS: Record<LibraryResourceType, { en: string; ne: 
   JOURNAL: { en: "Journal", ne: "जर्नल" },
   TEMPLATE: { en: "Template", ne: "टेम्प्लेट" },
   LEGAL_FORM: { en: "Legal Form", ne: "कानुनी फाराम" },
+  NOTE: { en: "Note", ne: "नोट" },
+  CASE_SUMMARY: { en: "Case Summary", ne: "मुद्दा सारांश" },
+  BOOK: { en: "Book", ne: "पुस्तक" },
 };
 
 export function getLibraryTypeLabel(type: LibraryResourceType, lang: Language): string {
@@ -68,6 +71,11 @@ export const LIBRARY_TYPE_GROUPS: { key: string; label: { en: string; ne: string
       "TEMPLATE",
       "LEGAL_FORM",
     ],
+  },
+  {
+    key: "student_content",
+    label: { en: "Student Learning Content", ne: "विद्यार्थी अध्ययन सामग्री" },
+    types: ["NOTE", "CASE_SUMMARY", "BOOK"],
   },
 ];
 

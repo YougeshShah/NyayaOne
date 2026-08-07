@@ -101,6 +101,18 @@ export const translations = {
     success: "Success",
     caseCreated: "Case created successfully.",
     hearingScheduled: "Hearing scheduled — reminders will be sent automatically.",
+
+    // Edit Profile
+    fullName: "Full Name",
+    emailCannotBeChanged: "Email (cannot be changed)",
+    saveChanges: "Save Changes",
+    saving: "Saving...",
+    missingName: "Missing name",
+    missingNameMsg: "Full name cannot be empty.",
+    saved: "Saved",
+    profileUpdated: "Profile updated successfully.",
+    couldNotUpdateProfile: "Could not update profile.",
+    error: "Error",
   },
   ne: {
 
@@ -205,6 +217,18 @@ export const translations = {
     success: "सफल भयो",
     caseCreated: "मुद्दा सफलतापूर्वक सिर्जना भयो।",
     hearingScheduled: "सुनुवाइ तालिका बनाइयो — रिमाइन्डरहरू स्वचालित रूपमा पठाइनेछ।",
+
+    // Edit Profile
+    fullName: "पूरा नाम",
+    emailCannotBeChanged: "इमेल (परिवर्तन गर्न मिल्दैन)",
+    saveChanges: "परिवर्तनहरू सुरक्षित गर्नुहोस्",
+    saving: "सुरक्षित हुँदैछ...",
+    missingName: "नाम छुटेको",
+    missingNameMsg: "पूरा नाम खाली हुन सक्दैन।",
+    saved: "सुरक्षित भयो",
+    profileUpdated: "प्रोफाइल सफलतापूर्वक अपडेट भयो।",
+    couldNotUpdateProfile: "प्रोफाइल अपडेट गर्न सकिएन।",
+    error: "त्रुटि",
   },
 };
 

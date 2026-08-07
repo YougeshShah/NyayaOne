@@ -1,5 +1,5 @@
 import { prisma } from "../../../database/prisma";
-import { LawFirmStatus, Prisma, AccountType } from "@prisma/client";
+import { LawFirmStatus, Prisma, AccountType, TenantType } from "@prisma/client";
 
 type AuditMetadata = Record<string, unknown>;
 
@@ -84,10 +84,18 @@ export const lawFirmRepository = {
     adminEmail: string;
     adminPhone?: string;
     passwordHash: string;
+    tenantType: TenantType;
+    modulesEnabled: string[];
   }) {
     return prisma.$transaction(async (tx) => {
       const lawFirm = await tx.lawFirm.create({
-        data: { name: params.lawFirmName, email: params.lawFirmEmail, status: "ACTIVE" },
+        data: {
+          name: params.lawFirmName,
+          email: params.lawFirmEmail,
+          status: "ACTIVE",
+          tenantType: params.tenantType,
+          modulesEnabled: params.modulesEnabled,
+        },
       });
 
       const admin = await tx.user.create({

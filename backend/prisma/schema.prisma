@@ -24,6 +24,15 @@ enum AccountType {
   LAWYER
   STAFF // Receptionist, Legal Assistant, Intern
   CLIENT
+  STUDENT // Phase 2 — Student Learning Platform (self-registered, no law firm)
+}
+
+// What kind of business this tenant is — drives which modules make sense
+// for them and how their staff roles/dashboard should be labeled.
+enum TenantType {
+  LAW_FIRM
+  EDUCATION
+  OTHER
 }
 
 enum LawFirmStatus {
@@ -109,21 +118,35 @@ enum LibraryResourceType {
   JOURNAL
   TEMPLATE
   LEGAL_FORM
+  NOTE // Phase 2 — student study notes
+  CASE_SUMMARY // Phase 2 — condensed case summaries for exam prep
+  BOOK // Phase 2 — textbooks/reference books
 }
 
 // ------------------------------------------------------------
 // COMPANY (TrailBlaze Tech) — Platform Owner
 // ------------------------------------------------------------
 
+// Roles come in two kinds, distinguished by lawFirmId:
+//   - lawFirmId = null  → platform-level role (Super Admin, Content Manager, ...)
+//     used by Company staff, managed via /admin/roles (Super Admin only)
+//   - lawFirmId = set   → tenant-scoped custom role, created by that tenant's
+//     own Admin (a Law Firm's "Senior Associate" or an Institute's "Teacher"),
+//     visible and usable ONLY within that tenant
 model Role {
   id          String   @id @default(uuid())
-  name        String   @unique // e.g. "Super Admin", "Library Manager"
+  name        String // e.g. "Super Admin", "Library Manager", or a tenant's own "Teacher"
   description String?
   isSystem    Boolean  @default(false) // true = built-in role, cannot be deleted
+  lawFirmId   String? // null = platform-level Company role; set = this tenant's own role
+  lawFirm     LawFirm? @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
   permissions RolePermission[]
   users       User[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([name, lawFirmId])
+  @@index([lawFirmId])
 }
 
 model Permission {
@@ -149,6 +172,11 @@ model RolePermission {
 // LAW FIRM (Tenant)
 // ------------------------------------------------------------
 
+// Despite the name "LawFirm" (kept as-is to avoid a breaking rename across
+// every module that already references it — User.lawFirmId, Case.lawFirmId,
+// etc.), this is now the generic TENANT record. `tenantType` and
+// `modulesEnabled` are what make it usable for a Law Firm, an Education
+// company, or any future client type without a schema rename.
 model LawFirm {
   id              String        @id @default(uuid())
   name            String
@@ -160,16 +188,21 @@ model LawFirm {
   approvedAt      DateTime?
   approvedBy      String? // User id of company staff who approved
 
+  tenantType      TenantType    @default(LAW_FIRM)
+  modulesEnabled  String[]      @default(["case_management"]) // e.g. ["case_management"], ["student_platform", "live_classes"]
+
   users           User[]
   clients         Client[]
   cases           Case[]
   documents       Document[]
   subscription    FirmSubscription?
+  roles           Role[] // this tenant's own custom staff roles
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   @@index([status])
+  @@index([tenantType])
 }
 
 // ------------------------------------------------------------
@@ -210,11 +243,22 @@ model User {
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
 
+  // Phase 2 — Student Learning Platform relations
+  testAttempts       TestAttempt[]         @relation("StudentTestAttempts")
+  bookmarks          Bookmark[]            @relation("StudentBookmarks")
+  studyProgress      StudyProgress[]       @relation("StudentProgress")
+  courseSubscriptions CourseSubscription[] @relation("StudentCourseSubscriptions")
+  liveClassAttendance LiveClassAttendance[] @relation("StudentLiveClassAttendance")
+  writingSubmissions  WritingSubmission[]  @relation("StudentWritingSubmissions")
+  feedbackGiven       Feedback[]           @relation("StudentFeedback")
+  payments            PaymentTransaction[] @relation("StudentPayments")
+
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   @@index([lawFirmId])
   @@index([accountType])
+  @@index([roleId])
 }
 
 model RefreshToken {
@@ -431,6 +475,15 @@ model LibraryResource {
   content     String? // extracted text (from PDF or typed article) — searched for full-text search inside documents
   isDownloadable Boolean          @default(true)
 
+  // Phase 2 — Student Learning Platform filters. Nullable/optional so this
+  // stays a no-op for existing lawyer-facing library resources; only content
+  // tagged for student use populates these.
+  subjectId   String?
+  subject     Subject?            @relation(fields: [subjectId], references: [id])
+  examType    ExamType?
+  difficulty  Difficulty?
+  isFreeDemo  Boolean             @default(false) // accessible without a course subscription
+
   publishedBy String // User id of company content manager
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
@@ -438,6 +491,8 @@ model LibraryResource {
   @@index([type])
   @@index([category])
   @@index([isRepealed])
+  @@index([subjectId])
+  @@index([examType])
 }
 
 // ------------------------------------------------------------
@@ -568,5 +623,380 @@ model FirmSubscription {
   updatedAt  DateTime            @updatedAt
 
   @@index([planId])
+  @@index([status])
+}
+
+// ------------------------------------------------------------
+// PHASE 2 — STUDENT LEARNING PLATFORM
+// ------------------------------------------------------------
+
+enum ExamType {
+  LLB
+  BALLB
+  BAR_COUNCIL // Nepal Bar Council
+  JUDICIAL_SERVICE
+  PUBLIC_SERVICE_COMMISSION
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model Subject {
+  id        String    @id @default(uuid())
+  name      String
+  courseId  String
+  course    Course    @relation(fields: [courseId], references: [id])
+  examType  ExamType? // Law-specific sub-tag only (LLB/BALLB/...) — null for non-Law courses like IELTS
+  createdAt DateTime  @default(now())
+
+  libraryResources LibraryResource[]
+  mcqQuestions     McqQuestion[]
+  mockTests        MockTest[]
+  studyProgress    StudyProgress[]
+  liveClasses      LiveClass[]
+
+  @@unique([name, courseId])
+  @@index([courseId])
+  @@index([examType])
+}
+
+model McqQuestion {
+  id            String     @id @default(uuid())
+  question      String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctOption String // "A" | "B" | "C" | "D"
+  explanation   String?
+
+  subjectId  String
+  subject    Subject    @relation(fields: [subjectId], references: [id])
+  courseId   String // denormalized from subject.courseId — lets us filter/gate by course without an extra join
+  course     Course     @relation(fields: [courseId], references: [id])
+  examType   ExamType? // Law-specific only, null for IELTS/other courses
+  difficulty Difficulty @default(MEDIUM)
+
+  // Free-demo gating — see Course model comment for how this works with CourseSubscription.
+  isFreeDemo Boolean @default(false)
+
+  // IELTS Listening questions play an audio clip before the question is answerable.
+  audioUrl   String?
+  sectionType SectionType? // LISTENING | READING | WRITING | SPEAKING — null for non-IELTS-style courses
+
+  createdBy String // Company user id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mockTestQuestions MockTestQuestion[]
+  testAnswers       TestAnswer[]
+
+  @@index([subjectId])
+  @@index([courseId])
+  @@index([examType])
+  @@index([difficulty])
+}
+
+model MockTest {
+  id              String   @id @default(uuid())
+  title           String
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id])
+  examType        ExamType? // Law-specific only, null for IELTS/other courses
+  subjectId       String?
+  subject         Subject? @relation(fields: [subjectId], references: [id])
+  durationMinutes Int      @default(60)
+  isPublished     Boolean  @default(false)
+  isFreeDemo      Boolean  @default(false)
+
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  questions MockTestQuestion[]
+  attempts  TestAttempt[]
+  sections  TestSection[]
+
+  @@index([courseId])
+  @@index([examType])
+  @@index([isPublished])
+}
+
+model MockTestQuestion {
+  id         String @id @default(uuid())
+  mockTestId String
+  mockTest   MockTest @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+  questionId String
+  question   McqQuestion @relation(fields: [questionId], references: [id])
+  sectionId  String? // set when this test uses IELTS-style sections; null for flat Law-style tests
+  section    TestSection? @relation(fields: [sectionId], references: [id])
+  order      Int
+
+  @@unique([mockTestId, questionId])
+  @@index([mockTestId])
+  @@index([sectionId])
+}
+
+model TestAttempt {
+  id             String    @id @default(uuid())
+  studentId      String // User.id (accountType STUDENT)
+  student        User      @relation("StudentTestAttempts", fields: [studentId], references: [id])
+  mockTestId     String
+  mockTest       MockTest  @relation(fields: [mockTestId], references: [id])
+  startedAt      DateTime  @default(now())
+  submittedAt    DateTime?
+  score          Int?
+  totalQuestions Int
+
+  answers TestAnswer[]
+  writingSubmissions WritingSubmission[]
+
+  @@index([studentId])
+  @@index([mockTestId])
+}
+
+model TestAnswer {
+  id             String      @id @default(uuid())
+  attemptId      String
+  attempt        TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       McqQuestion @relation(fields: [questionId], references: [id])
+  selectedOption String? // "A" | "B" | "C" | "D" | null (unanswered)
+  isCorrect      Boolean?
+
+  @@unique([attemptId, questionId])
+}
+
+model Bookmark {
+  id           String   @id @default(uuid())
+  studentId    String
+  student      User     @relation("StudentBookmarks", fields: [studentId], references: [id])
+  resourceType String // "LIBRARY" | "MCQ"
+  resourceId   String
+  createdAt    DateTime @default(now())
+
+  @@unique([studentId, resourceType, resourceId])
+  @@index([studentId])
+}
+
+model StudyProgress {
+  id               String    @id @default(uuid())
+  studentId        String
+  student          User      @relation("StudentProgress", fields: [studentId], references: [id])
+  subjectId        String
+  subject          Subject   @relation(fields: [subjectId], references: [id])
+  topicsCompleted  Int       @default(0)
+  totalTopics      Int       @default(0)
+  lastStudiedAt    DateTime?
+
+  @@unique([studentId, subjectId])
+  @@index([studentId])
+}
+
+// ------------------------------------------------------------
+// PHASE 2 (EXTENDED) — MULTI-COURSE PLATFORM (Law, IELTS, future courses)
+// ------------------------------------------------------------
+
+enum CourseCategory {
+  LAW
+  LANGUAGE // IELTS, TOEFL, etc.
+  OTHER // future-proofing for whatever comes next
+}
+
+model Course {
+  id          String         @id @default(uuid())
+  name        String // e.g. "Law Exam Preparation", "IELTS Preparation"
+  category    CourseCategory
+  description String?
+  iconUrl     String?
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+
+  subjects      Subject[]
+  liveClasses   LiveClass[]
+  subscriptions CourseSubscription[]
+  mcqQuestions  McqQuestion[]
+  mockTests     MockTest[]
+  paymentTransactions PaymentTransaction[]
+
+  @@index([category])
+}
+
+// A student's access is per-course, not platform-wide — subscribing to
+// IELTS does not unlock Law content and vice versa.
+model CourseSubscription {
+  id        String    @id @default(uuid())
+  studentId String
+  student   User      @relation("StudentCourseSubscriptions", fields: [studentId], references: [id])
+  courseId  String
+  course    Course    @relation(fields: [courseId], references: [id])
+  status    SubscriptionStatus @default(TRIAL)
+  startedAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+}
+
+// ------------------------------------------------------------
+// LIVE CLASSES — Jitsi Meet (free, no per-minute cost)
+// ------------------------------------------------------------
+
+model LiveClass {
+  id              String   @id @default(uuid())
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id])
+  subjectId       String?
+  subject         Subject? @relation(fields: [subjectId], references: [id])
+  title           String
+  description     String?
+  hostId          String // Company user id (the instructor/staff running it)
+  jitsiRoomName   String   @unique // random slug — becomes the Jitsi meeting room name
+  scheduledAt     DateTime
+  durationMinutes Int      @default(60)
+  isFreeDemo      Boolean  @default(false)
+  status          LiveClassStatus @default(SCHEDULED)
+  recordingUrl    String? // uploaded after class ends — subscribed students can watch anytime after
+  createdAt       DateTime @default(now())
+
+  attendees LiveClassAttendance[]
+  feedback  Feedback[]
+
+  @@index([courseId])
+  @@index([scheduledAt])
+}
+
+enum LiveClassStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+model LiveClassAttendance {
+  id          String    @id @default(uuid())
+  liveClassId String
+  liveClass   LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User      @relation("StudentLiveClassAttendance", fields: [studentId], references: [id])
+  joinedAt    DateTime  @default(now())
+
+  @@unique([liveClassId, studentId])
+}
+
+// ------------------------------------------------------------
+// IELTS-STYLE SECTIONED TESTS (Reading/Listening/Writing/Speaking)
+// ------------------------------------------------------------
+
+enum SectionType {
+  MCQ // generic multiple-choice section (used by Law tests too)
+  READING // passage + questions
+  LISTENING // audio + questions
+  WRITING // essay/task prompt, graded manually or later by AI
+  SPEAKING // prompt + live class booking or recorded audio submission
+}
+
+// A MockTest can now be composed of multiple typed sections — this is what
+// makes the same MockTest model work for both a flat Law MCQ test AND a
+// real 4-section IELTS Computer-Delivered-style test.
+model TestSection {
+  id              String      @id @default(uuid())
+  mockTestId      String
+  mockTest        MockTest    @relation(fields: [mockTestId], references: [id], onDelete: Cascade)
+  type            SectionType
+  title           String // e.g. "Listening Section 1", "Reading Passage 2", "Writing Task 1"
+  passageText     String? // for READING
+  audioUrl        String? // for LISTENING
+  writingPrompt   String? // for WRITING
+  minWordCount    Int? // for WRITING (IELTS Task 1 = 150 words, Task 2 = 250 words)
+  timeLimitMinutes Int?
+  order           Int
+
+  mockTestQuestions MockTestQuestion[]
+  writingSubmissions WritingSubmission[]
+
+  @@index([mockTestId])
+}
+
+model WritingSubmission {
+  id          String      @id @default(uuid())
+  sectionId   String
+  section     TestSection @relation(fields: [sectionId], references: [id])
+  attemptId   String
+  attempt     TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User        @relation("StudentWritingSubmissions", fields: [studentId], references: [id])
+  essayText   String
+  wordCount   Int
+  score       Float? // out of 9 (IELTS band score style) — filled in by Company staff review
+  feedback    String? // instructor feedback text
+  reviewedAt  DateTime?
+  submittedAt DateTime    @default(now())
+
+  @@index([attemptId])
+  @@index([studentId])
+}
+
+// ------------------------------------------------------------
+// FEEDBACK — students rate live classes, mock tests, courses
+// ------------------------------------------------------------
+
+enum FeedbackTargetType {
+  LIVE_CLASS
+  MOCK_TEST
+  COURSE
+}
+
+model Feedback {
+  id          String             @id @default(uuid())
+  studentId   String
+  student     User               @relation("StudentFeedback", fields: [studentId], references: [id])
+  targetType  FeedbackTargetType
+  targetId    String
+  liveClassId String? // set only when targetType = LIVE_CLASS, for the relation below
+  liveClass   LiveClass?         @relation(fields: [liveClassId], references: [id])
+  rating      Int // 1-5
+  comment     String?
+  createdAt   DateTime           @default(now())
+
+  @@index([studentId])
+  @@index([targetType, targetId])
+}
+
+// ------------------------------------------------------------
+// PAYMENT — eSewa / Khalti transaction records
+// ------------------------------------------------------------
+
+enum PaymentGateway {
+  ESEWA
+  KHALTI
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model PaymentTransaction {
+  id                String         @id @default(uuid())
+  studentId         String
+  student           User           @relation("StudentPayments", fields: [studentId], references: [id])
+  courseId          String
+  course            Course         @relation(fields: [courseId], references: [id])
+  gateway           PaymentGateway
+  transactionUuid   String         @unique // our own reference — eSewa's transaction_uuid, Khalti's purchase_order_id
+  khaltiPidx        String?        @unique // Khalti-specific payment identifier, set only for Khalti transactions
+  amount            Float
+  status            PaymentStatus  @default(PENDING)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([studentId])
+  @@index([courseId])
   @@index([status])
 }

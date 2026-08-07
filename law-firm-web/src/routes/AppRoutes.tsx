@@ -6,6 +6,8 @@ import { CasesPage } from "../pages/cases/CasesPage";
 import { CaseDetailPage } from "../pages/cases/CaseDetailPage";
 import { HearingsPage } from "../pages/hearings/HearingsPage";
 import { UsersPage } from "../pages/users/UsersPage";
+import { RolesPage } from "../pages/roles/RolesPage";
+import { StudentsPage } from "../pages/students/StudentsPage";
 import { ReportsPage } from "../pages/reports/ReportsPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
 import { ProfilePage } from "../pages/profile/ProfilePage";
@@ -25,6 +27,8 @@ export function AppRoutes() {
           <Route path="/cases/:id" element={<CaseDetailPage />} />
           <Route path="/hearings" element={<HearingsPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/roles" element={<RolesPage />} />
+          <Route path="/students" element={<StudentsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/profile" element={<ProfilePage />} />

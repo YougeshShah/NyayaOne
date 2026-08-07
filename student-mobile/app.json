@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "NyayaOne Learn",
+    "slug": "nyayaone-student",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "nyayaone-student",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trailblazetech.nyayaone.student"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563EB"
+      },
+      "package": "com.trailblazetech.nyayaone.student"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#2563EB"
+        }
+      ],
+      "expo-font",
+      "expo-status-bar"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://192.168.1.102:5000/api/v1",
+      "router": {},
+      "eas": {
+        "projectId": "ddf3454a-3757-4dd5-9618-9a0b0df8f469"
+      }
+    },
+    "owner": "yougeshshah"
+  }
+}

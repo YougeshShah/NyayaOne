@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import path from "path";
 import { authService } from "../service/auth.service";
-import { registerLawFirmSchema, loginSchema, refreshTokenSchema, changePasswordSchema, updateMyProfileSchema } from "../dto/auth.dto";
+import { registerLawFirmSchema, registerStudentSchema, loginSchema, refreshTokenSchema, changePasswordSchema, updateMyProfileSchema } from "../dto/auth.dto";
 import { AppError } from "../../../common/errors/AppError";
 
 export const authController = {
@@ -9,6 +9,27 @@ export const authController = {
     const input = registerLawFirmSchema.parse(req.body);
     const result = await authService.registerLawFirm(input);
     res.status(201).json({ success: true, data: result });
+  },
+
+  async registerStudent(req: Request, res: Response) {
+    const input = registerStudentSchema.parse(req.body);
+    const result = await authService.registerStudent(input);
+    res.status(201).json({ success: true, data: result });
+  },
+
+  // Institution (Education-type tenant) admin adds a student directly —
+  // same underlying account, just tagged with which institution added them.
+  async addInstitutionStudent(req: Request, res: Response) {
+    if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
+    const input = registerStudentSchema.parse(req.body);
+    const result = await authService.registerStudent(input, req.auth.lawFirmId);
+    res.status(201).json({ success: true, data: result });
+  },
+
+  async listInstitutionStudents(req: Request, res: Response) {
+    if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
+    const result = await authService.listInstitutionStudents(req.auth.lawFirmId);
+    res.status(200).json({ success: true, data: result });
   },
 
   async login(req: Request, res: Response) {

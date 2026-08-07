@@ -9,6 +9,8 @@ export interface CreateLawFirmPayload {
   adminEmail: string;
   adminPhone?: string;
   password: string;
+  tenantType: "LAW_FIRM" | "EDUCATION" | "OTHER";
+  modulesEnabled: string[];
 }
 
 export const lawFirmApi = {

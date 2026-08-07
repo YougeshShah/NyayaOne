@@ -4,29 +4,31 @@ import { useRouter } from "expo-router";
 import { useAuthStore } from "../src/store/authStore";
 import { useUpdateProfile } from "../src/hooks/useDomainData";
 import { colors, spacing, radius } from "../src/theme/theme";
+import { useTranslation } from "../src/i18n/LanguageContext";
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const updateProfile = useUpdateProfile();
+  const { t } = useTranslation();
 
   const [fullName, setFullName] = useState(user?.fullName || "");
   const [phone, setPhone] = useState(user?.phone || "");
 
   const handleSave = () => {
     if (!fullName.trim()) {
-      Alert.alert("Missing name", "Full name cannot be empty.");
+      Alert.alert(t("missingName"), t("missingNameMsg"));
       return;
     }
     updateProfile.mutate(
       { fullName, phone: phone || undefined },
       {
         onSuccess: () => {
-          Alert.alert("Saved", "Profile updated successfully.");
+          Alert.alert(t("saved"), t("profileUpdated"));
           router.back();
         },
         onError: (err: any) => {
-          Alert.alert("Error", err?.response?.data?.message || "Could not update profile.");
+          Alert.alert(t("error"), err?.response?.data?.message || t("couldNotUpdateProfile"));
         },
       }
     );
@@ -34,19 +36,19 @@ export default function EditProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.md }}>
-      <Text style={styles.label}>Full Name</Text>
+      <Text style={styles.label}>{t("fullName")}</Text>
       <TextInput style={styles.input} value={fullName} onChangeText={setFullName} placeholderTextColor="#9CA3AF" />
 
-      <Text style={styles.label}>Phone</Text>
+      <Text style={styles.label}>{t("phone")}</Text>
       <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor="#9CA3AF" />
 
-      <Text style={styles.label}>Email (cannot be changed)</Text>
+      <Text style={styles.label}>{t("emailCannotBeChanged")}</Text>
       <View style={[styles.input, styles.disabledInput]}>
         <Text style={{ color: colors.textSecondary }}>{user?.email}</Text>
       </View>
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={updateProfile.isPending}>
-        <Text style={styles.saveButtonText}>{updateProfile.isPending ? "Saving..." : "Save Changes"}</Text>
+        <Text style={styles.saveButtonText}>{updateProfile.isPending ? t("saving") : t("saveChanges")}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

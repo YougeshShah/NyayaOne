@@ -19,7 +19,10 @@ export type LibraryResourceType =
   | "RESEARCH_PAPER"
   | "JOURNAL"
   | "TEMPLATE"
-  | "LEGAL_FORM";
+  | "LEGAL_FORM"
+  | "NOTE"
+  | "CASE_SUMMARY"
+  | "BOOK";
 
 export interface LibraryResource {
   id: string;

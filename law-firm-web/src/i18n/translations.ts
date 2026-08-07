@@ -29,6 +29,31 @@ export const translations = {
     active: "Active",
     noResourcesFound: "No resources found",
     loading: "Loading...",
+
+    // Dashboard
+    currentPlan: "Current Plan",
+    expired: "Expired",
+    dayRemaining: "day(s) remaining",
+    lawyersLabel: "Lawyers",
+    casesLabel: "Cases",
+    noHearingsToday: "No hearings scheduled today.",
+    noUpcomingHearings: "No upcoming hearings.",
+
+    // Cases / Hearings tables
+    caseNo: "Case No.",
+    court: "Court",
+    leadLawyer: "Lead Lawyer",
+    priority: "Priority",
+    newCase: "New Case",
+    newHearing: "New Hearing",
+    casesCount: "cases",
+    hearingsCount: "hearings",
+    date: "Date",
+    time: "Time",
+    judge: "Judge",
+    caseSingular: "Case",
+    dateAndTime: "Date & Time",
+    scheduleNewHearing: "Schedule New Hearing",
   },
   ne: {
     dashboard: "ड्यासबोर्ड",
@@ -60,6 +85,31 @@ export const translations = {
     active: "सक्रिय",
     noResourcesFound: "कुनै स्रोत फेला परेन",
     loading: "लोड हुँदैछ...",
+
+    // Dashboard
+    currentPlan: "हालको योजना",
+    expired: "म्याद सकिएको",
+    dayRemaining: "दिन बाँकी",
+    lawyersLabel: "वकिलहरू",
+    casesLabel: "मुद्दाहरू",
+    noHearingsToday: "आज कुनै सुनुवाइ तालिका छैन।",
+    noUpcomingHearings: "कुनै आगामी सुनुवाइ छैन।",
+
+    // Cases / Hearings tables
+    caseNo: "मुद्दा नं.",
+    court: "अदालत",
+    leadLawyer: "प्रमुख वकिल",
+    priority: "प्राथमिकता",
+    newCase: "नयाँ मुद्दा",
+    newHearing: "नयाँ सुनुवाइ",
+    casesCount: "मुद्दाहरू",
+    hearingsCount: "सुनुवाइहरू",
+    date: "मिति",
+    time: "समय",
+    judge: "न्यायाधीश",
+    caseSingular: "मुद्दा",
+    dateAndTime: "मिति र समय",
+    scheduleNewHearing: "नयाँ सुनुवाइ तालिका बनाउनुहोस्",
   },
 };
 

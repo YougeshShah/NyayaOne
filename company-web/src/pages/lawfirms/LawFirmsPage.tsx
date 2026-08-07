@@ -3,10 +3,12 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   MenuItem,
   Paper,
   Table,
@@ -19,7 +21,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useLawFirms, useLawFirmActions } from "../../hooks/useLawFirms";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { PasswordField } from "../../components/common/PasswordField";
@@ -40,7 +42,9 @@ export function LawFirmsPage() {
   });
 
   const { approve, suspend, activate, reject, create } = useLawFirmActions();
-  const { register, handleSubmit, reset, formState } = useForm<CreateLawFirmPayload>();
+  const { register, handleSubmit, reset, control, formState } = useForm<CreateLawFirmPayload>({
+    defaultValues: { tenantType: "LAW_FIRM", modulesEnabled: ["case_management"] },
+  });
 
   const onCreate = (values: CreateLawFirmPayload) => {
     create.mutate(values, {
@@ -55,10 +59,10 @@ export function LawFirmsPage() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h5" fontWeight={700}>
-          Law Firm Management
+          Organization Management
         </Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-          Add Law Firm
+          Add Organization
         </Button>
       </Box>
 
@@ -160,7 +164,7 @@ export function LawFirmsPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Add Law Firm</DialogTitle>
+        <DialogTitle>Add Organization</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onCreate)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {create.isError && (
@@ -178,8 +182,13 @@ export function LawFirmsPage() {
             <Typography variant="caption" color="text.secondary">
               Firms added here go live immediately (ACTIVE) — no approval step needed, since Company is creating it directly.
             </Typography>
-            <TextField label="Law Firm Name" required fullWidth {...register("lawFirmName", { required: true })} error={!!formState.errors.lawFirmName} />
-            <TextField label="Law Firm Email" type="email" required fullWidth {...register("lawFirmEmail", { required: true })} error={!!formState.errors.lawFirmEmail} />
+            <TextField select label="Organization Type" required fullWidth defaultValue="LAW_FIRM" {...register("tenantType")}>
+              <MenuItem value="LAW_FIRM">Law Firm</MenuItem>
+              <MenuItem value="EDUCATION">Education / Coaching Institute</MenuItem>
+              <MenuItem value="OTHER">Other</MenuItem>
+            </TextField>
+            <TextField label="Organization Name" required fullWidth {...register("lawFirmName", { required: true })} error={!!formState.errors.lawFirmName} />
+            <TextField label="Organization Email" type="email" required fullWidth {...register("lawFirmEmail", { required: true })} error={!!formState.errors.lawFirmEmail} />
             <TextField label="Admin Full Name" required fullWidth {...register("adminFullName", { required: true })} error={!!formState.errors.adminFullName} />
             <TextField label="Admin Email" type="email" required fullWidth {...register("adminEmail", { required: true })} error={!!formState.errors.adminEmail} />
             <TextField label="Admin Phone" fullWidth {...register("adminPhone")} />
@@ -191,11 +200,53 @@ export function LawFirmsPage() {
               {...register("password", { required: true, minLength: 8 })}
               error={!!formState.errors.password}
             />
+
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+                Admin Dashboard Modules — controls what THIS organization's own admin panel shows
+                (this does not affect individual students who register and subscribe directly — see note below)
+              </Typography>
+              <Controller
+                name="modulesEnabled"
+                control={control}
+                render={({ field }) => (
+                  <Box sx={{ display: "flex", flexDirection: "column" }}>
+                    {[
+                      { key: "case_management", label: "Case Management — cases, hearings, clients (Law Firm admin tools)" },
+                      { key: "student_platform", label: "Student Management — add/manage this institute's own students, view their progress" },
+                      { key: "live_classes", label: "Live Classes — schedule and host classes for this institute's students" },
+                      { key: "document_templates", label: "Document Templates — generate legal documents" },
+                    ].map((mod) => (
+                      <FormControlLabel
+                        key={mod.key}
+                        control={
+                          <Checkbox
+                            checked={field.value?.includes(mod.key) ?? false}
+                            onChange={(e) => {
+                              const current = field.value ?? [];
+                              field.onChange(
+                                e.target.checked ? [...current, mod.key] : current.filter((k) => k !== mod.key)
+                              );
+                            }}
+                          />
+                        }
+                        label={mod.label}
+                      />
+                    ))}
+                  </Box>
+                )}
+              />
+              <Typography variant="caption" sx={{ display: "block", mt: 1, fontStyle: "italic", color: "text.secondary" }}>
+                Note: Individual students (Law, IELTS, IOE, Doctors, Loksewa — any subject) can always register
+                and subscribe to a course directly through the Student app, with no organization involved.
+                These modules only matter for institutes that want their own admin dashboard.
+              </Typography>
+            </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={create.isPending}>
-              {create.isPending ? "Creating..." : "Create Law Firm"}
+              {create.isPending ? "Creating..." : "Create Organization"}
             </Button>
           </DialogActions>
         </Box>

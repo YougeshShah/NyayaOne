@@ -6,6 +6,7 @@ import { useCases } from "../../hooks/useCases";
 import { useClients } from "../../hooks/useClients";
 import { useTodayHearings, useUpcomingHearings } from "../../hooks/useHearings";
 import { useMyFirmSubscription } from "../../hooks/useSubscription";
+import { useTranslation } from "../../i18n/LanguageContext";
 
 interface StatCardProps {
   label: string;
@@ -44,6 +45,7 @@ function StatCard({ label, value, icon, color }: StatCardProps) {
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const { data: allCases } = useCases({ page: 1 });
   const { data: openCases } = useCases({ status: "OPEN", page: 1 });
   const { data: clients } = useClients({ page: 1 });
@@ -58,14 +60,14 @@ export function DashboardPage() {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-        Overview
+        {t("overview")}
       </Typography>
 
       {subscription && (
         <Paper elevation={0} sx={{ p: 2.5, mb: 3, border: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Current Plan
+              {t("currentPlan")}
             </Typography>
             <Typography variant="h6" fontWeight={700}>
               {subscription.plan.name}{" "}
@@ -78,13 +80,13 @@ export function DashboardPage() {
             </Typography>
             {daysRemaining !== null && (
               <Typography variant="caption" color={daysRemaining <= 7 ? "error" : "text.secondary"}>
-                {daysRemaining > 0 ? `${daysRemaining} day(s) remaining` : "Expired"}
+                {daysRemaining > 0 ? `${daysRemaining} ${t("dayRemaining")}` : t("expired")}
               </Typography>
             )}
           </Box>
           <Box sx={{ minWidth: 220 }}>
             <Typography variant="caption" color="text.secondary">
-              Lawyers: {subscription.usage.lawyers.used} / {subscription.usage.lawyers.limit ?? "∞"}
+              {t("lawyersLabel")}: {subscription.usage.lawyers.used} / {subscription.usage.lawyers.limit ?? "∞"}
             </Typography>
             {subscription.usage.lawyers.limit && (
               <LinearProgress
@@ -94,7 +96,7 @@ export function DashboardPage() {
               />
             )}
             <Typography variant="caption" color="text.secondary">
-              Cases: {subscription.usage.cases.used} / {subscription.usage.cases.limit ?? "∞"}
+              {t("casesLabel")}: {subscription.usage.cases.used} / {subscription.usage.cases.limit ?? "∞"}
             </Typography>
             {subscription.usage.cases.limit && (
               <LinearProgress
@@ -109,16 +111,16 @@ export function DashboardPage() {
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Total Cases" value={allCases?.pagination.total ?? "—"} icon={<GavelIcon />} color="#0F4C3A" />
+          <StatCard label={t("totalCases")} value={allCases?.pagination.total ?? "—"} icon={<GavelIcon />} color="#0F4C3A" />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Open Cases" value={openCases?.pagination.total ?? "—"} icon={<GavelIcon />} color="#B8860B" />
+          <StatCard label={t("openCases")} value={openCases?.pagination.total ?? "—"} icon={<GavelIcon />} color="#B8860B" />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Total Clients" value={clients?.pagination.total ?? "—"} icon={<PeopleIcon />} color="#1D6E52" />
+          <StatCard label={t("totalClients")} value={clients?.pagination.total ?? "—"} icon={<PeopleIcon />} color="#1D6E52" />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Today's Hearings" value={todayHearings?.length ?? "—"} icon={<EventIcon />} color="#B8860B" />
+          <StatCard label={t("todaysHearings")} value={todayHearings?.length ?? "—"} icon={<EventIcon />} color="#B8860B" />
         </Grid>
       </Grid>
 
@@ -126,12 +128,12 @@ export function DashboardPage() {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb" }}>
             <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
-              Today's Hearings
+              {t("todaysHearings")}
             </Typography>
             <List dense>
               {(!todayHearings || todayHearings.length === 0) && (
                 <Typography variant="body2" color="text.secondary">
-                  No hearings scheduled today.
+                  {t("noHearingsToday")}
                 </Typography>
               )}
               {todayHearings?.map((h) => (
@@ -150,12 +152,12 @@ export function DashboardPage() {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb" }}>
             <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
-              Upcoming Hearings
+              {t("upcomingHearings")}
             </Typography>
             <List dense>
               {(!upcomingHearings || upcomingHearings.length === 0) && (
                 <Typography variant="body2" color="text.secondary">
-                  No upcoming hearings.
+                  {t("noUpcomingHearings")}
                 </Typography>
               )}
               {upcomingHearings?.slice(0, 6).map((h) => (

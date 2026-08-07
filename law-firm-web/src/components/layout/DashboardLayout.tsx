@@ -20,17 +20,23 @@ export function DashboardLayout() {
   const logout = useLogout();
   const { t, language, setLanguage } = useTranslation();
 
+  // Existing tenants created before this migration may not have modulesEnabled
+  // set — default to case_management so nothing disappears for them.
+  const enabledModules = user?.modulesEnabled ?? ["case_management"];
+
   const navItems = [
-    { to: "/dashboard", label: t("dashboard"), icon: <DashboardIcon fontSize="small" /> },
-    { to: "/cases", label: t("cases"), icon: <GavelIcon fontSize="small" /> },
-    { to: "/hearings", label: t("hearings"), icon: <EventIcon fontSize="small" /> },
-    { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" /> },
-    { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" /> },
-    { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" /> },
+    { to: "/dashboard", label: t("dashboard"), icon: <DashboardIcon fontSize="small" />, module: null },
+    { to: "/cases", label: t("cases"), icon: <GavelIcon fontSize="small" />, module: "case_management" },
+    { to: "/hearings", label: t("hearings"), icon: <EventIcon fontSize="small" />, module: "case_management" },
+    { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" />, module: "case_management" },
+    { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management" },
+    { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management" },
+    { to: "/roles", label: "Roles & Permissions", icon: <BadgeIcon fontSize="small" />, module: null },
+    { to: "/students", label: "Students", icon: <BadgeIcon fontSize="small" />, module: "student_platform" },
     ...(user?.accountType === "LAW_FIRM_ADMIN"
-      ? [{ to: "/users", label: t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" /> }]
+      ? [{ to: "/users", label: t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" />, module: "case_management" }]
       : []),
-  ];
+  ].filter((item) => item.module === null || enabledModules.includes(item.module));
 
   return (
     <div>

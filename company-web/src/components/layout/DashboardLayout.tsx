@@ -18,22 +18,39 @@ import { useTranslation } from "../../i18n/LanguageContext";
 import { TranslationKey } from "../../i18n/translations";
 import { getAvatarUrl } from "../../api/profile.api";
 
-const NAV_ITEMS: { to: string; labelKey: TranslationKey; icon: JSX.Element }[] = [
-  { to: "/dashboard", labelKey: "dashboard", icon: <DashboardIcon fontSize="small" /> },
-  { to: "/law-firms", labelKey: "lawFirms", icon: <BusinessIcon fontSize="small" /> },
-  { to: "/courts", labelKey: "courts", icon: <GavelIcon fontSize="small" /> },
-  { to: "/library", labelKey: "legalLibrary", icon: <MenuBookIcon fontSize="small" /> },
-  { to: "/document-templates", labelKey: "documentTemplates", icon: <DescriptionIcon fontSize="small" /> },
-  { to: "/notifications", labelKey: "notifications", icon: <NotificationsIcon fontSize="small" /> },
-  { to: "/audit-logs", labelKey: "auditLogs", icon: <HistoryIcon fontSize="small" /> },
-  { to: "/company-staff", labelKey: "companyStaff", icon: <BadgeIcon fontSize="small" /> },
-  { to: "/subscriptions", labelKey: "subscriptions", icon: <PaymentIcon fontSize="small" /> },
+const NAV_ITEMS: { to: string; labelKey: TranslationKey; icon: JSX.Element; permission: string | null }[] = [
+  { to: "/dashboard", labelKey: "dashboard", icon: <DashboardIcon fontSize="small" />, permission: null },
+  { to: "/law-firms", labelKey: "lawFirms", icon: <BusinessIcon fontSize="small" />, permission: "lawfirm.approve" },
+  { to: "/courts", labelKey: "courts", icon: <GavelIcon fontSize="small" />, permission: "court.manage" },
+  { to: "/library", labelKey: "legalLibrary", icon: <MenuBookIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/document-templates", labelKey: "documentTemplates", icon: <DescriptionIcon fontSize="small" />, permission: null },
+  { to: "/courses-admin", labelKey: "coursesAdmin", icon: <MenuBookIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/mcq-admin", labelKey: "mcqAdmin", icon: <DescriptionIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/mock-test-admin", labelKey: "mockTestAdmin", icon: <DescriptionIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/live-class-admin", labelKey: "liveClassAdmin", icon: <DescriptionIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/grant-subscription", labelKey: "grantSubscription", icon: <PaymentIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/writing-grading", labelKey: "writingGrading", icon: <DescriptionIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/content-generator", labelKey: "contentGenerator", icon: <DescriptionIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/photo-editor", labelKey: "photoEditor", icon: <DescriptionIcon fontSize="small" />, permission: null },
+  { to: "/transactions", labelKey: "transactions", icon: <PaymentIcon fontSize="small" />, permission: "library.manage" },
+  { to: "/notifications", labelKey: "notifications", icon: <NotificationsIcon fontSize="small" />, permission: "notification.broadcast" },
+  { to: "/audit-logs", labelKey: "auditLogs", icon: <HistoryIcon fontSize="small" />, permission: "auditlog.view" },
+  { to: "/company-staff", labelKey: "companyStaff", icon: <BadgeIcon fontSize="small" />, permission: "user.manage" },
+  { to: "/roles", labelKey: "rolesAndPermissions", icon: <BadgeIcon fontSize="small" />, permission: "user.manage" },
+  { to: "/subscriptions", labelKey: "subscriptions", icon: <PaymentIcon fontSize="small" />, permission: null },
 ];
 
 export function DashboardLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const { t, language, setLanguage } = useTranslation();
+
+  // permissions === null means unrestricted (Super Admin, or no custom role
+  // assigned) — show everything. Otherwise only show items whose gate is
+  // either unrestricted (permission: null) or present in the user's list.
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => item.permission === null || user?.permissions === null || user?.permissions === undefined || user.permissions.includes(item.permission)
+  );
 
   return (
     <div>
@@ -48,7 +65,7 @@ export function DashboardLayout() {
         </div>
 
         <nav>
-          {NAV_ITEMS.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

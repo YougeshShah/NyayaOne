@@ -16,6 +16,21 @@ import companyStaffRoutes from "./modules/company-staff/routes/company-staff.rou
 import pushRoutes from "./modules/push/routes/push.routes";
 import subscriptionRoutes from "./modules/subscription/routes/subscription.routes";
 import documentTemplateRoutes from "./modules/document-template/routes/document-template.routes";
+import subjectRoutes from "./modules/subject/routes/subject.routes";
+import mcqRoutes from "./modules/mcq/routes/mcq.routes";
+import mockTestRoutes from "./modules/mock-test/routes/mock-test.routes";
+import bookmarkRoutes from "./modules/bookmark/bookmark.routes";
+import studyProgressRoutes from "./modules/study-progress/study-progress.routes";
+import courseRoutes from "./modules/course/routes/course.routes";
+import liveClassRoutes from "./modules/live-class/routes/live-class.routes";
+import rolePermissionRoutes from "./modules/role-permission/role-permission.routes";
+import tenantRoleRoutes from "./modules/tenant-role/tenant-role.routes";
+import feedbackRoutes from "./modules/feedback/feedback.routes";
+import testSectionRoutes from "./modules/test-section/test-section.routes";
+import writingSubmissionRoutes from "./modules/writing-submission/writing-submission.routes";
+import chatbotRoutes from "./modules/chatbot/chatbot.routes";
+import contentGeneratorRoutes from "./modules/content-generator/content-generator.routes";
+import paymentRoutes from "./modules/payment/payment.routes";
 
 const router = Router();
 
@@ -41,5 +56,22 @@ router.use("/company-staff", companyStaffRoutes);
 router.use("/push", pushRoutes);
 router.use("/subscriptions", subscriptionRoutes);
 router.use("/document-templates", documentTemplateRoutes);
+
+// Phase 2 — Student Learning Platform
+router.use("/subjects", subjectRoutes);
+router.use("/mcq", mcqRoutes);
+router.use("/mock-tests", mockTestRoutes);
+router.use("/bookmarks", bookmarkRoutes);
+router.use("/study-progress", studyProgressRoutes);
+router.use("/courses", courseRoutes);
+router.use("/live-classes", liveClassRoutes);
+router.use("/admin", rolePermissionRoutes);
+router.use("/tenant", tenantRoleRoutes);
+router.use("/feedback", feedbackRoutes);
+router.use("/test-sections", testSectionRoutes);
+router.use("/writing-submissions", writingSubmissionRoutes);
+router.use("/chatbot", chatbotRoutes);
+router.use("/content-generator", contentGeneratorRoutes);
+router.use("/payment", paymentRoutes);
 
 export default router;

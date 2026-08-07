@@ -96,6 +96,28 @@ export const translations = {
     success: "Success",
     caseCreated: "Case created successfully.",
     hearingScheduled: "Hearing scheduled — reminders will be sent automatically.",
+
+    // Edit Profile
+    fullName: "Full Name",
+    barRegistrationNo: "Bar Registration No.",
+    specialization: "Specialization",
+    emailCannotBeChanged: "Email (cannot be changed)",
+    saveChanges: "Save Changes",
+    saving: "Saving...",
+    missingName: "Missing name",
+    missingNameMsg: "Full name cannot be empty.",
+    saved: "Saved",
+    profileUpdated: "Profile updated successfully.",
+    couldNotUpdateProfile: "Could not update profile.",
+    error: "Error",
+
+    // Legal Library
+    legalLibrary: "Legal Library",
+    searchLibraryPlaceholder: "Search title, act name, keyword — or a word inside the document",
+    allTypes: "All Types",
+    noResourcesFound: "No resources found.",
+    repealed: "Repealed",
+    couldNotDownload: "Could not download this resource.",
   },
   ne: {
 
@@ -195,6 +217,28 @@ export const translations = {
     success: "सफल भयो",
     caseCreated: "मुद्दा सफलतापूर्वक सिर्जना भयो।",
     hearingScheduled: "सुनुवाइ तालिका बनाइयो — रिमाइन्डरहरू स्वचालित रूपमा पठाइनेछ।",
+
+    // Edit Profile
+    fullName: "पूरा नाम",
+    barRegistrationNo: "बार दर्ता नं.",
+    specialization: "विशेषज्ञता",
+    emailCannotBeChanged: "इमेल (परिवर्तन गर्न मिल्दैन)",
+    saveChanges: "परिवर्तनहरू सुरक्षित गर्नुहोस्",
+    saving: "सुरक्षित हुँदैछ...",
+    missingName: "नाम छुटेको",
+    missingNameMsg: "पूरा नाम खाली हुन सक्दैन।",
+    saved: "सुरक्षित भयो",
+    profileUpdated: "प्रोफाइल सफलतापूर्वक अपडेट भयो।",
+    couldNotUpdateProfile: "प्रोफाइल अपडेट गर्न सकिएन।",
+    error: "त्रुटि",
+
+    // Legal Library
+    legalLibrary: "कानुनी पुस्तकालय",
+    searchLibraryPlaceholder: "शीर्षक, ऐनको नाम, शब्द — वा कागजात भित्रको शब्द खोज्नुहोस्",
+    allTypes: "सबै प्रकार",
+    noResourcesFound: "कुनै स्रोत फेला परेन।",
+    repealed: "खारेज भएको",
+    couldNotDownload: "यो स्रोत डाउनलोड गर्न सकिएन।",
   },
 };
 

@@ -57,6 +57,7 @@ export default function RootLayout() {
             <Stack.Screen name="edit-profile" options={{ headerShown: true, title: "Edit Profile", presentation: "modal" }} />
             <Stack.Screen name="client/create" options={{ headerShown: true, title: "Add Client", presentation: "modal" }} />
             <Stack.Screen name="library" options={{ headerShown: true, title: "Legal Library" }} />
+            <Stack.Screen name="document/generate" options={{ headerShown: true, title: "Generate Document", presentation: "modal" }} />
           </Stack>
         </AuthGate>
       </LanguageProvider>

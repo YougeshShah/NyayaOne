@@ -31,7 +31,7 @@ import { StatusBadge } from "../../components/common/StatusBadge";
 import { CreateHearingPayload } from "../../types/hearing.types";
 
 export function HearingsPage() {
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data, isLoading } = useHearings({ page: 1, limit: 100 });
   const { data: cases } = useCases({ page: 1, limit: 100 } as any);
@@ -54,7 +54,7 @@ export function HearingsPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>
-            Hearings
+            {t("hearings")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {data?.pagination.total ?? 0} hearings — reminders are scheduled automatically (48h, 24h, hearing day, 2h before)
@@ -69,10 +69,10 @@ export function HearingsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Case</TableCell>
-              <TableCell>Date & Time</TableCell>
-              <TableCell>Judge</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>{t("caseSingular")}</TableCell>
+              <TableCell>{t("dateAndTime")}</TableCell>
+              <TableCell>{t("judge")}</TableCell>
+              <TableCell>{t("status")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -110,7 +110,7 @@ export function HearingsPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Schedule New Hearing</DialogTitle>
+        <DialogTitle>{t("scheduleNewHearing")}</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onCreate)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Alert severity="info">Reminders (48h, 24h, hearing day, 2h before) will be created automatically.</Alert>

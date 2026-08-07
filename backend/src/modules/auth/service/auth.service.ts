@@ -2,7 +2,7 @@ import { AppError } from "../../../common/errors/AppError";
 import { hashPassword, comparePassword } from "../../../common/utils/password";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../../common/utils/jwt";
 import { authRepository } from "../repository/auth.repository";
-import { RegisterLawFirmInput, LoginInput } from "../dto/auth.dto";
+import { RegisterLawFirmInput, RegisterStudentInput, LoginInput } from "../dto/auth.dto";
 
 const REFRESH_TOKEN_TTL_DAYS = 7;
 
@@ -34,6 +34,35 @@ export const authService = {
       admin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       message: "Registration submitted. Your firm is pending approval from TrailBlaze Tech.",
     };
+  },
+
+  /**
+   * Phase 2 — a student self-registers directly, with no law firm and no
+   * approval step (unlike lawyers). Active immediately after registration.
+   */
+  async registerStudent(input: RegisterStudentInput, addedByLawFirmId?: string) {
+    const existing = await authRepository.findUserByEmail(input.email);
+    if (existing) {
+      throw AppError.conflict("An account with this email already exists");
+    }
+
+    const passwordHash = await hashPassword(input.password);
+    const student = await authRepository.createStudent({
+      fullName: input.fullName,
+      email: input.email,
+      phone: input.phone,
+      passwordHash,
+      addedByLawFirmId,
+    });
+
+    return {
+      student: { id: student.id, fullName: student.fullName, email: student.email },
+      message: addedByLawFirmId ? "Student added." : "Registration successful. You can log in now.",
+    };
+  },
+
+  async listInstitutionStudents(lawFirmId: string) {
+    return authRepository.findStudentsByLawFirmId(lawFirmId);
   },
 
   async login(input: LoginInput) {
@@ -78,6 +107,14 @@ export const authService = {
         accountType: user.accountType,
         lawFirmId: user.lawFirmId,
         lawFirmStatus: user.lawFirm?.status ?? null,
+        modulesEnabled: user.lawFirm?.modulesEnabled ?? null,
+        // "Super Admin" carries every permission implicitly (see requirePermission
+        // middleware) — null here means "unrestricted", not "no access".
+        roleName: user.role?.name ?? null,
+        permissions:
+          user.role && user.role.name !== "Super Admin"
+            ? user.role.permissions.map((rp: any) => rp.permission.key)
+            : null,
       },
     };
   },

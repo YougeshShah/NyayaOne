@@ -1,0 +1,104 @@
+version: "3.9"
+
+# Single-server production deployment for NyayaOne.
+# Covers 0-10 organizations comfortably (see Option 1 in the deployment
+# notes) — a 4 vCPU / 8GB RAM server is plenty to start.
+#
+# Usage:
+#   1. Copy .env.prod.example to .env.prod and fill in real values
+#      (DB password, JWT secret, ANTHROPIC_API_KEY when ready, etc.)
+#   2. Point your domain's DNS (see reverse-proxy.conf) at this server
+#   3. docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nyayaone_postgres_prod
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - nyayaone_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # No published port — only reachable by other containers on this network,
+    # not from the internet. Keeps the database off the public attack surface.
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nyayaone_backend_prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env.prod
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    volumes:
+      - nyayaone_uploads:/app/uploads
+    # Run migrations on every deploy, then start the server.
+    command: sh -c "npx prisma migrate deploy && node dist/server.js"
+
+  company-web:
+    build:
+      context: ./company-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://api.yourdomain.com/api/v1
+    container_name: nyayaone_company_web_prod
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  law-firm-web:
+    build:
+      context: ./law-firm-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://api.yourdomain.com/api/v1
+    container_name: nyayaone_law_firm_web_prod
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  student-web:
+    build:
+      context: ./student-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://api.yourdomain.com/api/v1
+    container_name: nyayaone_student_web_prod
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: nyayaone_reverse_proxy_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./reverse-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      # Uncomment once you've run certbot and have real certs:
+      # - ./certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+      - company-web
+      - law-firm-web
+      - student-web
+
+volumes:
+  nyayaone_pg_data:
+    driver: local
+  nyayaone_uploads:
+    driver: local

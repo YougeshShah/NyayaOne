@@ -10,6 +10,16 @@ export const registerLawFirmSchema = z.object({
 });
 export type RegisterLawFirmInput = z.infer<typeof registerLawFirmSchema>;
 
+// Phase 2 — students self-register directly, no law firm / approval step
+// (unlike lawyers, who register via a law firm that Company then approves).
+export const registerStudentSchema = z.object({
+  fullName: z.string().min(2, "Full name is required"),
+  email: z.string().email(),
+  phone: z.string().min(7).optional(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+export type RegisterStudentInput = z.infer<typeof registerStudentSchema>;
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1, "Password is required"),

@@ -9,6 +9,8 @@ export interface AuthUser {
   accountType: AccountType;
   lawFirmId: string | null;
   lawFirmStatus: string | null;
+  roleName?: string | null;
+  permissions?: string[] | null; // null = unrestricted (Super Admin or no role assigned yet)
 }
 
 export interface LoginPayload {

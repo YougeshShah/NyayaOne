@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #1e3a5f;
+  --color-primary-light: #2e5c8a;
+  --color-accent: #b8860b;
+  --sidebar-width: 260px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f4f6f8;
+  color: #1a1a1a;
+}
+
+/* Custom scrollbar - professional look for a dashboard used all day */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #eef1f4;
+}
+::-webkit-scrollbar-thumb {
+  background: #c2cad4;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a3aeb9;
+}

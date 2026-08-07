@@ -26,7 +26,7 @@ export default function LibraryScreen() {
     try {
       await downloadResource.mutateAsync({ id, title });
     } catch {
-      Alert.alert("Error", "Could not download this resource.");
+      Alert.alert(t("error"), t("couldNotDownload"));
     } finally {
       setDownloadingId(null);
     }
@@ -36,7 +36,7 @@ export default function LibraryScreen() {
     <View style={styles.container}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search title, act name, keyword — or a word inside the document"
+        placeholder={t("searchLibraryPlaceholder")}
         placeholderTextColor="#9CA3AF"
         value={search}
         onChangeText={setSearch}
@@ -46,7 +46,7 @@ export default function LibraryScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.chipRow}
-        data={[{ type: "ALL" as const, label: "All Types" }, ...groupedTypes.map((g) => ({ type: g.type, label: g.label }))]}
+        data={[{ type: "ALL" as const, label: t("allTypes") }, ...groupedTypes.map((g) => ({ type: g.type, label: g.label }))]}
         keyExtractor={(item) => item.type}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -65,7 +65,7 @@ export default function LibraryScreen() {
           data={data?.items ?? []}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
-          ListEmptyComponent={<Text style={styles.emptyText}>No resources found.</Text>}
+          ListEmptyComponent={<Text style={styles.emptyText}>{t("noResourcesFound")}</Text>}
           renderItem={({ item }) => (
             <Card style={{ marginBottom: spacing.sm }}>
               <View style={styles.row}>
@@ -75,7 +75,7 @@ export default function LibraryScreen() {
                     <Text style={styles.typeLabel}>{getLibraryTypeLabel(item.type, language)}</Text>
                     {item.isRepealed && (
                       <View style={styles.repealedBadge}>
-                        <Text style={styles.repealedText}>Repealed</Text>
+                        <Text style={styles.repealedText}>{t("repealed")}</Text>
                       </View>
                     )}
                   </View>

@@ -38,7 +38,7 @@ const STATUS_OPTIONS: (CaseStatus | "ALL")[] = ["ALL", "OPEN", "ONGOING", "ON_HO
 const STATUS_EDIT_OPTIONS: CaseStatus[] = ["OPEN", "ONGOING", "ON_HOLD", "CLOSED", "DISMISSED"];
 
 export function CasesPage() {
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<CaseListItem | null>(null);
   const [status, setStatus] = useState<CaseStatus | "ALL">("ALL");
@@ -85,14 +85,14 @@ export function CasesPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>
-            Cases
+            {t("cases")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.pagination.total ?? 0} cases
+            {data?.pagination.total ?? 0} {t("casesCount")}
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-          New Case
+          {t("newCase")}
         </Button>
       </Box>
 
@@ -111,12 +111,12 @@ export function CasesPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Case No.</TableCell>
-              <TableCell>Title</TableCell>
-              <TableCell>Court</TableCell>
-              <TableCell>Lead Lawyer</TableCell>
-              <TableCell>Priority</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>{t("caseNo")}</TableCell>
+              <TableCell>{t("title")}</TableCell>
+              <TableCell>{t("court")}</TableCell>
+              <TableCell>{t("leadLawyer")}</TableCell>
+              <TableCell>{t("priority")}</TableCell>
+              <TableCell>{t("status")}</TableCell>
               <TableCell align="center">Hearings</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
