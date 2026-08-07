@@ -12,8 +12,13 @@ import { env } from "../../../config/env";
 
 export const libraryController = {
   async list(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
     const query = listLibraryResourcesQuerySchema.parse(req.query);
-    const result = await libraryService.list(query);
+    if (req.auth.accountType === "STUDENT" && !query.courseId) {
+      throw AppError.badRequest("courseId is required");
+    }
+    const studentId = req.auth.accountType === "STUDENT" ? req.auth.userId : null;
+    const result = await libraryService.list(query, studentId);
     res.status(200).json({ success: true, data: result });
   },
 

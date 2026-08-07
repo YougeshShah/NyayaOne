@@ -4,6 +4,7 @@ export interface Course {
   category: "LAW" | "LANGUAGE" | "OTHER";
   description: string | null;
   iconUrl: string | null;
+  _count?: { subjects: number; mcqQuestions: number; liveClasses: number };
 }
 
 export interface CourseSubscription {

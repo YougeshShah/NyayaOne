@@ -20,8 +20,13 @@ function generateRoomName(title: string): string {
 }
 
 export const liveClassService = {
-  async list(query: ListLiveClassesQuery) {
-    return liveClassRepository.findMany({ courseId: query.courseId, upcomingOnly: query.upcomingOnly });
+  async list(query: ListLiveClassesQuery, opts: { studentLawFirmId?: string | null; forLawFirmId?: string } = {}) {
+    return liveClassRepository.findMany({
+      courseId: query.courseId,
+      upcomingOnly: query.upcomingOnly,
+      studentLawFirmId: opts.studentLawFirmId,
+      forLawFirmId: opts.forLawFirmId,
+    });
   },
 
   async getById(id: string, studentId?: string | null) {
@@ -37,7 +42,7 @@ export const liveClassService = {
     return liveClass;
   },
 
-  async create(input: CreateLiveClassInput, hostId: string) {
+  async create(input: CreateLiveClassInput, hostId: string, hostLawFirmId?: string) {
     const jitsiRoomName = generateRoomName(input.title);
     return liveClassRepository.create({
       courseId: input.courseId,
@@ -49,16 +54,22 @@ export const liveClassService = {
       scheduledAt: new Date(input.scheduledAt),
       durationMinutes: input.durationMinutes,
       isFreeDemo: input.isFreeDemo,
+      hostLawFirmId,
     });
   },
 
   /**
-   * A student requests to join — this is the access-gate checkpoint. Only
-   * on success do we hand back the actual meeting URL, so a non-subscribed
-   * student never even learns the room name for paid content.
+   * A student requests to join — checks BOTH course access AND, for
+   * institution-hosted classes, that the student actually belongs to that
+   * institution (an IELTS-course subscriber from Institute A should never
+   * be able to join Institute B's class for the same course).
    */
-  async joinAsStudent(liveClassId: string, studentId: string) {
-    const liveClass = await this.getById(liveClassId);
+  async joinAsStudent(liveClassId: string, studentId: string, studentLawFirmId: string | null) {
+    const liveClass: any = await this.getById(liveClassId);
+
+    if (liveClass.hostLawFirmId && liveClass.hostLawFirmId !== studentLawFirmId) {
+      throw AppError.forbidden("This class is only open to students of the hosting institution.");
+    }
 
     const allowed = await courseService.canAccess(studentId, liveClass.courseId, liveClass.isFreeDemo);
     if (!allowed) {
@@ -74,7 +85,7 @@ export const liveClassService = {
     };
   },
 
-  // The host (Company instructor) joins the same room without a subscription check.
+  // The host (Company or institution instructor) joins the same room without a subscription check.
   async joinAsHost(liveClassId: string) {
     const liveClass = await this.getById(liveClassId);
     return {

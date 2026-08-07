@@ -197,6 +197,7 @@ model LawFirm {
   documents       Document[]
   subscription    FirmSubscription?
   roles           Role[] // this tenant's own custom staff roles
+  hostedLiveClasses LiveClass[] // classes this institution's own staff scheduled
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -861,6 +862,12 @@ model LiveClass {
   isFreeDemo      Boolean  @default(false)
   status          LiveClassStatus @default(SCHEDULED)
   recordingUrl    String? // uploaded after class ends — subscribed students can watch anytime after
+  // Null = hosted directly by TrailBlaze (Company) for all subscribers of
+  // the course. Set = hosted by a specific institution's own staff — only
+  // that institution's own students (matching lawFirmId) can see/join it,
+  // even though other students may also be subscribed to the same course.
+  hostLawFirmId   String?
+  hostLawFirm     LawFirm? @relation(fields: [hostLawFirmId], references: [id])
   createdAt       DateTime @default(now())
 
   attendees LiveClassAttendance[]

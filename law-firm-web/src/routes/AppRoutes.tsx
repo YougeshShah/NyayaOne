@@ -8,6 +8,7 @@ import { HearingsPage } from "../pages/hearings/HearingsPage";
 import { UsersPage } from "../pages/users/UsersPage";
 import { RolesPage } from "../pages/roles/RolesPage";
 import { StudentsPage } from "../pages/students/StudentsPage";
+import { LiveClassesPage } from "../pages/live-classes/LiveClassesPage";
 import { ReportsPage } from "../pages/reports/ReportsPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
 import { ProfilePage } from "../pages/profile/ProfilePage";
@@ -29,6 +30,7 @@ export function AppRoutes() {
           <Route path="/users" element={<UsersPage />} />
           <Route path="/roles" element={<RolesPage />} />
           <Route path="/students" element={<StudentsPage />} />
+          <Route path="/live-classes" element={<LiveClassesPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/profile" element={<ProfilePage />} />

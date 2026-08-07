@@ -9,6 +9,13 @@ export const mcqController = {
     if (!req.auth) throw AppError.unauthorized();
     const query = listMcqQuerySchema.parse(req.query);
     const studentId = req.auth.accountType === "STUDENT" ? req.auth.userId : null;
+    // Students must always scope to a single course — an IELTS student
+    // should never see Law questions mixed in just because the caller
+    // forgot to pass ?courseId=... (courseId is optional for Company staff
+    // browsing across courses, but never for students).
+    if (studentId && !query.courseId) {
+      throw AppError.badRequest("courseId is required");
+    }
     const result = await mcqService.list(query, studentId);
     res.status(200).json({ success: true, data: result });
   },

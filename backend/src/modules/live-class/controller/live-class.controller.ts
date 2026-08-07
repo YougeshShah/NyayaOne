@@ -7,7 +7,14 @@ import { createLiveClassSchema, listLiveClassesQuerySchema, liveClassIdParamSche
 export const liveClassController = {
   async list(req: Request, res: Response) {
     const query = listLiveClassesQuerySchema.parse(req.query);
-    const result = await liveClassService.list(query);
+    if (req.auth?.accountType === "STUDENT" && !query.courseId) {
+      throw AppError.badRequest("courseId is required");
+    }
+    const isInstitutionStaff = req.auth?.accountType === "LAW_FIRM_ADMIN" || req.auth?.accountType === "LAWYER" || req.auth?.accountType === "STAFF";
+    const result = await liveClassService.list(query, {
+      studentLawFirmId: req.auth?.accountType === "STUDENT" ? req.auth.lawFirmId : undefined,
+      forLawFirmId: isInstitutionStaff ? req.auth?.lawFirmId ?? undefined : undefined,
+    });
     res.status(200).json({ success: true, data: result });
   },
 
@@ -21,14 +28,17 @@ export const liveClassController = {
   async create(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const input = createLiveClassSchema.parse(req.body);
-    const result = await liveClassService.create(input, req.auth.userId);
+    // Company-hosted classes are platform-wide (hostLawFirmId null); an
+    // institution admin's classes are scoped to their own tenant.
+    const hostLawFirmId = req.auth.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined;
+    const result = await liveClassService.create(input, req.auth.userId, hostLawFirmId);
     res.status(201).json({ success: true, data: result });
   },
 
   async joinAsStudent(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const { id } = liveClassIdParamSchema.parse(req.params);
-    const result = await liveClassService.joinAsStudent(id, req.auth.userId);
+    const result = await liveClassService.joinAsStudent(id, req.auth.userId, req.auth.lawFirmId);
     res.status(200).json({ success: true, data: result });
   },
 

@@ -1,11 +1,19 @@
 import { prisma } from "../../../database/prisma";
 
 export const liveClassRepository = {
-  findMany(params: { courseId?: string; upcomingOnly: boolean }) {
+  // studentLawFirmId (when provided) means: only show platform-wide classes
+  // (hostLawFirmId null) PLUS this student's own institution's classes —
+  // never another institution's classes, even for the same course.
+  findMany(params: { courseId?: string; upcomingOnly: boolean; studentLawFirmId?: string | null; forLawFirmId?: string }) {
     return prisma.liveClass.findMany({
       where: {
         ...(params.courseId ? { courseId: params.courseId } : {}),
         ...(params.upcomingOnly ? { scheduledAt: { gte: new Date() }, status: { not: "CANCELLED" } } : {}),
+        ...(params.forLawFirmId
+          ? { hostLawFirmId: params.forLawFirmId } // Institution staff view — only their own scheduled classes
+          : params.studentLawFirmId !== undefined
+          ? { OR: [{ hostLawFirmId: null }, { hostLawFirmId: params.studentLawFirmId }] } // Student view
+          : {}),
       },
       include: { course: true, subject: true, _count: { select: { attendees: true } } },
       orderBy: { scheduledAt: "asc" },
@@ -29,6 +37,7 @@ export const liveClassRepository = {
     scheduledAt: Date;
     durationMinutes: number;
     isFreeDemo: boolean;
+    hostLawFirmId?: string;
   }) {
     return prisma.liveClass.create({ data });
   },

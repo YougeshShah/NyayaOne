@@ -6,6 +6,9 @@ import { createMockTestSchema, listMockTestsQuerySchema, mockTestIdParamSchema, 
 export const mockTestController = {
   async list(req: Request, res: Response) {
     const query = listMockTestsQuerySchema.parse(req.query);
+    if (req.auth?.accountType === "STUDENT" && !query.courseId) {
+      throw AppError.badRequest("courseId is required");
+    }
     const result = await mockTestService.list(query);
     res.status(200).json({ success: true, data: result });
   },

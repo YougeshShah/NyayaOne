@@ -7,6 +7,8 @@ export const libraryRepository = {
     category?: string;
     isRepealed?: boolean;
     search?: string;
+    courseId?: string;
+    subjectId?: string;
     skip: number;
     take: number;
   }) {
@@ -14,6 +16,8 @@ export const libraryRepository = {
       ...(params.type ? { type: params.type } : {}),
       ...(params.category ? { category: params.category } : {}),
       ...(params.isRepealed !== undefined ? { isRepealed: params.isRepealed } : {}),
+      ...(params.subjectId ? { subjectId: params.subjectId } : {}),
+      ...(params.courseId ? { subject: { courseId: params.courseId } } : {}),
       ...(params.search
         ? {
             OR: [
@@ -34,6 +38,7 @@ export const libraryRepository = {
         skip: params.skip,
         take: params.take,
         orderBy: { createdAt: "desc" },
+        include: { subject: true },
       }),
       prisma.libraryResource.count({ where }),
     ]);
@@ -64,6 +69,6 @@ export const libraryRepository = {
       where: { category: { not: null } },
       orderBy: { category: "asc" },
     });
-    return rows.map((r) => r.category).filter((c): c is string => !!c);
+    return rows.map((r: { category: string | null }) => r.category).filter((c): c is string => !!c);
   },
 };

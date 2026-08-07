@@ -50,6 +50,8 @@ export const listLibraryResourcesQuerySchema = z.object({
   category: z.string().optional(),
   isRepealed: z.coerce.boolean().optional(),
   search: z.string().optional(), // matches title, actName, keywords, AND full document content (PDF text)
+  courseId: z.string().uuid().optional(), // Student Platform — scopes to one course's own materials
+  subjectId: z.string().uuid().optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });

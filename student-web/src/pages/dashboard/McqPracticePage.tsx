@@ -20,6 +20,18 @@ import { useBookmarks, useToggleBookmark } from "../../hooks/useBookmark";
 
 type OptionKey = "A" | "B" | "C" | "D";
 
+// Some practice questions embed a reading passage ahead of the actual
+// question (e.g. `Reading Passage: "..."\n\n<question>`) — split those out
+// so the passage renders as reference material instead of running together
+// with the question as one wall of text.
+function splitPassage(text: string): { passage: string | null; question: string } {
+  const match = text.match(/^Reading Passage:\s*"([\s\S]*?)"\s*\n\n([\s\S]*)$/);
+  if (match) {
+    return { passage: match[1], question: match[2] };
+  }
+  return { passage: null, question: text };
+}
+
 export function McqPracticePage() {
   const { courseId } = useParams<{ courseId: string }>();
   const [searchParams] = useSearchParams();
@@ -116,6 +128,8 @@ export function McqPracticePage() {
     );
   }
 
+  const { passage, question: questionText } = splitPassage(question.question);
+
   const options: { key: OptionKey; text: string }[] = [
     { key: "A", text: question.optionA },
     { key: "B", text: question.optionB },
@@ -124,7 +138,7 @@ export function McqPracticePage() {
   ];
 
   return (
-    <Box sx={{ maxWidth: 640, mx: "auto" }}>
+    <Box sx={{ maxWidth: passage ? 1000 : 640, mx: "auto" }}>
       {/* Progress header */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <IconButton size="small" onClick={() => navigate(`/courses/${courseId}`)}>
@@ -138,12 +152,29 @@ export function McqPracticePage() {
         </Typography>
       </Box>
 
-      {/* Question card */}
+      {/* Question card — when a reading passage is attached, it gets its
+          own fixed reference panel beside the question, same pattern as
+          the full Mock Test reading sections. */}
       <Fade in key={question.id}>
-        <Paper elevation={0} sx={{ p: 3, border: "1px solid #E5E7EB", borderRadius: 3 }}>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          {passage && (
+            <Paper
+              elevation={0}
+              sx={{ flex: "0 0 42%", border: "1px solid #E5E7EB", borderRadius: 3, p: 3, maxHeight: 560, overflowY: "auto", bgcolor: "#FAFBFC" }}
+            >
+              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+                READING PASSAGE
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>
+                {passage}
+              </Typography>
+            </Paper>
+          )}
+
+          <Paper elevation={0} sx={{ flex: 1, p: 3, border: "1px solid #E5E7EB", borderRadius: 3 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
             <Typography variant="h6" fontWeight={600} sx={{ lineHeight: 1.5, flexGrow: 1 }}>
-              {question.question}
+              {questionText}
             </Typography>
             <IconButton
               size="small"
@@ -251,7 +282,8 @@ export function McqPracticePage() {
               </Button>
             )}
           </Box>
-        </Paper>
+          </Paper>
+        </Box>
       </Fade>
     </Box>
   );

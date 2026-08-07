@@ -25,7 +25,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/EditOutlined";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useCoursesAdmin, useSubjectsAdmin, useMcqAdminList, useMcqAdminActions } from "../../hooks/useCourseAdmin";
 import { CreateMcqPayload, McqQuestionAdmin } from "../../api/mcqAdmin.api";
 
@@ -38,7 +38,7 @@ export function McqAdminPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<McqQuestionAdmin | null>(null);
-  const { register, handleSubmit, reset, formState } = useForm<CreateMcqPayload>({
+  const { register, handleSubmit, reset, control, formState } = useForm<CreateMcqPayload>({
     defaultValues: { difficulty: "MEDIUM", isFreeDemo: false },
   });
 
@@ -191,9 +191,15 @@ export function McqAdminPage() {
 
             <TextField label="Explanation (shown after answering)" fullWidth multiline rows={2} {...register("explanation")} />
 
-            <FormControlLabel
-              control={<Checkbox {...register("isFreeDemo")} />}
-              label="Free Demo — students without a subscription can see this"
+            <Controller
+              name="isFreeDemo"
+              control={control}
+              render={({ field }) => (
+                <FormControlLabel
+                  control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
+                  label="Free Demo — students without a subscription can see this"
+                />
+              )}
             />
 
             <input type="hidden" {...register("courseId")} value={courseId} />

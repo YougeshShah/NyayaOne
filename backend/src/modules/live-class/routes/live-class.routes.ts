@@ -10,12 +10,12 @@ router.use(authenticate);
 router.get("/", liveClassController.list);
 router.get("/:id", liveClassController.getById);
 
-router.post("/", authorize("COMPANY"), liveClassController.create);
-router.post("/:id/host-join", authorize("COMPANY"), liveClassController.joinAsHost);
-router.patch("/:id/mark-live", authorize("COMPANY"), liveClassController.markLive);
-router.patch("/:id/mark-ended", authorize("COMPANY"), liveClassController.markEnded);
-router.patch("/:id/recording", authorize("COMPANY"), liveClassController.uploadRecording);
-router.patch("/:id/cancel", authorize("COMPANY"), liveClassController.cancel);
+router.post("/", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.create);
+router.post("/:id/host-join", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.joinAsHost);
+router.patch("/:id/mark-live", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.markLive);
+router.patch("/:id/mark-ended", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.markEnded);
+router.patch("/:id/recording", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.uploadRecording);
+router.patch("/:id/cancel", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.cancel);
 
 router.post("/:id/join", authorize("STUDENT"), liveClassController.joinAsStudent);
 

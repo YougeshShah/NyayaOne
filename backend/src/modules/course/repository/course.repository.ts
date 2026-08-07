@@ -6,7 +6,7 @@ export const courseRepository = {
     return prisma.course.findMany({
       where: activeOnly ? { isActive: true } : undefined,
       orderBy: { name: "asc" },
-      include: { _count: { select: { subjects: true, liveClasses: true, subscriptions: true } } },
+      include: { _count: { select: { subjects: true, liveClasses: true, subscriptions: true, mcqQuestions: true } } },
     });
   },
 

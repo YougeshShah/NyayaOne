@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -7,15 +7,27 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Tabs,
-  Tab,
   TextField,
+  Divider,
+  Tooltip,
 } from "@mui/material";
 import HeadphonesIcon from "@mui/icons-material/HeadphonesOutlined";
+import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
+import EditNoteIcon from "@mui/icons-material/EditNoteOutlined";
+import MicIcon from "@mui/icons-material/MicNoneOutlined";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useMockTestDetail, useStartAttempt, useSubmitAttempt, useSubmitWriting } from "../../hooks/useCourse";
 import { TestSection } from "../../api/testSection.api";
 
 type OptionKey = "A" | "B" | "C" | "D";
+
+const sectionMeta: Record<string, { icon: JSX.Element; label: string }> = {
+  READING: { icon: <MenuBookIcon fontSize="small" />, label: "Reading" },
+  LISTENING: { icon: <HeadphonesIcon fontSize="small" />, label: "Listening" },
+  WRITING: { icon: <EditNoteIcon fontSize="small" />, label: "Writing" },
+  SPEAKING: { icon: <MicIcon fontSize="small" />, label: "Speaking" },
+  MCQ: { icon: <MenuBookIcon fontSize="small" />, label: "Questions" },
+};
 
 export function SectionedTestTakePage() {
   const { courseId, mockTestId } = useParams<{ courseId: string; mockTestId: string }>();
@@ -27,11 +39,12 @@ export function SectionedTestTakePage() {
   const submitWriting = useSubmitWriting();
 
   const [attemptId, setAttemptId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, OptionKey | null>>({});
   const [essays, setEssays] = useState<Record<string, string>>({});
   const [writingSubmitted, setWritingSubmitted] = useState<Record<string, boolean>>({});
   const [result, setResult] = useState<{ score: number; totalQuestions: number; percentage: number } | null>(null);
+  const questionsPaneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (test && !attemptId && !startAttempt.isPending) {
@@ -40,18 +53,21 @@ export function SectionedTestTakePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [test]);
 
+  // Jumping between sections should feel like a fresh screen, not a
+  // continuation of wherever the reader last scrolled to.
+  useEffect(() => {
+    questionsPaneRef.current?.scrollTo({ top: 0 });
+  }, [activeSectionIndex]);
+
   const sections: TestSection[] = test?.sections ?? [];
   const hasSections = sections.length > 0;
-  // Flat tests (no sections defined — e.g. existing Law-style tests) get
-  // wrapped as a single synthetic "All Questions" section so the same
-  // rendering path handles both cases without a separate page.
   const effectiveSections: TestSection[] = hasSections
     ? sections
     : [
         {
           id: "flat",
           type: "MCQ",
-          title: "All Questions",
+          title: "Questions",
           passageText: null,
           audioUrl: null,
           writingPrompt: null,
@@ -61,7 +77,9 @@ export function SectionedTestTakePage() {
           mockTestQuestions: (test?.questions ?? []).map((q: any) => ({ questionId: q.questionId, order: q.order, question: q.question })),
         },
       ];
-  const activeSection = effectiveSections[activeTab];
+  const activeSection = effectiveSections[activeSectionIndex];
+  const isLastSection = activeSectionIndex === effectiveSections.length - 1;
+  const hasSidePanel = activeSection?.type === "READING" || activeSection?.type === "LISTENING";
 
   const handleSubmitWriting = (sectionId: string) => {
     if (!attemptId) return;
@@ -108,135 +126,188 @@ export function SectionedTestTakePage() {
 
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
+  const renderQuestions = (compact: boolean) => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: compact ? 2.5 : 3 }}>
+      {activeSection.mockTestQuestions.map((mq, qi) => (
+        <Box key={mq.questionId}>
+          <Typography variant="body1" fontWeight={600} sx={{ mb: 1 }}>
+            {qi + 1}. {mq.question.question}
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {(["A", "B", "C", "D"] as OptionKey[]).map((key) => {
+              const optionText = mq.question[`option${key}` as "optionA"];
+              const isSelected = answers[mq.questionId] === key;
+              return (
+                <Box
+                  key={key}
+                  onClick={() => setAnswers((prev) => ({ ...prev, [mq.questionId]: key }))}
+                  sx={{
+                    p: 1.25,
+                    border: `1px solid ${isSelected ? "#2563EB" : "#E5E7EB"}`,
+                    bgcolor: isSelected ? "#EFF6FF" : "#fff",
+                    borderRadius: 1.5,
+                    cursor: "pointer",
+                    transition: "all 0.12s ease",
+                    "&:hover": { borderColor: "#93C5FD" },
+                  }}
+                >
+                  <Typography variant="body2">
+                    {key}. {optionText}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
-      <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-        {test.title}
-      </Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 96px)" }}>
+      {/* Section tabs — each tab is a distinct "part" of the exam, matching
+          the real IELTS computer-delivered structure (separate timed
+          sections, not one long scroll). */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mr: 2 }}>
+          {test.title}
+        </Typography>
+        {effectiveSections.map((s, i) => {
+          const meta = sectionMeta[s.type] ?? sectionMeta.MCQ;
+          const isDone = s.type === "WRITING" ? writingSubmitted[s.id] : s.mockTestQuestions.every((q) => answers[q.questionId]);
+          return (
+            <Chip
+              key={s.id}
+              icon={meta.icon}
+              label={s.title}
+              onClick={() => setActiveSectionIndex(i)}
+              color={activeSectionIndex === i ? "primary" : isDone ? "success" : "default"}
+              variant={activeSectionIndex === i ? "filled" : "outlined"}
+              sx={{ fontWeight: 600 }}
+            />
+          );
+        })}
+      </Box>
 
-      {effectiveSections.length > 1 && (
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 3, borderBottom: "1px solid #E5E7EB" }}>
-          {effectiveSections.map((s, i) => (
-            <Tab key={s.id} label={s.title} value={i} />
-          ))}
-        </Tabs>
-      )}
-
-      {activeSection && (
-        <Paper elevation={0} sx={{ p: 3, border: "1px solid #E5E7EB", borderRadius: 3, mb: 3 }}>
-          <Chip label={activeSection.type} size="small" sx={{ mb: 2 }} />
-
-          {/* Reading passage */}
-          {activeSection.type === "READING" && activeSection.passageText && (
-            <Paper elevation={0} sx={{ p: 2, bgcolor: "#F9FAFB", borderRadius: 2, mb: 3, maxHeight: 300, overflow: "auto" }}>
-              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+      {/* Split-screen for Reading/Listening: reference material stays fixed
+          on the left while questions scroll independently on the right —
+          this is the layout every real computer-based exam uses, since
+          re-reading the passage while answering shouldn't cost your place
+          in the question list. */}
+      {hasSidePanel ? (
+        <Box sx={{ display: "flex", gap: 2, flex: 1, minHeight: 0 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              flex: "0 0 45%",
+              border: "1px solid #E5E7EB",
+              borderRadius: 3,
+              p: 3,
+              overflowY: "auto",
+              bgcolor: "#FAFBFC",
+            }}
+          >
+            <Chip
+              size="small"
+              icon={sectionMeta[activeSection.type].icon}
+              label={sectionMeta[activeSection.type].label}
+              sx={{ mb: 2 }}
+            />
+            {activeSection.type === "READING" && activeSection.passageText && (
+              <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>
                 {activeSection.passageText}
               </Typography>
+            )}
+            {activeSection.type === "LISTENING" && activeSection.audioUrl && (
+              <Box sx={{ position: "sticky", top: 0 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Listen carefully — in the real exam, audio plays only once. Answer as you listen.
+                </Typography>
+                <audio controls src={activeSection.audioUrl} style={{ width: "100%" }} />
+              </Box>
+            )}
+          </Paper>
+
+          <Box ref={questionsPaneRef} sx={{ flex: 1, overflowY: "auto", pr: 1 }}>
+            <Paper elevation={0} sx={{ p: 3, border: "1px solid #E5E7EB", borderRadius: 3 }}>
+              {renderQuestions(true)}
             </Paper>
-          )}
+          </Box>
+        </Box>
+      ) : (
+        <Box sx={{ flex: 1, overflowY: "auto" }}>
+          <Paper elevation={0} sx={{ p: 3, border: "1px solid #E5E7EB", borderRadius: 3, maxWidth: 800 }}>
+            <Chip size="small" icon={sectionMeta[activeSection.type].icon} label={sectionMeta[activeSection.type].label} sx={{ mb: 2 }} />
 
-          {/* Listening audio */}
-          {activeSection.type === "LISTENING" && activeSection.audioUrl && (
-            <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-              <HeadphonesIcon color="primary" />
-              <audio controls src={activeSection.audioUrl} style={{ width: "100%" }} />
-            </Box>
-          )}
+            {(activeSection.type === "MCQ") && renderQuestions(false)}
 
-          {/* MCQ / Reading / Listening questions */}
-          {(activeSection.type === "MCQ" || activeSection.type === "READING" || activeSection.type === "LISTENING") && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {activeSection.mockTestQuestions.map((mq, qi) => (
-                <Box key={mq.questionId}>
-                  <Typography variant="body1" fontWeight={600} sx={{ mb: 1 }}>
-                    {qi + 1}. {mq.question.question}
+            {activeSection.type === "WRITING" && (
+              <Box>
+                {activeSection.writingPrompt && (
+                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 600 }}>
+                    {activeSection.writingPrompt}
                   </Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    {(["A", "B", "C", "D"] as OptionKey[]).map((key) => {
-                      const optionText = mq.question[`option${key}` as "optionA"];
-                      const isSelected = answers[mq.questionId] === key;
-                      return (
-                        <Box
-                          key={key}
-                          onClick={() => setAnswers((prev) => ({ ...prev, [mq.questionId]: key }))}
-                          sx={{
-                            p: 1.25,
-                            border: `1px solid ${isSelected ? "#2563EB" : "#E5E7EB"}`,
-                            bgcolor: isSelected ? "#EFF6FF" : "#fff",
-                            borderRadius: 1.5,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <Typography variant="body2">
-                            {key}. {optionText}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          )}
+                )}
+                {activeSection.minWordCount && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                    Minimum {activeSection.minWordCount} words
+                  </Typography>
+                )}
+                {writingSubmitted[activeSection.id] ? (
+                  <Typography variant="body2" color="success.main" fontWeight={600}>
+                    Submitted — awaiting grading.
+                  </Typography>
+                ) : (
+                  <>
+                    <TextField
+                      multiline
+                      rows={14}
+                      fullWidth
+                      placeholder="Write your response here..."
+                      value={essays[activeSection.id] ?? ""}
+                      onChange={(e) => setEssays((prev) => ({ ...prev, [activeSection.id]: e.target.value }))}
+                    />
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {wordCount(essays[activeSection.id] ?? "")} words
+                      </Typography>
+                      <Button variant="contained" size="small" onClick={() => handleSubmitWriting(activeSection.id)} disabled={submitWriting.isPending}>
+                        Submit Essay
+                      </Button>
+                    </Box>
+                  </>
+                )}
+              </Box>
+            )}
 
-          {/* Writing task */}
-          {activeSection.type === "WRITING" && (
-            <Box>
-              {activeSection.writingPrompt && (
-                <Typography variant="body1" sx={{ mb: 2, fontWeight: 600 }}>
-                  {activeSection.writingPrompt}
-                </Typography>
-              )}
-              {activeSection.minWordCount && (
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                  Minimum {activeSection.minWordCount} words
-                </Typography>
-              )}
-              {writingSubmitted[activeSection.id] ? (
-                <Typography variant="body2" color="success.main" fontWeight={600}>
-                  Submitted — awaiting grading.
-                </Typography>
-              ) : (
-                <>
-                  <TextField
-                    multiline
-                    rows={12}
-                    fullWidth
-                    placeholder="Write your response here..."
-                    value={essays[activeSection.id] ?? ""}
-                    onChange={(e) => setEssays((prev) => ({ ...prev, [activeSection.id]: e.target.value }))}
-                  />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      {wordCount(essays[activeSection.id] ?? "")} words
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleSubmitWriting(activeSection.id)}
-                      disabled={submitWriting.isPending}
-                    >
-                      Submit Essay
-                    </Button>
-                  </Box>
-                </>
-              )}
-            </Box>
-          )}
-
-          {/* Speaking */}
-          {activeSection.type === "SPEAKING" && (
-            <Typography variant="body2" color="text.secondary">
-              Speaking practice happens via a scheduled Live Class — check the course page for upcoming sessions.
-            </Typography>
-          )}
-        </Paper>
+            {activeSection.type === "SPEAKING" && (
+              <Typography variant="body2" color="text.secondary">
+                Speaking practice happens via a scheduled Live Class — check the course page for upcoming sessions.
+              </Typography>
+            )}
+          </Paper>
+        </Box>
       )}
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button variant="contained" color="secondary" onClick={handleFinish} disabled={submitAttempt.isPending}>
-          {submitAttempt.isPending ? "Submitting..." : "Finish Test"}
+      <Divider sx={{ my: 2 }} />
+
+      {/* Footer nav — "Next Part" moves through the exam's timed sections
+          one at a time; the final section surfaces "Finish Test" instead. */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Button disabled={activeSectionIndex === 0} onClick={() => setActiveSectionIndex((i) => i - 1)}>
+          Previous Part
         </Button>
+        {!isLastSection ? (
+          <Tooltip title="Answers are saved automatically as you go">
+            <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={() => setActiveSectionIndex((i) => i + 1)}>
+              Next Part
+            </Button>
+          </Tooltip>
+        ) : (
+          <Button variant="contained" color="secondary" onClick={handleFinish} disabled={submitAttempt.isPending}>
+            {submitAttempt.isPending ? "Submitting..." : "Finish Test"}
+          </Button>
+        )}
       </Box>
     </Box>
   );
