@@ -65,8 +65,8 @@ export function GenerateDocumentDialog({ open, onClose, caseId, clientId }: Gene
     }
   }, [open]);
 
-  const manualFields = template?.fields.filter((f) => !f.autoFillSource) ?? [];
-  const autoFields = template?.fields.filter((f) => f.autoFillSource) ?? [];
+  const manualFields = template?.fields?.filter((f) => !f.autoFillSource) ?? [];
+  const autoFields = template?.fields?.filter((f) => f.autoFillSource) ?? [];
 
   const handleGenerate = () => {
     if (!templateId) return;

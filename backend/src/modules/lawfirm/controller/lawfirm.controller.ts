@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { lawFirmService } from "../service/lawfirm.service";
-import { listLawFirmsQuerySchema, lawFirmIdParamSchema, suspendLawFirmSchema, createLawFirmSchema } from "../dto/lawfirm.dto";
+import { listLawFirmsQuerySchema, lawFirmIdParamSchema, suspendLawFirmSchema, createLawFirmSchema, updateModulesSchema } from "../dto/lawfirm.dto";
 import { AppError } from "../../../common/errors/AppError";
 
 export const lawFirmController = {
@@ -51,5 +51,19 @@ export const lawFirmController = {
     if (!req.auth) throw AppError.unauthorized();
     const result = await lawFirmService.reject(id, req.auth.userId, reason);
     res.status(200).json({ success: true, message: "Law firm registration rejected", data: result });
+  },
+
+  async updateModules(req: Request, res: Response) {
+    const { id } = lawFirmIdParamSchema.parse(req.params);
+    const { modulesEnabled, allowedCourseIds, allowedExamTypes } = updateModulesSchema.parse(req.body);
+    if (!req.auth) throw AppError.unauthorized();
+    const result = await lawFirmService.updateModules(id, modulesEnabled, req.auth.userId, allowedCourseIds, allowedExamTypes);
+    res.status(200).json({ success: true, message: "Modules updated successfully", data: result });
+  },
+
+  async remove(req: Request, res: Response) {
+    const { id } = lawFirmIdParamSchema.parse(req.params);
+    await lawFirmService.remove(id);
+    res.status(200).json({ success: true, message: "Organization permanently deleted" });
   },
 };

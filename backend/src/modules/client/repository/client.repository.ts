@@ -52,6 +52,14 @@ export const clientRepository = {
     return prisma.client.updateMany({ where: { id, lawFirmId }, data });
   },
 
+  countCases(clientId: string) {
+    return prisma.caseClient.count({ where: { clientId } });
+  },
+
+  async removeScoped(id: string, lawFirmId: string) {
+    await prisma.client.deleteMany({ where: { id, lawFirmId } });
+  },
+
   findUserByEmail(email: string) {
     return prisma.user.findUnique({ where: { email } });
   },

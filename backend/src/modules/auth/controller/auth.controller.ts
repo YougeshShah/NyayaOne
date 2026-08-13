@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import path from "path";
+import { z } from "zod";
 import { authService } from "../service/auth.service";
 import { registerLawFirmSchema, registerStudentSchema, loginSchema, refreshTokenSchema, changePasswordSchema, updateMyProfileSchema } from "../dto/auth.dto";
 import { AppError } from "../../../common/errors/AppError";
@@ -30,6 +31,21 @@ export const authController = {
     if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
     const result = await authService.listInstitutionStudents(req.auth.lawFirmId);
     res.status(200).json({ success: true, data: result });
+  },
+
+  async updateInstitutionStudent(req: Request, res: Response) {
+    if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const input = z.object({ fullName: z.string().min(2).optional(), phone: z.string().optional() }).parse(req.body);
+    const result = await authService.updateInstitutionStudent(id, req.auth.lawFirmId, input);
+    res.status(200).json({ success: true, message: "Student updated", data: result });
+  },
+
+  async removeInstitutionStudent(req: Request, res: Response) {
+    if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    await authService.removeInstitutionStudent(id, req.auth.lawFirmId);
+    res.status(200).json({ success: true, message: "Student removed" });
   },
 
   async login(req: Request, res: Response) {
@@ -70,5 +86,24 @@ export const authController = {
     const avatarUrl = path.join("avatars", req.file.filename);
     const result = await authService.updateAvatar(req.auth.userId, avatarUrl);
     res.status(200).json({ success: true, message: "Profile photo updated", data: result });
+  },
+
+  async requestPasswordReset(req: Request, res: Response) {
+    const { email, note } = z.object({ email: z.string().email(), note: z.string().optional() }).parse(req.body);
+    const result = await authService.requestPasswordReset(email, note);
+    res.status(200).json({ success: true, message: result.message });
+  },
+
+  async listPasswordResetRequests(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const result = await authService.listPasswordResetRequests(req.auth);
+    res.status(200).json({ success: true, data: result });
+  },
+
+  async resolvePasswordResetRequest(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const result = await authService.resolvePasswordResetRequest(id, req.auth.userId);
+    res.status(200).json({ success: true, message: "Marked as resolved", data: result });
   },
 };

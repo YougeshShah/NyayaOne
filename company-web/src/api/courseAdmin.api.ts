@@ -4,7 +4,7 @@ import { ApiSuccessResponse } from "../types/api.types";
 export interface Course {
   id: string;
   name: string;
-  category: "LAW" | "LANGUAGE" | "OTHER";
+  category: "LAW" | "LANGUAGE" | "GOVERNMENT_SERVICE" | "ENGINEERING" | "MEDICAL" | "OTHER";
   description: string | null;
   isActive: boolean;
   _count?: { subjects: number; liveClasses: number; subscriptions: number };

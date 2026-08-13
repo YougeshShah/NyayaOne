@@ -37,14 +37,16 @@ router.put("/", async (req: Request, res: Response) => {
 });
 
 // Simple study analytics — average score across all submitted mock test
-// attempts, plus overall topic-completion percentage across subjects.
+// attempts, plus overall topic-completion percentage across subjects, plus
+// practice-mode (MCQ Practice page) accuracy and question count.
 router.get("/analytics", async (req: Request, res: Response) => {
   if (!req.auth) throw AppError.unauthorized();
   const studentId = req.auth.userId;
 
-  const [attempts, progress] = await Promise.all([
+  const [attempts, progress, practiceAttempts] = await Promise.all([
     prisma.testAttempt.findMany({ where: { studentId, submittedAt: { not: null } } }),
     prisma.studyProgress.findMany({ where: { studentId } }),
+    prisma.mcqPracticeAttempt.findMany({ where: { studentId } }),
   ]);
 
   const avgScorePercent =
@@ -59,6 +61,11 @@ router.get("/analytics", async (req: Request, res: Response) => {
   const completedTopics = progress.reduce((sum: number, p: { topicsCompleted: number }) => sum + p.topicsCompleted, 0);
   const overallCompletionPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
+  const practiceQuestionsAnswered = practiceAttempts.length;
+  const practiceCorrectCount = practiceAttempts.filter((a: { isCorrect: boolean }) => a.isCorrect).length;
+  const practiceAccuracyPercent =
+    practiceQuestionsAnswered > 0 ? Math.round((practiceCorrectCount / practiceQuestionsAnswered) * 100) : 0;
+
   res.status(200).json({
     success: true,
     data: {
@@ -66,6 +73,8 @@ router.get("/analytics", async (req: Request, res: Response) => {
       averageScorePercent: avgScorePercent,
       overallCompletionPercent,
       subjectsInProgress: progress.length,
+      practiceQuestionsAnswered,
+      practiceAccuracyPercent,
     },
   });
 });

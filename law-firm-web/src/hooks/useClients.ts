@@ -30,3 +30,11 @@ export function useInviteClient() {
     mutationFn: ({ id, password }: { id: string; password: string }) => clientApi.invite(id, password),
   });
 }
+
+export function useDeleteClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => clientApi.remove(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+}

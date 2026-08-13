@@ -18,6 +18,7 @@ export const registerStudentSchema = z.object({
   phone: z.string().min(7).optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   interestedCourseId: z.string().uuid().optional(), // "what are you preparing for?" — used only to personalize the dashboard on first login
+  preferredExamType: z.string().optional(), // e.g. KHARIDAR — which level within a multi-level course (Loksewa) this student is preparing for
 });
 export type RegisterStudentInput = z.infer<typeof registerStudentSchema>;
 

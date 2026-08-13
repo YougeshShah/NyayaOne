@@ -41,6 +41,10 @@ export const companyStaffService = {
     return companyStaffRepository.updateStatus(id, status);
   },
 
+  async update(id: string, input: { fullName?: string; phone?: string }) {
+    return companyStaffRepository.update(id, input);
+  },
+
   async updateRole(id: string, roleId: string) {
     return companyStaffRepository.updateRole(id, roleId);
   },

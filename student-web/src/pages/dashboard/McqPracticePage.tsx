@@ -9,6 +9,7 @@ import {
   IconButton,
   CircularProgress,
   Fade,
+  TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -17,6 +18,7 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorderOutlined";
 import { useMcqList, useCheckAnswer } from "../../hooks/useCourse";
 import { useBookmarks, useToggleBookmark } from "../../hooks/useBookmark";
+import { resolveMediaUrl } from "../../api/client";
 
 type OptionKey = "A" | "B" | "C" | "D";
 
@@ -45,7 +47,15 @@ export function McqPracticePage() {
 
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<OptionKey | null>(null);
-  const [feedback, setFeedback] = useState<{ isCorrect: boolean; correctOption: string; explanation: string | null } | null>(null);
+  const [textAnswer, setTextAnswer] = useState("");
+  const [multiBlankAnswers, setMultiBlankAnswers] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState<{
+    isCorrect: boolean;
+    correctOption?: string;
+    correctAnswerText?: string;
+    blankResults?: boolean[];
+    explanation: string | null;
+  } | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
 
   const questions = data?.items ?? [];
@@ -65,8 +75,36 @@ export function McqPracticePage() {
     );
   };
 
+  const handleSubmitText = () => {
+    if (!question || feedback || !textAnswer.trim()) return;
+    checkAnswer.mutate(
+      { id: question.id, selectedOption: textAnswer.trim() },
+      {
+        onSuccess: (result) => {
+          setFeedback(result);
+          if (result.isCorrect) setCorrectCount((c) => c + 1);
+        },
+      }
+    );
+  };
+
+  const handleSubmitMultiBlank = () => {
+    if (!question || feedback || multiBlankAnswers.some((a) => !a?.trim())) return;
+    checkAnswer.mutate(
+      { id: question.id, selectedOption: multiBlankAnswers.map((a) => a.trim()).join("|") },
+      {
+        onSuccess: (result) => {
+          setFeedback(result);
+          if (result.isCorrect) setCorrectCount((c) => c + 1);
+        },
+      }
+    );
+  };
+
   const handleNext = () => {
     setSelected(null);
+    setTextAnswer("");
+    setMultiBlankAnswers([]);
     setFeedback(null);
     setIndex((i) => i + 1);
   };
@@ -129,13 +167,23 @@ export function McqPracticePage() {
   }
 
   const { passage, question: questionText } = splitPassage(question.question);
+  const isFreeTextAnswer = question.answerType === "FILL_BLANK" || question.answerType === "SHORT_ANSWER";
+  const isMultiBlank = question.answerType === "MULTI_BLANK";
 
-  const options: { key: OptionKey; text: string }[] = [
-    { key: "A", text: question.optionA },
-    { key: "B", text: question.optionB },
-    { key: "C", text: question.optionC },
-    { key: "D", text: question.optionD },
-  ];
+  // Splits "...text {{1}} more text {{2}}..." into alternating text/blank
+  // segments, so each {{N}} can be rendered as an inline input box in the
+  // natural reading flow — the real IELTS form/note/table completion pattern.
+  const multiBlankSegments = isMultiBlank ? questionText.split(/(\{\{\d+\}\})/g) : [];
+  const blankCount = multiBlankSegments.filter((s) => /^\{\{\d+\}\}$/.test(s)).length;
+
+  const options: { key: OptionKey; text: string }[] = (
+    [
+      { key: "A" as OptionKey, text: question.optionA },
+      { key: "B" as OptionKey, text: question.optionB },
+      { key: "C" as OptionKey, text: question.optionC },
+      { key: "D" as OptionKey, text: question.optionD },
+    ] as { key: OptionKey; text: string | undefined }[]
+  ).filter((o): o is { key: OptionKey; text: string } => !!o.text);
 
   return (
     <Box sx={{ maxWidth: passage ? 1000 : 640, mx: "auto" }}>
@@ -172,9 +220,41 @@ export function McqPracticePage() {
           )}
 
           <Paper elevation={0} sx={{ flex: 1, p: 3, border: "1px solid #E5E7EB", borderRadius: 3 }}>
+          {question.audioUrl && (
+            <Box sx={{ mb: 2 }}>
+              <audio controls src={resolveMediaUrl(question.audioUrl) ?? undefined} style={{ width: "100%" }} />
+            </Box>
+          )}
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
-            <Typography variant="h6" fontWeight={600} sx={{ lineHeight: 1.5, flexGrow: 1 }}>
-              {questionText}
+            <Typography variant="h6" fontWeight={600} sx={{ lineHeight: 1.8, flexGrow: 1 }}>
+              {isMultiBlank
+                ? multiBlankSegments.map((segment, i) => {
+                    const blankMatch = segment.match(/^\{\{(\d+)\}\}$/);
+                    if (!blankMatch) return <span key={i}>{segment}</span>;
+                    const blankIndex = parseInt(blankMatch[1], 10) - 1;
+                    const isBlankWrong = feedback && feedback.blankResults && feedback.blankResults[blankIndex] === false;
+                    const isBlankRight = feedback && feedback.blankResults && feedback.blankResults[blankIndex] === true;
+                    return (
+                      <TextField
+                        key={i}
+                        size="small"
+                        variant="standard"
+                        value={multiBlankAnswers[blankIndex] ?? ""}
+                        disabled={!!feedback}
+                        onChange={(e) => {
+                          const next = [...multiBlankAnswers];
+                          next[blankIndex] = e.target.value;
+                          setMultiBlankAnswers(next);
+                        }}
+                        sx={{
+                          width: 130,
+                          mx: 0.5,
+                          "& .MuiInput-underline:before": { borderBottomColor: isBlankWrong ? "#DC2626" : isBlankRight ? "#16A34A" : undefined },
+                        }}
+                      />
+                    );
+                  })
+                : questionText}
             </Typography>
             <IconButton
               size="small"
@@ -190,7 +270,52 @@ export function McqPracticePage() {
           </Box>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            {options.map((opt) => {
+            {isMultiBlank ? (
+              <>
+                {!feedback && (
+                  <Button
+                    variant="contained"
+                    onClick={handleSubmitMultiBlank}
+                    disabled={multiBlankAnswers.length < blankCount || multiBlankAnswers.some((a) => !a?.trim()) || checkAnswer.isPending}
+                    sx={{ alignSelf: "flex-start" }}
+                  >
+                    Submit Answers
+                  </Button>
+                )}
+                {feedback && !feedback.isCorrect && feedback.correctAnswerText && (
+                  <Typography variant="body2" color="success.main" fontWeight={600}>
+                    Correct answers: {feedback.correctAnswerText.split("|").join(", ")}
+                  </Typography>
+                )}
+              </>
+            ) : isFreeTextAnswer ? (
+              <>
+                <TextField
+                  fullWidth
+                  placeholder="Type your answer..."
+                  value={textAnswer}
+                  onChange={(e) => setTextAnswer(e.target.value)}
+                  disabled={!!feedback}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmitText()}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderColor: feedback ? (feedback.isCorrect ? "#16A34A" : "#DC2626") : undefined,
+                    },
+                  }}
+                />
+                {!feedback && (
+                  <Button variant="contained" onClick={handleSubmitText} disabled={!textAnswer.trim() || checkAnswer.isPending}>
+                    Submit Answer
+                  </Button>
+                )}
+                {feedback && !feedback.isCorrect && feedback.correctAnswerText && (
+                  <Typography variant="body2" color="success.main" fontWeight={600}>
+                    Correct answer: {feedback.correctAnswerText}
+                  </Typography>
+                )}
+              </>
+            ) : (
+              options.map((opt) => {
               const isSelected = selected === opt.key;
               const isCorrectOption = feedback && opt.key === feedback.correctOption;
               const isWrongSelected = feedback && isSelected && !feedback.isCorrect;
@@ -249,7 +374,8 @@ export function McqPracticePage() {
                   {isWrongSelected && <CancelIcon sx={{ color: "#DC2626" }} />}
                 </Box>
               );
-            })}
+            })
+            )}
           </Box>
 
           {feedback && (

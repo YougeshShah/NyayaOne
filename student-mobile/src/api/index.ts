@@ -7,7 +7,7 @@ interface ApiSuccess<T> {
 }
 
 export const authApi = {
-  async register(payload: { fullName: string; email: string; phone?: string; password: string }) {
+  async register(payload: { fullName: string; email: string; phone?: string; password: string; interestedCourseId?: string }) {
     const { data } = await apiClient.post<ApiSuccess<any>>("/auth/register/student", payload);
     return data.data;
   },
@@ -18,11 +18,19 @@ export const authApi = {
     );
     return data.data;
   },
+  async requestPasswordReset(email: string) {
+    const { data } = await apiClient.post<{ success: boolean; message: string }>("/auth/request-password-reset", { email });
+    return data;
+  },
 };
 
 export const courseApi = {
   async list() {
     const { data } = await apiClient.get<ApiSuccess<Course[]>>("/courses");
+    return data.data;
+  },
+  async listPublic() {
+    const { data } = await apiClient.get<ApiSuccess<{ id: string; name: string; category: string }[]>>("/courses/public");
     return data.data;
   },
   async mySubscriptions() {
@@ -43,11 +51,14 @@ export const mcqApi = {
     const { data } = await apiClient.get<ApiSuccess<{ items: McqQuestion[] }>>("/mcq", { params: { courseId, subjectId } });
     return data.data.items;
   },
-  async checkAnswer(id: string, selectedOption: "A" | "B" | "C" | "D") {
-    const { data } = await apiClient.post<ApiSuccess<{ isCorrect: boolean; correctOption: string; explanation: string | null }>>(
-      `/mcq/${id}/check-answer`,
-      { selectedOption }
-    );
+  async myMistakes(courseId?: string) {
+    const { data } = await apiClient.get<ApiSuccess<McqQuestion[]>>("/mcq/my-mistakes", { params: { courseId } });
+    return data.data;
+  },
+  async checkAnswer(id: string, selectedOption: string) {
+    const { data } = await apiClient.post<
+      ApiSuccess<{ isCorrect: boolean; correctOption?: string; correctAnswerText?: string; blankResults?: boolean[]; explanation: string | null }>
+    >(`/mcq/${id}/check-answer`, { selectedOption });
     return data.data;
   },
 };
@@ -68,10 +79,20 @@ export const mockTestApi = {
     return data.data;
   },
   async submit(attemptId: string, answers: { questionId: string; selectedOption: string | null }[]) {
-    const { data } = await apiClient.post<ApiSuccess<{ score: number; totalQuestions: number; percentage: number }>>(
-      `/mock-tests/attempts/${attemptId}/submit`,
-      { answers }
-    );
+    const { data } = await apiClient.post<
+      ApiSuccess<{
+        score: number;
+        totalQuestions: number;
+        percentage: number;
+        marksScored?: number;
+        totalMarks?: number;
+        negativeMarkingApplied?: boolean;
+      }>
+    >(`/mock-tests/attempts/${attemptId}/submit`, { answers });
+    return data.data;
+  },
+  async submitWriting(sectionId: string, attemptId: string, essayText: string) {
+    const { data } = await apiClient.post<ApiSuccess<any>>("/writing-submissions", { sectionId, attemptId, essayText });
     return data.data;
   },
 };
@@ -88,8 +109,8 @@ export const liveClassApi = {
 };
 
 export const libraryApi = {
-  async list(courseId: string): Promise<{ items: LibraryResource[] }> {
-    const { data } = await apiClient.get<ApiSuccess<{ items: LibraryResource[] }>>("/library", { params: { courseId } });
+  async list(courseId: string, search?: string): Promise<{ items: LibraryResource[] }> {
+    const { data } = await apiClient.get<ApiSuccess<{ items: LibraryResource[] }>>("/library", { params: { courseId, search } });
     return data.data;
   },
 };
@@ -119,6 +140,30 @@ export const profileApi = {
   },
   async changePassword(currentPassword: string, newPassword: string) {
     const { data } = await apiClient.patch<ApiSuccess<{ message: string }>>("/auth/change-password", { currentPassword, newPassword });
+    return data.data;
+  },
+};
+
+export const notificationApi = {
+  async myNotifications(page = 1, limit = 30) {
+    const { data } = await apiClient.get<
+      ApiSuccess<{ items: any[]; total: number; unreadCount: number }>
+    >("/notifications/my", { params: { page, limit } });
+    return data.data;
+  },
+  async markRead(id: string) {
+    const { data } = await apiClient.patch<ApiSuccess<{ message: string }>>(`/notifications/my/${id}/read`);
+    return data.data;
+  },
+};
+
+export const flashcardApi = {
+  async list(courseId: string, subjectId?: string) {
+    const { data } = await apiClient.get<ApiSuccess<any[]>>("/flashcards", { params: { courseId, subjectId } });
+    return data.data;
+  },
+  async submitFamiliarity(id: string, familiarity: "AGAIN" | "GOOD" | "EASY") {
+    const { data } = await apiClient.post<ApiSuccess<any>>(`/flashcards/${id}/familiarity`, { familiarity });
     return data.data;
   },
 };

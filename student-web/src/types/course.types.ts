@@ -25,16 +25,23 @@ export interface Subject {
 export interface McqQuestion {
   id: string;
   question: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  // correctOption/explanation are intentionally absent — backend strips
-  // them for STUDENT accounts until an attempt is submitted.
+  answerType?: "MCQ" | "TRUE_FALSE_NOT_GIVEN" | "YES_NO_NOT_GIVEN" | "FILL_BLANK" | "SHORT_ANSWER" | "MULTI_BLANK";
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  // Absent on normal /mcq list/getById responses for STUDENT accounts —
+  // only present on /mcq/my-mistakes, which is explicitly a review/answer
+  // endpoint and shows the correct answer on purpose.
+  correctOption?: string;
+  correctAnswerText?: string;
+  explanation?: string | null;
+  subject?: { name: string };
   courseId: string;
   subjectId: string;
   isFreeDemo: boolean;
   difficulty: "EASY" | "MEDIUM" | "HARD";
+  audioUrl?: string | null;
 }
 
 export interface MockTest {
@@ -58,5 +65,8 @@ export interface TestAttemptResult {
   score: number;
   totalQuestions: number;
   percentage: number;
+  marksScored?: number;
+  totalMarks?: number;
+  negativeMarkingApplied?: boolean;
   submittedAt: string;
 }

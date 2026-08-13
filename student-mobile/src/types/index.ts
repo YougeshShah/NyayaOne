@@ -23,13 +23,20 @@ export interface CourseSubscription {
 export interface McqQuestion {
   id: string;
   question: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
+  answerType?: "MCQ" | "TRUE_FALSE_NOT_GIVEN" | "YES_NO_NOT_GIVEN" | "FILL_BLANK" | "SHORT_ANSWER" | "MULTI_BLANK";
+  optionA?: string | null;
+  optionB?: string | null;
+  optionC?: string | null;
+  optionD?: string | null;
   courseId: string;
   subjectId: string;
   isFreeDemo: boolean;
+  audioUrl?: string | null;
+  // Only present on /mcq/my-mistakes — a review/answer-reveal endpoint.
+  correctOption?: string;
+  correctAnswerText?: string;
+  explanation?: string | null;
+  subject?: { name: string };
 }
 
 export interface Subject {
@@ -44,6 +51,7 @@ export interface MockTest {
   courseId: string;
   durationMinutes: number;
   isFreeDemo: boolean;
+  negativeMarkingPercent?: number;
   _count?: { questions: number };
 }
 

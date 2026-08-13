@@ -22,3 +22,10 @@ export interface CreateFirmUserPayload {
   barRegistrationNo?: string;
   specialization?: string;
 }
+
+export interface UpdateFirmUserPayload {
+  fullName?: string;
+  phone?: string;
+  barRegistrationNo?: string;
+  specialization?: string;
+}

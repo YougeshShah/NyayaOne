@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { z } from "zod";
 import { companyStaffService } from "../service/company-staff.service";
 import {
   createCompanyStaffSchema,
@@ -31,6 +32,13 @@ export const companyStaffController = {
     const { status } = updateCompanyStaffStatusSchema.parse(req.body);
     const result = await companyStaffService.updateStatus(id, status);
     res.status(200).json({ success: true, message: `Status updated to ${status}`, data: result });
+  },
+
+  async update(req: Request, res: Response) {
+    const { id } = companyStaffIdParamSchema.parse(req.params);
+    const input = z.object({ fullName: z.string().min(2).optional(), phone: z.string().optional() }).parse(req.body);
+    const result = await companyStaffService.update(id, input);
+    res.status(200).json({ success: true, message: "Staff details updated", data: result });
   },
 
   async updateRole(req: Request, res: Response) {

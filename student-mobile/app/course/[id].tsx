@@ -42,6 +42,10 @@ export default function CourseDetailScreen() {
             <Ionicons name="library-outline" size={22} color="#2563EB" />
             <Text style={styles.quickActionLabel}>Library</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push(`/flashcards?courseId=${id}`)}>
+            <Ionicons name="albums-outline" size={22} color="#2563EB" />
+            <Text style={styles.quickActionLabel}>Flashcards</Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionTitle}>Practice by Subject</Text>
@@ -67,6 +71,7 @@ export default function CourseDetailScreen() {
                 <Text style={styles.subjectName}>{test.title}</Text>
                 <Text style={styles.metaText}>
                   {test.durationMinutes} min · {test._count?.questions ?? 0} questions
+                  {!!test.negativeMarkingPercent && ` · ⚠️ ${test.negativeMarkingPercent}% negative marking`}
                 </Text>
               </View>
               {locked ? <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" /> : <Text style={styles.subjectCta}>Start →</Text>}

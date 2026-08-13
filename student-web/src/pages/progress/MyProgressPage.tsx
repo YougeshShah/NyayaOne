@@ -52,6 +52,12 @@ export function MyProgressPage() {
           <Grid item xs={6} sm={3}>
             <StatCard label="Average Score" value={`${analytics?.averageScorePercent ?? 0}%`} icon={<TrendingUpIcon />} />
           </Grid>
+          <Grid item xs={6} sm={3}>
+            <StatCard label="Practice Questions" value={analytics?.practiceQuestionsAnswered ?? 0} icon={<QuizIcon />} />
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <StatCard label="Practice Accuracy" value={`${analytics?.practiceAccuracyPercent ?? 0}%`} icon={<TrendingUpIcon />} />
+          </Grid>
         </Grid>
       )}
 

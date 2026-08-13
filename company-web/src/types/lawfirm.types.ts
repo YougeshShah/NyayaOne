@@ -6,6 +6,9 @@ export interface LawFirmListItem {
   email: string | null;
   status: LawFirmStatus;
   registrationNo: string | null;
+  tenantType?: "LAW_FIRM" | "EDUCATION" | "OTHER";
+  modulesEnabled?: string[];
+  allowedCourseIds?: string[];
   stats: {
     totalUsers: number;
     totalClients: number;

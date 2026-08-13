@@ -11,6 +11,7 @@ router.use(authenticate, authorize("COMPANY"));
 router.get("/", companyStaffController.list);
 router.get("/roles", companyStaffController.listRoles);
 router.post("/", requirePermission("user.manage"), companyStaffController.create);
+router.patch("/:id", requirePermission("user.manage"), companyStaffController.update);
 router.patch("/:id/status", requirePermission("user.manage"), companyStaffController.updateStatus);
 router.patch("/:id/role", requirePermission("user.manage"), companyStaffController.updateRole);
 

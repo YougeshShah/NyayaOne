@@ -44,7 +44,13 @@ export function LoginPage() {
           </Button>
         </Box>
 
-        <Typography variant="body2" textAlign="center" sx={{ mt: 3 }}>
+        <Typography variant="body2" textAlign="center" sx={{ mt: 2 }}>
+          <MuiLink component={Link} to="/forgot-password">
+            Forgot password?
+          </MuiLink>
+        </Typography>
+
+        <Typography variant="body2" textAlign="center" sx={{ mt: 1 }}>
           New here?{" "}
           <MuiLink component={Link} to="/register">
             Create an account

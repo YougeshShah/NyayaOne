@@ -84,13 +84,17 @@ export const libraryService = {
   async createInstitutionResource(
     input: { title: string; subjectId: string; content: string; isFreeDemo: boolean },
     publishedBy: string,
-    hostLawFirmId: string
+    hostLawFirmId: string,
+    fileUrl?: string,
+    absoluteFilePath?: string
   ) {
+    const extractedText = absoluteFilePath ? await extractPdfText(absoluteFilePath) : undefined;
     return libraryRepository.create({
       title: input.title,
       type: "NOTE",
       subjectId: input.subjectId,
-      content: input.content,
+      content: input.content || extractedText || "",
+      fileUrl,
       isFreeDemo: input.isFreeDemo,
       publishedBy,
       hostLawFirmId,

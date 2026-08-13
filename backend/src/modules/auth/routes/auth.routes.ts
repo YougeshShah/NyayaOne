@@ -21,6 +21,18 @@ router.patch("/me", authenticate, authController.updateMyProfile);
 // Institution (Education tenant) admin adds their own students directly.
 router.post("/institution-students", authenticate, authorize("LAW_FIRM_ADMIN"), authController.addInstitutionStudent);
 router.get("/institution-students", authenticate, authorize("LAW_FIRM_ADMIN"), authController.listInstitutionStudents);
+router.patch("/institution-students/:id", authenticate, authorize("LAW_FIRM_ADMIN"), authController.updateInstitutionStudent);
+router.delete("/institution-students/:id", authenticate, authorize("LAW_FIRM_ADMIN"), authController.removeInstitutionStudent);
+
+// Public — no login required, since the whole point is the person can't
+// log in. No email service is configured yet, so this just queues a
+// request an admin can see and act on manually (see resolvePasswordResetRequest).
+router.post("/request-password-reset", authController.requestPasswordReset);
+
+// Admin-facing — Company sees every request; institution/law firm admins
+// see only requests matching an email in their own organization.
+router.get("/password-reset-requests", authenticate, authorize("COMPANY", "LAW_FIRM_ADMIN"), authController.listPasswordResetRequests);
+router.patch("/password-reset-requests/:id/resolve", authenticate, authorize("COMPANY", "LAW_FIRM_ADMIN"), authController.resolvePasswordResetRequest);
 
 const avatarMiddleware = (req: Request, res: Response, next: NextFunction) => {
   avatarUpload.single("avatar")(req, res, (err) => {

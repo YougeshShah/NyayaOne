@@ -14,9 +14,15 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/webp",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "audio/mpeg", // .mp3
+  "audio/mp4", // .m4a
+  "audio/wav",
+  "audio/x-wav",
+  "audio/ogg",
 ]);
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_AUDIO_SIZE_BYTES = 30 * 1024 * 1024; // 30MB — audio clips run longer than a document page
 
 const storage = multer.diskStorage({
   destination: (req: Request, file, cb) => {
@@ -65,6 +71,26 @@ export const libraryUpload = multer({
   storage: libraryStorage,
   fileFilter,
   limits: { fileSize: MAX_FILE_SIZE_BYTES },
+});
+
+// Listening question audio clips — own folder, bigger size cap than
+// documents since a full listening-section audio clip runs several minutes.
+const audioStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "audio");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}-${uuidv4()}${ext}`);
+  },
+});
+
+export const audioUpload = multer({
+  storage: audioStorage,
+  fileFilter,
+  limits: { fileSize: MAX_AUDIO_SIZE_BYTES },
 });
 
 // Profile photos — small, image-only, own folder so they're easy to serve/cache separately.

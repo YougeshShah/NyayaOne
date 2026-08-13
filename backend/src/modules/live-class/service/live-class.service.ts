@@ -114,4 +114,18 @@ export const liveClassService = {
     await this.getById(id);
     return liveClassRepository.setStatus(id, "CANCELLED");
   },
+
+  async update(id: string, input: { title?: string; description?: string; scheduledAt?: string; durationMinutes?: number; isFreeDemo?: boolean }) {
+    const cls = await this.getById(id);
+    if (cls.status !== "SCHEDULED") {
+      throw AppError.badRequest(`Only a SCHEDULED class can be edited. Current status: ${cls.status}`);
+    }
+    return liveClassRepository.update(id, {
+      title: input.title,
+      description: input.description,
+      scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : undefined,
+      durationMinutes: input.durationMinutes,
+      isFreeDemo: input.isFreeDemo,
+    });
+  },
 };

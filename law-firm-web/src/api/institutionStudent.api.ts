@@ -14,6 +14,8 @@ export interface AddStudentPayload {
   email: string;
   phone?: string;
   password: string;
+  interestedCourseId: string;
+  preferredExamType?: string;
 }
 
 export const institutionStudentApi = {
@@ -25,5 +27,14 @@ export const institutionStudentApi = {
   async add(payload: AddStudentPayload) {
     const { data } = await apiClient.post<ApiSuccessResponse<any>>("/auth/institution-students", payload);
     return data.data;
+  },
+
+  async update(id: string, payload: { fullName?: string; phone?: string }) {
+    const { data } = await apiClient.patch<ApiSuccessResponse<InstitutionStudent>>(`/auth/institution-students/${id}`, payload);
+    return data.data;
+  },
+
+  async remove(id: string) {
+    await apiClient.delete(`/auth/institution-students/${id}`);
   },
 };

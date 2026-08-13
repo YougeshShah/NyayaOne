@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
-import { Alert, Box, Button, Paper, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Paper, TextField, Typography, Link as MuiLink } from "@mui/material";
+import { Link } from "react-router-dom";
 import styles from "./LoginPage.module.css";
 import { useLogin } from "../../hooks/useAuth";
 import { LoginPayload } from "../../types/auth.types";
@@ -62,6 +63,11 @@ export function LoginPage() {
             {loginMutation.isPending ? "Signing in..." : "Sign In"}
           </Button>
         </Box>
+        <Typography variant="body2" textAlign="center" sx={{ mt: 2 }}>
+          <MuiLink component={Link} to="/forgot-password">
+            Forgot password?
+          </MuiLink>
+        </Typography>
       </Paper>
     </div>
   );

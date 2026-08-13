@@ -1,0 +1,11 @@
+-- CreateEnum
+CREATE TYPE "McqAnswerType" AS ENUM ('MCQ', 'TRUE_FALSE_NOT_GIVEN', 'YES_NO_NOT_GIVEN', 'FILL_BLANK', 'SHORT_ANSWER');
+
+-- AlterTable
+ALTER TABLE "McqQuestion" ADD COLUMN     "answerType" "McqAnswerType" NOT NULL DEFAULT 'MCQ',
+ADD COLUMN     "correctAnswerText" TEXT,
+ALTER COLUMN "optionA" DROP NOT NULL,
+ALTER COLUMN "optionB" DROP NOT NULL,
+ALTER COLUMN "optionC" DROP NOT NULL,
+ALTER COLUMN "optionD" DROP NOT NULL,
+ALTER COLUMN "correctOption" DROP NOT NULL;

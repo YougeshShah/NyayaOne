@@ -12,6 +12,7 @@ router.get("/", clientController.list);
 router.get("/:id", clientController.getById);
 router.post("/", clientController.create);
 router.patch("/:id", clientController.update);
+router.delete("/:id", authorize("LAW_FIRM_ADMIN"), clientController.remove);
 router.post("/:id/invite", authorize("LAW_FIRM_ADMIN", "LAWYER"), clientController.invite);
 
 export default router;

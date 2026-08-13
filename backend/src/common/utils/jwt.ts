@@ -6,6 +6,7 @@ export interface AccessTokenPayload {
   accountType: string;
   lawFirmId: string | null;
   roleId: string | null;
+  preferredExamType?: string | null;
 }
 
 export function signAccessToken(payload: AccessTokenPayload): string {

@@ -30,6 +30,12 @@ router.delete("/:id", authenticate, authorize("COMPANY"), requirePermission("lib
 // an institute can publish their own notes/materials without needing
 // TrailBlaze's document-management tooling. Scoped to their own tenant
 // automatically (see controller).
-router.post("/institution", authenticate, authorize("LAW_FIRM_ADMIN"), libraryController.createInstitutionResource);
+router.post(
+  "/institution",
+  authenticate,
+  authorize("LAW_FIRM_ADMIN"),
+  uploadMiddleware,
+  libraryController.createInstitutionResource
+);
 
 export default router;

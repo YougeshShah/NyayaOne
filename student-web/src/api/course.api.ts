@@ -40,11 +40,18 @@ export const mcqApi = {
     return data.data;
   },
 
-  async checkAnswer(id: string, selectedOption: "A" | "B" | "C" | "D"): Promise<{ isCorrect: boolean; correctOption: string; explanation: string | null }> {
-    const { data } = await apiClient.post<ApiSuccessResponse<{ isCorrect: boolean; correctOption: string; explanation: string | null }>>(
-      `/mcq/${id}/check-answer`,
-      { selectedOption }
-    );
+  async myMistakes(courseId?: string): Promise<McqQuestion[]> {
+    const { data } = await apiClient.get<ApiSuccessResponse<McqQuestion[]>>("/mcq/my-mistakes", { params: { courseId } });
+    return data.data;
+  },
+
+  async checkAnswer(
+    id: string,
+    selectedOption: string
+  ): Promise<{ isCorrect: boolean; correctOption?: string; correctAnswerText?: string; blankResults?: boolean[]; explanation: string | null }> {
+    const { data } = await apiClient.post<
+      ApiSuccessResponse<{ isCorrect: boolean; correctOption?: string; correctAnswerText?: string; blankResults?: boolean[]; explanation: string | null }>
+    >(`/mcq/${id}/check-answer`, { selectedOption });
     return data.data;
   },
 };

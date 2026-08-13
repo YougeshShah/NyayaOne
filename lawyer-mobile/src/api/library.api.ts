@@ -14,6 +14,7 @@ export interface LibraryResource {
   category: string | null;
   isRepealed: boolean;
   fileUrl: string | null;
+  content: string | null;
   isDownloadable: boolean;
 }
 

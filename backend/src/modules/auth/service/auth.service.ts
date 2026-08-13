@@ -2,7 +2,9 @@ import { AppError } from "../../../common/errors/AppError";
 import { hashPassword, comparePassword } from "../../../common/utils/password";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../../common/utils/jwt";
 import { authRepository } from "../repository/auth.repository";
+import { prisma } from "../../../database/prisma";
 import { RegisterLawFirmInput, RegisterStudentInput, LoginInput } from "../dto/auth.dto";
+import { courseService } from "../../course/service/course.service";
 
 const REFRESH_TOKEN_TTL_DAYS = 7;
 
@@ -54,7 +56,16 @@ export const authService = {
       passwordHash,
       addedByLawFirmId,
       preferredCourseId: input.interestedCourseId,
+      preferredExamType: input.preferredExamType,
     });
+
+    // An institution adding their own student is enrolling them in a
+    // specific sector (IELTS / Law / etc.) — unlike self-registration where
+    // interestedCourseId is just a stated preference, here it grants real
+    // access immediately, since the institution is vouching for this student.
+    if (addedByLawFirmId && input.interestedCourseId) {
+      await courseService.grantSubscription(student.id, input.interestedCourseId);
+    }
 
     return {
       student: { id: student.id, fullName: student.fullName, email: student.email },
@@ -64,6 +75,17 @@ export const authService = {
 
   async listInstitutionStudents(lawFirmId: string) {
     return authRepository.findStudentsByLawFirmId(lawFirmId);
+  },
+
+  async updateInstitutionStudent(id: string, lawFirmId: string, input: { fullName?: string; phone?: string }) {
+    const result = await authRepository.updateStudentScoped(id, lawFirmId, input);
+    if (result.count === 0) throw AppError.notFound("Student not found in your institution");
+    return authRepository.findStudentById(id);
+  },
+
+  async removeInstitutionStudent(id: string, lawFirmId: string) {
+    const result = await authRepository.removeStudentScoped(id, lawFirmId);
+    if (result.count === 0) throw AppError.notFound("Student not found in your institution");
   },
 
   async login(input: LoginInput) {
@@ -81,9 +103,13 @@ export const authService = {
       throw AppError.forbidden("Your account has been suspended. Contact support.");
     }
 
-    // Law firm tenants must be ACTIVE (approved by Company) before staff can log in,
-    // except the law firm admin, who needs to be able to check status.
-    if (user.lawFirm && user.lawFirm.status !== "ACTIVE" && user.accountType !== "LAW_FIRM_ADMIN") {
+    // Law firm tenants must be ACTIVE (approved by Company) before their own
+    // STAFF can log in — this does NOT apply to students or clients, who are
+    // being taught/served by the institution, not employed by it. Blocking
+    // them just because the institution's own approval status lapsed would
+    // cut off people who did nothing wrong.
+    const staffAccountTypes = ["LAWYER", "STAFF"];
+    if (user.lawFirm && user.lawFirm.status !== "ACTIVE" && staffAccountTypes.includes(user.accountType)) {
       throw AppError.forbidden("Your law firm account is not yet active");
     }
 
@@ -92,6 +118,7 @@ export const authService = {
       accountType: user.accountType,
       lawFirmId: user.lawFirmId,
       roleId: user.roleId,
+      preferredExamType: (user as any).preferredExamType ?? null,
     });
 
     const refreshToken = signRefreshToken(user.id);
@@ -109,6 +136,9 @@ export const authService = {
         lawFirmId: user.lawFirmId,
         lawFirmStatus: user.lawFirm?.status ?? null,
         modulesEnabled: user.lawFirm?.modulesEnabled ?? null,
+        tenantType: user.lawFirm?.tenantType ?? null,
+        tenantName: user.lawFirm?.name ?? null,
+        allowedCourseIds: user.lawFirm?.allowedCourseIds ?? null,
         // "Super Admin" carries every permission implicitly (see requirePermission
         // middleware) — null here means "unrestricted", not "no access".
         roleName: user.role?.name ?? null,
@@ -144,6 +174,7 @@ export const authService = {
       accountType: user.accountType,
       lawFirmId: user.lawFirmId,
       roleId: user.roleId,
+      preferredExamType: (user as any).preferredExamType ?? null,
     });
 
     return { accessToken };
@@ -208,5 +239,33 @@ export const authService = {
 
   async updateAvatar(userId: string, avatarUrl: string) {
     return authRepository.updateAvatar(userId, avatarUrl);
+  },
+
+  async requestPasswordReset(email: string, note?: string) {
+    await prisma.passwordResetRequest.create({ data: { email, note } });
+    // Always return the same message regardless of whether the email
+    // exists — avoids leaking which emails are registered.
+    return { message: "If an account exists for this email, your institution/admin has been notified." };
+  },
+
+  async listPasswordResetRequests(auth: { accountType: string; lawFirmId: string | null }) {
+    if (auth.accountType === "COMPANY") {
+      return prisma.passwordResetRequest.findMany({ where: { status: "PENDING" }, orderBy: { createdAt: "desc" } });
+    }
+    // Institution/Law Firm admin — only requests from emails belonging to their own organization's users.
+    if (!auth.lawFirmId) return [];
+    const orgUsers = await prisma.user.findMany({ where: { lawFirmId: auth.lawFirmId }, select: { email: true } });
+    const orgEmails = orgUsers.map((u) => u.email);
+    return prisma.passwordResetRequest.findMany({
+      where: { status: "PENDING", email: { in: orgEmails } },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async resolvePasswordResetRequest(id: string, resolvedBy: string) {
+    return prisma.passwordResetRequest.update({
+      where: { id },
+      data: { status: "RESOLVED", resolvedAt: new Date(), resolvedBy },
+    });
   },
 };

@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Box,
   Button,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -25,8 +27,9 @@ import { useForm, Controller } from "react-hook-form";
 import { useLawFirms, useLawFirmActions } from "../../hooks/useLawFirms";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { PasswordField } from "../../components/common/PasswordField";
-import { LawFirmStatus } from "../../types/lawfirm.types";
+import { LawFirmStatus, LawFirmListItem } from "../../types/lawfirm.types";
 import { CreateLawFirmPayload } from "../../api/lawfirm.api";
+import { courseApi, subjectApi } from "../../api/courseAdmin.api";
 
 const STATUS_OPTIONS: (LawFirmStatus | "ALL")[] = ["ALL", "PENDING", "ACTIVE", "SUSPENDED", "REJECTED"];
 
@@ -34,6 +37,7 @@ export function LawFirmsPage() {
   const [status, setStatus] = useState<LawFirmStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editModulesFirm, setEditModulesFirm] = useState<LawFirmListItem | null>(null);
 
   const { data, isLoading } = useLawFirms({
     status: status === "ALL" ? undefined : status,
@@ -41,10 +45,42 @@ export function LawFirmsPage() {
     page: 1,
   });
 
-  const { approve, suspend, activate, reject, create } = useLawFirmActions();
-  const { register, handleSubmit, reset, control, formState } = useForm<CreateLawFirmPayload>({
+  const { approve, suspend, activate, reject, create, updateModules, remove } = useLawFirmActions();
+
+  const handleDelete = (firm: { id: string; name: string; stats: { totalUsers: number; totalCases: number } }) => {
+    const warning =
+      `Permanently delete "${firm.name}"?\n\n` +
+      `This will delete ${firm.stats.totalUsers} staff account(s), ${firm.stats.totalCases} case(s), and all its ` +
+      `question bank / mock test content. Students keep their own login but lose access to this organization's content.\n\n` +
+      `This CANNOT be undone. Type the organization name to confirm.`;
+    const typed = window.prompt(warning);
+    if (typed === firm.name) {
+      remove.mutate(firm.id);
+    } else if (typed !== null) {
+      window.alert("Name didn't match — deletion cancelled.");
+    }
+  };
+  const { register, handleSubmit, reset, control, watch, setValue, formState } = useForm<CreateLawFirmPayload>({
     defaultValues: { tenantType: "LAW_FIRM", modulesEnabled: ["case_management"] },
   });
+  const watchedModules = watch("modulesEnabled");
+  const watchedTenantType = watch("tenantType");
+  const { data: createCourses } = useQuery({ queryKey: ["all-courses"], queryFn: () => courseApi.list() });
+
+  // Switching Organization Type should switch the sensible default module too —
+  // otherwise picking "Education" while "Case Management" stays checked (the
+  // Law Firm default) means Sector Access never appears unless the admin
+  // notices and manually fixes the checkboxes themselves.
+  useEffect(() => {
+    if (watchedTenantType === "EDUCATION") {
+      setValue("modulesEnabled", ["student_platform"]);
+    } else if (watchedTenantType === "LAW_FIRM") {
+      setValue("modulesEnabled", ["case_management"]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedTenantType]);
+
+  const { data: createSubjectsPreview } = useQuery({ queryKey: ["all-subjects-preview"], queryFn: () => subjectApi.list() });
 
   const onCreate = (values: CreateLawFirmPayload) => {
     create.mutate(values, {
@@ -100,6 +136,7 @@ export function LawFirmsPage() {
               <TableCell>Status</TableCell>
               <TableCell align="center">Users</TableCell>
               <TableCell align="center">Cases</TableCell>
+              <TableCell>Sector Access</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -129,6 +166,22 @@ export function LawFirmsPage() {
                 </TableCell>
                 <TableCell align="center">{firm.stats.totalUsers}</TableCell>
                 <TableCell align="center">{firm.stats.totalCases}</TableCell>
+                <TableCell>
+                  {firm.allowedCourseIds && firm.allowedCourseIds.length > 0 ? (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {firm.allowedCourseIds.map((id) => {
+                        const course = createCourses?.find((c: any) => c.id === id);
+                        return course ? <Chip key={id} label={course.name.replace(" Preparation", "").replace(" Entrance", "")} size="small" /> : null;
+                      })}
+                    </Box>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      {firm.modulesEnabled?.includes("student_platform") || firm.modulesEnabled?.includes("live_classes")
+                        ? "All courses (unrestricted)"
+                        : "—"}
+                    </Typography>
+                  )}
+                </TableCell>
                 <TableCell align="right">
                   {firm.status === "PENDING" && (
                     <>
@@ -152,10 +205,16 @@ export function LawFirmsPage() {
                     </Button>
                   )}
                   {firm.status === "SUSPENDED" && (
-                    <Button size="small" variant="contained" onClick={() => activate.mutate(firm.id)} disabled={activate.isPending}>
+                    <Button size="small" variant="contained" onClick={() => activate.mutate(firm.id)} disabled={activate.isPending} sx={{ mr: 1 }}>
                       Reactivate
                     </Button>
                   )}
+                  <Button size="small" variant="outlined" onClick={() => setEditModulesFirm(firm)} sx={{ mr: 1 }}>
+                    Edit Modules
+                  </Button>
+                  <Button size="small" color="error" variant="outlined" onClick={() => handleDelete(firm)} disabled={remove.isPending}>
+                    Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -242,6 +301,50 @@ export function LawFirmsPage() {
                 These modules only matter for institutes that want their own admin dashboard.
               </Typography>
             </Box>
+
+            {(watchedModules?.includes("student_platform") || watchedModules?.includes("live_classes")) && (
+              <Box sx={{ pt: 1, borderTop: "1px solid #e5e7eb" }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+                  Sector Access
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                  Which course(s) this institute is allowed to teach — leave none checked to allow every course
+                  (not recommended for a single-sector institute).
+                </Typography>
+                <Controller
+                  name="allowedCourseIds"
+                  control={control}
+                  render={({ field }) => (
+                    <Box sx={{ display: "flex", flexDirection: "column" }}>
+                      {createCourses?.map((c: any) => {
+                        const courseSubjects = createSubjectsPreview?.filter((s: any) => s.courseId === c.id) ?? [];
+                        return (
+                          <Box key={c.id} sx={{ mb: 0.5 }}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={field.value?.includes(c.id) ?? false}
+                                  onChange={(e) => {
+                                    const current = field.value ?? [];
+                                    field.onChange(e.target.checked ? [...current, c.id] : current.filter((id: string) => id !== c.id));
+                                  }}
+                                />
+                              }
+                              label={c.name}
+                            />
+                            {courseSubjects.length > 0 && (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", ml: 4, mt: -0.5 }}>
+                                Unlocks: {courseSubjects.map((s: any) => s.name).join(", ")}
+                              </Typography>
+                            )}
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  )}
+                />
+              </Box>
+            )}
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -251,6 +354,147 @@ export function LawFirmsPage() {
           </DialogActions>
         </Box>
       </Dialog>
+
+      {editModulesFirm && (
+        <EditModulesDialog
+          firm={editModulesFirm}
+          onClose={() => setEditModulesFirm(null)}
+          onSave={(modulesEnabled, allowedCourseIds, allowedExamTypes) =>
+            updateModules.mutate(
+              { id: editModulesFirm.id, modulesEnabled, allowedCourseIds, allowedExamTypes } as any,
+              { onSuccess: () => setEditModulesFirm(null) }
+            )
+          }
+          saving={updateModules.isPending}
+        />
+      )}
     </Box>
+  );
+}
+
+const MODULE_OPTIONS = [
+  { key: "case_management", label: "Case Management — cases, hearings, clients (Law Firm admin tools)" },
+  { key: "student_platform", label: "Student Management — add/manage this institute's own students, view their progress" },
+  { key: "live_classes", label: "Live Classes — schedule and host classes for this institute's students" },
+  { key: "document_templates", label: "Document Templates — generate legal documents" },
+];
+
+function EditModulesDialog({
+  firm,
+  onClose,
+  onSave,
+  saving,
+}: {
+  firm: LawFirmListItem;
+  onClose: () => void;
+  onSave: (modulesEnabled: string[], allowedCourseIds: string[], allowedExamTypes: string[]) => void;
+  saving: boolean;
+}) {
+  const [selected, setSelected] = useState<string[]>(firm.modulesEnabled ?? ["case_management"]);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>(firm.allowedCourseIds ?? []);
+  const [selectedExamTypes, setSelectedExamTypes] = useState<string[]>((firm as any).allowedExamTypes ?? []);
+  const { data: courses } = useQuery({ queryKey: ["all-courses"], queryFn: () => courseApi.list() });
+  const { data: allSubjects } = useQuery({ queryKey: ["all-subjects-preview"], queryFn: () => subjectApi.list() });
+  const showCourseAccess = selected.includes("student_platform") || selected.includes("live_classes");
+
+  return (
+    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Edit Modules — {firm.name}</DialogTitle>
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+          Controls what this organization's own admin dashboard shows. Changing this here updates it
+          immediately — no need to recreate the organization.
+        </Typography>
+        {MODULE_OPTIONS.map((mod) => (
+          <FormControlLabel
+            key={mod.key}
+            control={
+              <Checkbox
+                checked={selected.includes(mod.key)}
+                onChange={(e) =>
+                  setSelected((prev) => (e.target.checked ? [...prev, mod.key] : prev.filter((k) => k !== mod.key)))
+                }
+              />
+            }
+            label={mod.label}
+          />
+        ))}
+
+        {showCourseAccess && (
+          <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #e5e7eb" }}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+              Sector Access
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+              Which course(s) this institute is allowed to teach — students, questions, notes, and live classes
+              they create will only ever apply to these. Leave none checked to allow every course (not
+              recommended for a single-sector institute).
+            </Typography>
+            {courses?.map((c: any) => {
+              const courseSubjects = allSubjects?.filter((s: any) => s.courseId === c.id) ?? [];
+              return (
+                <Box key={c.id} sx={{ mb: 0.5 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedCourses.includes(c.id)}
+                        onChange={(e) =>
+                          setSelectedCourses((prev) => (e.target.checked ? [...prev, c.id] : prev.filter((id) => id !== c.id)))
+                        }
+                      />
+                    }
+                    label={c.name}
+                  />
+                  {courseSubjects.length > 0 && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", ml: 4, mt: -0.5 }}>
+                      Unlocks: {courseSubjects.map((s: any) => s.name).join(", ")}
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })}
+
+            {selectedCourses.some((id) => courses?.find((c: any) => c.id === id)?.name?.toLowerCase().includes("loksewa")) && (
+              <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #e5e7eb" }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+                  Loksewa Position Level Access
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                  Which level(s) this institute coaches for — leave none checked to allow all levels.
+                </Typography>
+                {[
+                  { key: "KHARIDAR", label: "Kharidar (Non-Gazetted 3rd Class)" },
+                  { key: "NAYAB_SUBBA", label: "Nayab Subba (Non-Gazetted 1st Class)" },
+                  { key: "SECTION_OFFICER", label: "Section Officer / Sakha Adhikrit (Gazetted 3rd Class)" },
+                ].map((level) => (
+                  <FormControlLabel
+                    key={level.key}
+                    control={
+                      <Checkbox
+                        checked={selectedExamTypes.includes(level.key)}
+                        onChange={(e) =>
+                          setSelectedExamTypes((prev) => (e.target.checked ? [...prev, level.key] : prev.filter((k) => k !== level.key)))
+                        }
+                      />
+                    }
+                    label={level.label}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="contained"
+          disabled={saving || selected.length === 0}
+          onClick={() => onSave(selected, selectedCourses, selectedExamTypes)}
+        >
+          {saving ? "Saving..." : "Save Modules"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

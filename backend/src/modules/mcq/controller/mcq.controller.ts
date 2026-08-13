@@ -20,6 +20,7 @@ export const mcqController = {
     const result = await mcqService.list(query, studentId, {
       studentLawFirmId: studentId ? req.auth.lawFirmId : undefined,
       forLawFirmId: isInstitutionStaff && query.courseId ? req.auth.lawFirmId ?? undefined : undefined,
+      studentExamType: studentId ? req.auth.preferredExamType ?? null : undefined,
     });
     res.status(200).json({ success: true, data: result });
   },
@@ -38,7 +39,7 @@ export const mcqController = {
   async checkAnswer(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const { id } = mcqIdParamSchema.parse(req.params);
-    const { selectedOption } = z.object({ selectedOption: z.enum(["A", "B", "C", "D"]) }).parse(req.body);
+    const { selectedOption } = z.object({ selectedOption: z.string().min(1) }).parse(req.body);
     const studentId = req.auth.accountType === "STUDENT" ? req.auth.userId : null;
     const result = await mcqService.checkAnswer(id, selectedOption, studentId);
     res.status(200).json({ success: true, data: result });
@@ -47,7 +48,8 @@ export const mcqController = {
   async create(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const input = createMcqSchema.parse(req.body);
-    const result = await mcqService.create(input, req.auth.userId);
+    const audioUrl = req.file ? `/uploads/audio/${req.file.filename}` : input.audioUrl || undefined;
+    const result = await mcqService.create({ ...input, audioUrl }, req.auth.userId);
     res.status(201).json({ success: true, data: result });
   },
 
@@ -56,31 +58,48 @@ export const mcqController = {
     const input = z
       .object({
         question: z.string().min(3),
-        optionA: z.string().min(1),
-        optionB: z.string().min(1),
-        optionC: z.string().min(1),
-        optionD: z.string().min(1),
-        correctOption: z.enum(["A", "B", "C", "D"]),
+        answerType: z.enum(["MCQ", "TRUE_FALSE_NOT_GIVEN", "YES_NO_NOT_GIVEN", "FILL_BLANK", "SHORT_ANSWER", "MULTI_BLANK"]).optional(),
+        optionA: z.string().optional(),
+        optionB: z.string().optional(),
+        optionC: z.string().optional(),
+        optionD: z.string().optional(),
+        correctOption: z.enum(["A", "B", "C", "D"]).optional(),
+        correctAnswerText: z.string().optional(),
         explanation: z.string().optional(),
         subjectId: z.string().uuid(),
         courseId: z.string().uuid(),
         isFreeDemo: z.coerce.boolean().default(false),
+        sectionType: z.enum(["LISTENING", "READING", "WRITING", "SPEAKING"]).optional(),
+        audioUrl: z.string().url().optional().or(z.literal("")),
       })
       .parse(req.body);
-    const result = await mcqService.createInstitution(input, req.auth.userId, req.auth.lawFirmId);
+    // File upload takes priority over a pasted URL — an institution admin
+    // uploads their own recorded/downloaded audio clip rather than needing
+    // to host it externally first.
+    const audioUrl = req.file ? `/uploads/audio/${req.file.filename}` : input.audioUrl || undefined;
+    const result = await mcqService.createInstitution({ ...input, audioUrl }, req.auth.userId, req.auth.lawFirmId);
     res.status(201).json({ success: true, data: result });
   },
 
   async update(req: Request, res: Response) {
     const { id } = mcqIdParamSchema.parse(req.params);
     const input = updateMcqSchema.parse(req.body);
-    const result = await mcqService.update(id, input);
+    const requesterLawFirmId = req.auth?.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined;
+    const result = await mcqService.update(id, input, requesterLawFirmId);
     res.status(200).json({ success: true, data: result });
   },
 
   async remove(req: Request, res: Response) {
     const { id } = mcqIdParamSchema.parse(req.params);
-    await mcqService.remove(id);
+    const requesterLawFirmId = req.auth?.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined;
+    await mcqService.remove(id, requesterLawFirmId);
     res.status(200).json({ success: true, message: "Question deleted" });
+  },
+
+  async myMistakes(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const courseId = typeof req.query.courseId === "string" ? req.query.courseId : undefined;
+    const result = await mcqService.myMistakes(req.auth.userId, courseId);
+    res.status(200).json({ success: true, data: result });
   },
 };

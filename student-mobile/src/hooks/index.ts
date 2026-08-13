@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authApi, courseApi, subjectApi, mcqApi, mockTestApi, liveClassApi, libraryApi, bookmarkApi, chatbotApi, profileApi } from "../api";
+import { authApi, courseApi, subjectApi, mcqApi, mockTestApi, liveClassApi, libraryApi, bookmarkApi, chatbotApi, profileApi, notificationApi, flashcardApi } from "../api";
 import { useAuthStore } from "../store/authStore";
 import { ChatMessage } from "../types";
 
@@ -11,12 +11,20 @@ export function useLogin() {
   });
 }
 
+export function useRequestPasswordReset() {
+  return useMutation({ mutationFn: (email: string) => authApi.requestPasswordReset(email) });
+}
+
 export function useRegister() {
   return useMutation({ mutationFn: authApi.register });
 }
 
 export function useCourses() {
   return useQuery({ queryKey: ["courses"], queryFn: courseApi.list });
+}
+
+export function usePublicCourses() {
+  return useQuery({ queryKey: ["public-courses"], queryFn: courseApi.listPublic });
 }
 
 export function useMySubscriptions() {
@@ -31,9 +39,13 @@ export function useMcqList(courseId: string, subjectId?: string) {
   return useQuery({ queryKey: ["mcq", courseId, subjectId], queryFn: () => mcqApi.list(courseId, subjectId), enabled: !!courseId });
 }
 
+export function useMyMistakes(courseId?: string) {
+  return useQuery({ queryKey: ["my-mistakes", courseId], queryFn: () => mcqApi.myMistakes(courseId) });
+}
+
 export function useCheckAnswer() {
   return useMutation({
-    mutationFn: ({ id, selectedOption }: { id: string; selectedOption: "A" | "B" | "C" | "D" }) => mcqApi.checkAnswer(id, selectedOption),
+    mutationFn: ({ id, selectedOption }: { id: string; selectedOption: string }) => mcqApi.checkAnswer(id, selectedOption),
   });
 }
 
@@ -56,6 +68,13 @@ export function useSubmitAttempt() {
   });
 }
 
+export function useSubmitWriting() {
+  return useMutation({
+    mutationFn: ({ sectionId, attemptId, essayText }: { sectionId: string; attemptId: string; essayText: string }) =>
+      mockTestApi.submitWriting(sectionId, attemptId, essayText),
+  });
+}
+
 export function useLiveClasses(courseId: string) {
   return useQuery({ queryKey: ["live-classes", courseId], queryFn: () => liveClassApi.list(courseId), enabled: !!courseId });
 }
@@ -64,8 +83,8 @@ export function useJoinLiveClass() {
   return useMutation({ mutationFn: (id: string) => liveClassApi.join(id) });
 }
 
-export function useLibrary(courseId: string) {
-  return useQuery({ queryKey: ["library", courseId], queryFn: () => libraryApi.list(courseId), enabled: !!courseId });
+export function useLibrary(courseId: string, search?: string) {
+  return useQuery({ queryKey: ["library", courseId, search], queryFn: () => libraryApi.list(courseId, search), enabled: !!courseId });
 }
 
 export function useBookmarks() {
@@ -100,5 +119,33 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
       profileApi.changePassword(currentPassword, newPassword),
+  });
+}
+
+export function useMyNotifications() {
+  return useQuery({
+    queryKey: ["my-notifications"],
+    queryFn: () => notificationApi.myNotifications(),
+    refetchInterval: 60000,
+  });
+}
+
+export function useMarkNotificationRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationApi.markRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["my-notifications"] }),
+  });
+}
+
+export function useFlashcards(courseId: string) {
+  return useQuery({ queryKey: ["flashcards", courseId], queryFn: () => flashcardApi.list(courseId), enabled: !!courseId });
+}
+
+export function useSubmitFamiliarity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, familiarity }: { id: string; familiarity: "AGAIN" | "GOOD" | "EASY" }) => flashcardApi.submitFamiliarity(id, familiarity),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["flashcards"] }),
   });
 }

@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   MenuItem,
   Paper,
   Table,
@@ -19,19 +20,23 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import ContentCopyIcon from "@mui/icons-material/ContentCopyOutlined";
 import { useForm } from "react-hook-form";
 import { useCompanyStaff, useRoles, useCompanyStaffActions } from "../../hooks/useCompanyStaff";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { PasswordField } from "../../components/common/PasswordField";
-import { CreateCompanyStaffPayload } from "../../types/companyStaff.types";
+import { CreateCompanyStaffPayload, CompanyStaff } from "../../types/companyStaff.types";
 
 export function CompanyStaffPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<CompanyStaff | null>(null);
+  const [resetResult, setResetResult] = useState<{ name: string; password: string } | null>(null);
   const { data, isLoading } = useCompanyStaff({ page: 1 });
   const { data: roles } = useRoles();
-  const { create, updateStatus, updateRole } = useCompanyStaffActions();
+  const { create, updateStatus, update, resetPassword, updateRole } = useCompanyStaffActions();
 
   const { register, handleSubmit, reset, formState } = useForm<CreateCompanyStaffPayload>();
+  const editForm = useForm<{ fullName: string; phone?: string }>();
 
   const onCreate = (values: CreateCompanyStaffPayload) => {
     create.mutate(values, {
@@ -39,6 +44,22 @@ export function CompanyStaffPage() {
         reset();
         setDialogOpen(false);
       },
+    });
+  };
+
+  const openEdit = (s: CompanyStaff) => {
+    setEditingStaff(s);
+    editForm.reset({ fullName: s.fullName, phone: s.phone ?? "" });
+  };
+
+  const onEditSubmit = (values: { fullName: string; phone?: string }) => {
+    if (!editingStaff) return;
+    update.mutate({ id: editingStaff.id, payload: values }, { onSuccess: () => setEditingStaff(null) });
+  };
+
+  const handleResetPassword = (id: string, name: string) => {
+    resetPassword.mutate(id, {
+      onSuccess: (data) => setResetResult({ name, password: data.newPassword }),
     });
   };
 
@@ -109,14 +130,20 @@ export function CompanyStaffPage() {
                 </TableCell>
                 <TableCell align="right">
                   {s.status === "ACTIVE" ? (
-                    <Button size="small" color="error" variant="outlined" onClick={() => updateStatus.mutate({ id: s.id, status: "SUSPENDED" })}>
+                    <Button size="small" color="error" variant="outlined" onClick={() => updateStatus.mutate({ id: s.id, status: "SUSPENDED" })} sx={{ mr: 1 }}>
                       Suspend
                     </Button>
                   ) : (
-                    <Button size="small" variant="contained" onClick={() => updateStatus.mutate({ id: s.id, status: "ACTIVE" })}>
+                    <Button size="small" variant="contained" onClick={() => updateStatus.mutate({ id: s.id, status: "ACTIVE" })} sx={{ mr: 1 }}>
                       Activate
                     </Button>
                   )}
+                  <Button size="small" variant="outlined" onClick={() => openEdit(s)} sx={{ mr: 1 }}>
+                    Edit
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => handleResetPassword(s.id, s.fullName)} disabled={resetPassword.isPending}>
+                    Reset Password
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -166,6 +193,58 @@ export function CompanyStaffPage() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog open={!!editingStaff} onClose={() => setEditingStaff(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Edit Staff — {editingStaff?.fullName}</DialogTitle>
+        <Box component="form" onSubmit={editForm.handleSubmit(onEditSubmit)}>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField label="Full Name" required fullWidth {...editForm.register("fullName", { required: true })} />
+            <TextField label="Phone" fullWidth {...editForm.register("phone")} />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setEditingStaff(null)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={update.isPending}>
+              {update.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={!!resetResult} onClose={() => setResetResult(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Password Reset</DialogTitle>
+        <DialogContent>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            New password generated for <strong>{resetResult?.name}</strong>.
+          </Alert>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+            Share this password with them directly — it won't be shown again.
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              bgcolor: "#F3F4F6",
+              borderRadius: 1,
+              px: 2,
+              py: 1.5,
+              fontFamily: "monospace",
+              fontSize: 18,
+              fontWeight: 700,
+            }}
+          >
+            {resetResult?.password}
+            <IconButton size="small" onClick={() => resetResult && navigator.clipboard.writeText(resetResult.password)} sx={{ ml: "auto" }}>
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button variant="contained" onClick={() => setResetResult(null)}>
+            Done
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

@@ -17,9 +17,25 @@ import EditNoteIcon from "@mui/icons-material/EditNoteOutlined";
 import MicIcon from "@mui/icons-material/MicNoneOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useMockTestDetail, useStartAttempt, useSubmitAttempt, useSubmitWriting } from "../../hooks/useCourse";
+import { TestAttemptResult } from "../../types/course.types";
 import { TestSection } from "../../api/testSection.api";
 
 type OptionKey = "A" | "B" | "C" | "D";
+
+// Question Bank content embeds the passage/transcript directly inside each
+// question's text (e.g. "Reading Passage: \"...\"\n\n<question>"), a
+// convention built for the flat Practice page. When those same questions
+// get randomly pulled into a sectioned Mock Test, the section's own
+// dedicated passageText field is left empty — this extracts the passage
+// from the first question so it can still be shown once in the side
+// panel, and strips it from each individual question so it isn't repeated.
+function splitEmbeddedPassage(text: string): { passage: string | null; question: string } {
+  const match = text.match(/^(?:Reading Passage|Listening Transcript):\s*"([\s\S]*?)"\s*\n\n([\s\S]*)$/);
+  if (match) {
+    return { passage: match[1], question: match[2] };
+  }
+  return { passage: null, question: text };
+}
 
 const sectionMeta: Record<string, { icon: JSX.Element; label: string }> = {
   READING: { icon: <MenuBookIcon fontSize="small" />, label: "Reading" },
@@ -43,8 +59,42 @@ export function SectionedTestTakePage() {
   const [answers, setAnswers] = useState<Record<string, OptionKey | null>>({});
   const [essays, setEssays] = useState<Record<string, string>>({});
   const [writingSubmitted, setWritingSubmitted] = useState<Record<string, boolean>>({});
-  const [result, setResult] = useState<{ score: number; totalQuestions: number; percentage: number } | null>(null);
+  const [result, setResult] = useState<TestAttemptResult | null>(null);
   const questionsPaneRef = useRef<HTMLDivElement>(null);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (test?.durationMinutes && attemptId && !result) {
+      setSecondsLeft(test.durationMinutes * 60);
+    }
+  }, [test?.durationMinutes, attemptId, result]);
+
+  useEffect(() => {
+    if (secondsLeft === null || result) return;
+    if (secondsLeft <= 0) {
+      // Time's up — auto-submit whatever has been answered so far, just
+      // like a real exam ending the session at the bell.
+      if (attemptId) {
+        submitAttempt.mutate(
+          { attemptId, answers: Object.entries(answers).map(([questionId, selectedOption]) => ({ questionId, selectedOption })) },
+          { onSuccess: (data) => setResult(data) }
+        );
+      }
+      return;
+    }
+    const timer = setTimeout(() => setSecondsLeft((s) => (s !== null ? s - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secondsLeft, result]);
+
+  const formattedTimeLeft =
+    secondsLeft !== null
+      ? `${Math.floor(secondsLeft / 3600)
+          .toString()
+          .padStart(2, "0")}:${Math.floor((secondsLeft % 3600) / 60)
+          .toString()
+          .padStart(2, "0")}:${(secondsLeft % 60).toString().padStart(2, "0")}`
+      : null;
 
   useEffect(() => {
     if (test && !attemptId && !startAttempt.isPending) {
@@ -81,6 +131,15 @@ export function SectionedTestTakePage() {
   const isLastSection = activeSectionIndex === effectiveSections.length - 1;
   const hasSidePanel = activeSection?.type === "READING" || activeSection?.type === "LISTENING";
 
+  // Fall back to extracting the passage/transcript from the first question
+  // when the section itself has no dedicated passageText set (see
+  // splitEmbeddedPassage comment above for why this happens).
+  const derivedPassage =
+    activeSection && !activeSection.passageText && activeSection.mockTestQuestions.length > 0
+      ? splitEmbeddedPassage(activeSection.mockTestQuestions[0].question.question).passage
+      : null;
+  const displayPassageText = activeSection?.passageText || derivedPassage;
+
   const handleSubmitWriting = (sectionId: string) => {
     if (!attemptId) return;
     submitWriting.mutate(
@@ -111,8 +170,13 @@ export function SectionedTestTakePage() {
         </Typography>
         <Paper elevation={0} sx={{ p: 3, border: "1px solid #E5E7EB", borderRadius: 3, my: 3 }}>
           <Typography variant="body2" color="text.secondary">
-            MCQ sections: {result.score}/{result.totalQuestions} ({result.percentage}%)
+            MCQ sections: {result.score}/{result.totalQuestions} correct ({result.percentage}%)
           </Typography>
+          {result.negativeMarkingApplied && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Marks (with negative marking): {result.marksScored} / {result.totalMarks}
+            </Typography>
+          )}
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
             Writing sections are graded manually — check back later for your band score.
           </Typography>
@@ -131,7 +195,7 @@ export function SectionedTestTakePage() {
       {activeSection.mockTestQuestions.map((mq, qi) => (
         <Box key={mq.questionId}>
           <Typography variant="body1" fontWeight={600} sx={{ mb: 1 }}>
-            {qi + 1}. {mq.question.question}
+            {qi + 1}. {splitEmbeddedPassage(mq.question.question).question}
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {(["A", "B", "C", "D"] as OptionKey[]).map((key) => {
@@ -172,6 +236,13 @@ export function SectionedTestTakePage() {
         <Typography variant="h6" fontWeight={700} sx={{ mr: 2 }}>
           {test.title}
         </Typography>
+        {formattedTimeLeft && (
+          <Chip
+            label={`⏱ ${formattedTimeLeft}`}
+            color={secondsLeft !== null && secondsLeft < 300 ? "error" : "default"}
+            sx={{ mr: 2, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}
+          />
+        )}
         {effectiveSections.map((s, i) => {
           const meta = sectionMeta[s.type] ?? sectionMeta.MCQ;
           const isDone = s.type === "WRITING" ? writingSubmitted[s.id] : s.mockTestQuestions.every((q) => answers[q.questionId]);
@@ -213,9 +284,9 @@ export function SectionedTestTakePage() {
               label={sectionMeta[activeSection.type].label}
               sx={{ mb: 2 }}
             />
-            {activeSection.type === "READING" && activeSection.passageText && (
+            {activeSection.type === "READING" && displayPassageText && (
               <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>
-                {activeSection.passageText}
+                {displayPassageText}
               </Typography>
             )}
             {activeSection.type === "LISTENING" && activeSection.audioUrl && (
@@ -281,9 +352,26 @@ export function SectionedTestTakePage() {
             )}
 
             {activeSection.type === "SPEAKING" && (
-              <Typography variant="body2" color="text.secondary">
-                Speaking practice happens via a scheduled Live Class — check the course page for upcoming sessions.
-              </Typography>
+              <Box>
+                {activeSection.writingPrompt ? (
+                  <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>
+                    {activeSection.writingPrompt}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No topic set for this Speaking part yet.
+                  </Typography>
+                )}
+                {activeSection.timeLimitMinutes && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
+                    Suggested time: {activeSection.timeLimitMinutes} minute{activeSection.timeLimitMinutes !== 1 ? "s" : ""}
+                  </Typography>
+                )}
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                  Speaking is assessed live — practice this topic out loud, or check the course page for a scheduled
+                  Speaking session with an instructor.
+                </Typography>
+              </Box>
             )}
           </Paper>
         </Box>

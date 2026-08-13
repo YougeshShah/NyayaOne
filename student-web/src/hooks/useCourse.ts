@@ -22,9 +22,13 @@ export function useMcqList(params: { courseId?: string; subjectId?: string; page
   return useQuery({ queryKey: ["mcq", params], queryFn: () => mcqApi.list(params), enabled: !!params.courseId });
 }
 
+export function useMyMistakes(courseId?: string) {
+  return useQuery({ queryKey: ["my-mistakes", courseId], queryFn: () => mcqApi.myMistakes(courseId) });
+}
+
 export function useCheckAnswer() {
   return useMutation({
-    mutationFn: ({ id, selectedOption }: { id: string; selectedOption: "A" | "B" | "C" | "D" }) => mcqApi.checkAnswer(id, selectedOption),
+    mutationFn: ({ id, selectedOption }: { id: string; selectedOption: string }) => mcqApi.checkAnswer(id, selectedOption),
   });
 }
 

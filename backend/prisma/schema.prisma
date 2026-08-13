@@ -94,6 +94,8 @@ enum NotificationAudience {
   ALL_STUDENTS
   ALL_CLIENTS
   INDIVIDUAL_USER
+  INSTITUTION_STUDENTS
+  ALL_INSTITUTION_ADMINS
 }
 
 enum LibraryResourceType {
@@ -190,6 +192,19 @@ model LawFirm {
 
   tenantType      TenantType    @default(LAW_FIRM)
   modulesEnabled  String[]      @default(["case_management"]) // e.g. ["case_management"], ["student_platform", "live_classes"]
+  // For Education tenants — which course(s)/sectors this institution is
+  // allowed to teach (e.g. only IELTS, or only Law). An institute that only
+  // teaches IELTS should never see or add content to the Law course, even
+  // though student_platform is enabled. Empty array = no restriction yet
+  // set by Company (institution setup incomplete).
+  allowedCourseIds String[]     @default([])
+
+  // Finer-grained than allowedCourseIds — restricts WHICH exam level/track
+  // within an allowed course this institution may access (e.g. a Loksewa
+  // institute that only coaches for Kharidar shouldn't see Section Officer
+  // content). Empty array = no restriction (all levels within their
+  // allowed courses).
+  allowedExamTypes String[]     @default([])
 
   users           User[]
   clients         Client[]
@@ -234,6 +249,13 @@ model User {
   // for?"), used purely to personalize the dashboard on first login.
   // Nullable and unenforced — never gates access to any course.
   preferredCourseId String?
+
+  // For institution-added students of a multi-level course (e.g. Loksewa):
+  // which specific level/track (Kharidar, Nayab Subba, Section Officer,
+  // etc.) this student is preparing for. Nullable — self-registered
+  // students and institutions that don't need level-splitting leave this
+  // unset, seeing all content within their allowed courses as before.
+  preferredExamType String?
 
   // Lawyer-specific professional details
   barRegistrationNo String?
@@ -649,6 +671,12 @@ enum ExamType {
   BAR_COUNCIL // Nepal Bar Council
   JUDICIAL_SERVICE
   PUBLIC_SERVICE_COMMISSION
+  // Loksewa (Nepal civil service) is not one exam — it's several distinct
+  // position levels, each with its own syllabus depth. These track which
+  // level a question/mock test is prepared for.
+  KHARIDAR // Non-Gazetted Third Class
+  NAYAB_SUBBA // Non-Gazetted First Class
+  SECTION_OFFICER // Gazetted Third Class (Sakha Adhikrit)
 }
 
 enum Difficulty {
@@ -670,6 +698,7 @@ model Subject {
   mockTests        MockTest[]
   studyProgress    StudyProgress[]
   liveClasses      LiveClass[]
+  flashcards       Flashcard[]
 
   @@unique([name, courseId])
   @@index([courseId])
@@ -679,11 +708,21 @@ model Subject {
 model McqQuestion {
   id            String     @id @default(uuid())
   question      String
-  optionA       String
-  optionB       String
-  optionC       String
-  optionD       String
-  correctOption String // "A" | "B" | "C" | "D"
+  // For MCQ / TRUE_FALSE_NOT_GIVEN / YES_NO_NOT_GIVEN: options hold the
+  // answer choices (True/False/Not Given is stored as optionA/B/C so it
+  // reuses the exact same select-one UI as a normal MCQ). Null for
+  // FILL_BLANK / SHORT_ANSWER, which are graded against correctAnswerText
+  // instead.
+  optionA       String?
+  optionB       String?
+  optionC       String?
+  optionD       String?
+  correctOption String? // "A" | "B" | "C" | "D" — used by MCQ/TRUE_FALSE_NOT_GIVEN/YES_NO_NOT_GIVEN
+  // For FILL_BLANK / SHORT_ANSWER — the expected text answer. Grading does
+  // a case-insensitive, trimmed match (IELTS itself accepts minor spelling
+  // variants, but exact-ish matching is the practical starting point here).
+  correctAnswerText String?
+  answerType    McqAnswerType @default(MCQ)
   explanation   String?
 
   subjectId  String
@@ -730,6 +769,14 @@ model MockTest {
   durationMinutes Int      @default(60)
   isPublished     Boolean  @default(false)
   isFreeDemo      Boolean  @default(false)
+  // 0 = no negative marking (Law/IELTS practice style). IOE uses ~10,
+  // Medical (MECEE-BL) uses 25 — meaning 25% of a question's own marks are
+  // deducted for each wrong (attempted) answer, matching the real exams.
+  negativeMarkingPercent Int @default(0)
+  // Set when an Institution creates this test (their own students only see
+  // it, plus Company's platform-wide tests) — null means Company-created,
+  // visible platform-wide. Mirrors McqQuestion.hostLawFirmId.
+  hostLawFirmId String?
 
   createdBy String
   createdAt DateTime @default(now())
@@ -753,6 +800,10 @@ model MockTestQuestion {
   sectionId  String? // set when this test uses IELTS-style sections; null for flat Law-style tests
   section    TestSection? @relation(fields: [sectionId], references: [id])
   order      Int
+  // Point value of THIS question within THIS specific mock test — lets one
+  // test mix question weights (e.g. IOE's Part A = 1 mark, Part B = 2 marks)
+  // rather than every question being worth the same.
+  marks      Int @default(1)
 
   @@unique([mockTestId, questionId])
   @@index([mockTestId])
@@ -822,6 +873,9 @@ model StudyProgress {
 enum CourseCategory {
   LAW
   LANGUAGE // IELTS, TOEFL, etc.
+  GOVERNMENT_SERVICE // Loksewa (Nepal civil service exam prep)
+  ENGINEERING // IOE entrance and related engineering exam prep
+  MEDICAL // MBBS/Medical entrance and related exam prep
   OTHER // future-proofing for whatever comes next
 }
 
@@ -840,6 +894,7 @@ model Course {
   mcqQuestions  McqQuestion[]
   mockTests     MockTest[]
   paymentTransactions PaymentTransaction[]
+  flashcards    Flashcard[]
 
   @@index([category])
 }
@@ -923,6 +978,23 @@ enum SectionType {
   LISTENING // audio + questions
   WRITING // essay/task prompt, graded manually or later by AI
   SPEAKING // prompt + live class booking or recorded audio submission
+}
+
+// The answer PATTERN for a question — separate from sectionType (which is
+// which skill it belongs to). A Reading question can be MCQ, True/False/Not
+// Given, or Fill Blank; a Listening question can be MCQ or Fill Blank, etc.
+enum McqAnswerType {
+  MCQ // standard 4-option multiple choice
+  TRUE_FALSE_NOT_GIVEN // Reading — stored as a 3-option select (A=True, B=False, C=Not Given)
+  YES_NO_NOT_GIVEN // Reading — stored as a 3-option select (A=Yes, B=No, C=Not Given)
+  FILL_BLANK // free-text answer, graded against correctAnswerText
+  SHORT_ANSWER // free-text answer, graded against correctAnswerText
+  // Real IELTS Form/Note/Table/Summary/Sentence Completion pattern — ONE
+  // shared passage/form/table with MULTIPLE numbered blanks (___1___,
+  // ___2___, etc — matched via {{1}}, {{2}} markers in `question`), each
+  // graded against its own answer in `correctAnswerText` (pipe-separated,
+  // in blank order — e.g. "9am|8pm|student ID").
+  MULTI_BLANK
 }
 
 // A MockTest can now be composed of multiple typed sections — this is what
@@ -1025,3 +1097,100 @@ model PaymentTransaction {
   @@index([courseId])
   @@index([status])
 }
+
+// ------------------------------------------------------------
+// PASSWORD RESET REQUEST — no email service configured yet, so a student
+// (or anyone) who forgets their password submits a request here. The
+// admin who manages them (Company, or their own institution/law firm
+// admin) sees it and manually resets + relays the new password.
+// ------------------------------------------------------------
+
+enum PasswordResetRequestStatus {
+  PENDING
+  RESOLVED
+}
+
+model PasswordResetRequest {
+  id        String                      @id @default(uuid())
+  email     String
+  note      String? // optional context from the requester
+  status    PasswordResetRequestStatus  @default(PENDING)
+  createdAt DateTime                    @default(now())
+  resolvedAt DateTime?
+  resolvedBy String? // User id of the admin who handled it
+
+  @@index([email])
+  @@index([status])
+}
+
+// ------------------------------------------------------------
+// MCQ PRACTICE ATTEMPT — records every individual question a student
+// answers in Practice mode (outside a formal Mock Test), so "My Progress"
+// can reflect practice activity, not just mock test scores. Upserted per
+// student+question so re-answering the same question updates the record
+// rather than piling up duplicates.
+// ------------------------------------------------------------
+
+model McqPracticeAttempt {
+  id         String   @id @default(uuid())
+  studentId  String
+  questionId String
+  isCorrect  Boolean
+  answeredAt DateTime @default(now())
+
+  @@unique([studentId, questionId])
+  @@index([studentId])
+}
+
+// ------------------------------------------------------------
+// FLASHCARD — a generic "term + definition" reference card, reused across
+// every sector rather than being IELTS-vocabulary-specific: IELTS gets
+// vocabulary words, Law gets legal terms, IOE/Medical get formulas or key
+// facts, Loksewa gets GK facts. The label shown to students is decided by
+// the frontend based on the course, not by this model.
+// ------------------------------------------------------------
+
+model Flashcard {
+  id            String   @id @default(uuid())
+  term          String // the word / legal term / formula name / fact title
+  definition    String // meaning / legal definition / formula or explanation
+  example       String? // optional example sentence or worked example
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
+  subjectId     String?
+  subject       Subject? @relation(fields: [subjectId], references: [id])
+  difficulty    Difficulty @default(MEDIUM)
+  hostLawFirmId String? // set when an institution created it — their own students only, mirrors McqQuestion
+
+  createdBy String
+  createdAt DateTime @default(now())
+
+  progress FlashcardProgress[]
+
+  @@index([courseId])
+  @@index([hostLawFirmId])
+}
+
+// Tracks each student's own familiarity with a card — a simple three-state
+// "again / good / easy" self-rating rather than a full spaced-repetition
+// scheduler, so cards the student already knows well surface less often
+// without needing a background job to recompute review dates.
+enum FlashcardFamiliarity {
+  AGAIN
+  GOOD
+  EASY
+}
+
+model FlashcardProgress {
+  id          String               @id @default(uuid())
+  studentId   String
+  flashcardId String
+  flashcard   Flashcard            @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  familiarity FlashcardFamiliarity
+  reviewedAt  DateTime             @default(now())
+
+  @@unique([studentId, flashcardId])
+  @@index([studentId])
+}
+
+

@@ -4,11 +4,13 @@ import { ApiSuccessResponse, PaginatedResult } from "../types/api.types";
 export interface McqQuestionAdmin {
   id: string;
   question: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOption: "A" | "B" | "C" | "D";
+  answerType?: "MCQ" | "TRUE_FALSE_NOT_GIVEN" | "YES_NO_NOT_GIVEN" | "FILL_BLANK" | "SHORT_ANSWER" | "MULTI_BLANK";
+  optionA: string | null;
+  optionB: string | null;
+  optionC: string | null;
+  optionD: string | null;
+  correctOption: "A" | "B" | "C" | "D" | null;
+  correctAnswerText: string | null;
   explanation: string | null;
   courseId: string;
   subjectId: string;
@@ -20,17 +22,21 @@ export interface McqQuestionAdmin {
 
 export interface CreateMcqPayload {
   question: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOption: "A" | "B" | "C" | "D";
+  answerType?: "MCQ" | "TRUE_FALSE_NOT_GIVEN" | "YES_NO_NOT_GIVEN" | "FILL_BLANK" | "SHORT_ANSWER" | "MULTI_BLANK";
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  correctOption?: "A" | "B" | "C" | "D";
+  correctAnswerText?: string;
   explanation?: string;
   courseId: string;
   subjectId: string;
   examType?: string;
   difficulty: "EASY" | "MEDIUM" | "HARD";
   isFreeDemo: boolean;
+  sectionType?: string;
+  audioUrl?: string;
 }
 
 export const mcqAdminApi = {
@@ -39,8 +45,17 @@ export const mcqAdminApi = {
     return data.data;
   },
 
-  async create(payload: CreateMcqPayload) {
-    const { data } = await apiClient.post<ApiSuccessResponse<McqQuestionAdmin>>("/mcq", payload);
+  async create(payload: CreateMcqPayload & { audioFile?: File | null }) {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === "audioFile") return;
+      if (value !== undefined && value !== null) formData.append(key, String(value));
+    });
+    if (payload.audioFile) formData.append("audioFile", payload.audioFile);
+
+    const { data } = await apiClient.post<ApiSuccessResponse<McqQuestionAdmin>>("/mcq", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return data.data;
   },
 

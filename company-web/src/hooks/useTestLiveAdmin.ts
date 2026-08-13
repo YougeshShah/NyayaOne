@@ -8,6 +8,7 @@ export function useMockTestsAdmin(courseId?: string) {
 export function useMockTestAdminActions() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: ["mock-tests-admin"] });
+  const invalidateDetail = () => qc.invalidateQueries({ queryKey: ["mock-test-detail-admin"] });
 
   const create = useMutation({
     mutationFn: (payload: CreateMockTestPayload) => mockTestAdminApi.create(payload),
@@ -17,8 +18,31 @@ export function useMockTestAdminActions() {
     mutationFn: (id: string) => mockTestAdminApi.publish(id),
     onSuccess: invalidate,
   });
+  const addQuestion = useMutation({
+    mutationFn: ({ mockTestId, questionId, marks }: { mockTestId: string; questionId: string; marks: number }) =>
+      mockTestAdminApi.addQuestion(mockTestId, questionId, marks),
+    onSuccess: () => {
+      invalidate();
+      invalidateDetail();
+    },
+  });
+  const removeQuestion = useMutation({
+    mutationFn: ({ mockTestId, questionId }: { mockTestId: string; questionId: string }) => mockTestAdminApi.removeQuestion(mockTestId, questionId),
+    onSuccess: () => {
+      invalidate();
+      invalidateDetail();
+    },
+  });
 
-  return { create, publish };
+  return { create, publish, addQuestion, removeQuestion };
+}
+
+export function useMockTestDetailAdmin(mockTestId: string | null) {
+  return useQuery({
+    queryKey: ["mock-test-detail-admin", mockTestId],
+    queryFn: () => mockTestAdminApi.getById(mockTestId!),
+    enabled: !!mockTestId,
+  });
 }
 
 export function useLiveClassesAdmin(courseId?: string) {
@@ -48,6 +72,11 @@ export function useLiveClassAdminActions() {
     mutationFn: ({ id, recordingUrl }: { id: string; recordingUrl: string }) => liveClassAdminApi.uploadRecording(id, recordingUrl),
     onSuccess: invalidate,
   });
+  const update = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { title?: string; scheduledAt?: string; durationMinutes?: number } }) =>
+      liveClassAdminApi.update(id, payload),
+    onSuccess: invalidate,
+  });
 
-  return { create, hostJoin, markLive, cancel, uploadRecording };
+  return { create, hostJoin, markLive, cancel, uploadRecording, update };
 }

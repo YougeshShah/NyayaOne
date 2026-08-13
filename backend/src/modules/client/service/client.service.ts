@@ -35,6 +35,17 @@ export const clientService = {
     return this.getById(id, lawFirmId);
   },
 
+  async remove(id: string, lawFirmId: string) {
+    const client = await this.getById(id, lawFirmId);
+    const caseCount = await clientRepository.countCases(id);
+    if (caseCount > 0) {
+      throw AppError.badRequest(
+        `This client is linked to ${caseCount} case(s) — remove them from those cases first before deleting.`
+      );
+    }
+    await clientRepository.removeScoped(id, lawFirmId);
+  },
+
   /**
    * Grants a client login access to the Client Mobile App. Creates a User
    * account (accountType CLIENT) and links it to the existing Client record.

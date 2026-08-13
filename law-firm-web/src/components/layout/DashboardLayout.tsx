@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
 import PeopleIcon from "@mui/icons-material/PeopleOutlined";
@@ -23,22 +24,36 @@ export function DashboardLayout() {
   // Existing tenants created before this migration may not have modulesEnabled
   // set — default to case_management so nothing disappears for them.
   const enabledModules = user?.modulesEnabled ?? ["case_management"];
+  const isEducation = user?.tenantType === "EDUCATION";
+  const tenantLabel = isEducation ? "Institution Dashboard" : "Law Firm Dashboard";
+
+  useEffect(() => {
+    document.title = `NyayaOne — ${tenantLabel}`;
+  }, [tenantLabel]);
+  const roleLabel = user?.accountType === "LAW_FIRM_ADMIN" ? (isEducation ? "Institution Admin" : "Law Firm Admin") : user?.accountType?.replace(/_/g, " ") ?? "";
 
   const navItems = [
-    { to: "/dashboard", label: t("dashboard"), icon: <DashboardIcon fontSize="small" />, module: null },
-    { to: "/cases", label: t("cases"), icon: <GavelIcon fontSize="small" />, module: "case_management" },
-    { to: "/hearings", label: t("hearings"), icon: <EventIcon fontSize="small" />, module: "case_management" },
-    { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" />, module: "case_management" },
-    { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management" },
-    { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management" },
-    { to: "/roles", label: "Roles & Permissions", icon: <BadgeIcon fontSize="small" />, module: null },
-    { to: "/students", label: "Students", icon: <BadgeIcon fontSize="small" />, module: "student_platform" },
-    { to: "/live-classes", label: "Live Classes", icon: <BadgeIcon fontSize="small" />, module: "live_classes" },
-    { to: "/resources", label: "Resources", icon: <BadgeIcon fontSize="small" />, module: "student_platform" },
+    { to: "/dashboard", label: t("dashboard"), icon: <DashboardIcon fontSize="small" />, module: null, tenantSpecific: null },
+    { to: "/cases", label: t("cases"), icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/hearings", label: t("hearings"), icon: <EventIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/roles", label: "Roles & Permissions", icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null },
+    { to: "/students", label: "Students", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
+    { to: "/live-classes", label: "Live Classes", icon: <BadgeIcon fontSize="small" />, module: "live_classes", tenantSpecific: "EDUCATION" },
+    { to: "/resources", label: "Resources", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
+    { to: "/mock-tests", label: "Mock Tests", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
     ...(user?.accountType === "LAW_FIRM_ADMIN"
-      ? [{ to: "/users", label: t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" />, module: "case_management" }]
+      ? [{ to: "/users", label: isEducation ? "Staff" : t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null }]
       : []),
-  ].filter((item) => item.module === null || enabledModules.includes(item.module));
+  ]
+    // Module gate — the organization must have this feature enabled at all.
+    .filter((item) => item.module === null || enabledModules.includes(item.module))
+    // Tenant-type gate — Law Firm items never show for an Education tenant
+    // and vice versa, even if the underlying module was accidentally left
+    // enabled — an institution should only ever see an institution's view.
+    .filter((item) => item.tenantSpecific === null || item.tenantSpecific === user?.tenantType);
 
   return (
     <div>
@@ -48,7 +63,7 @@ export function DashboardLayout() {
             NyayaOne
           </Typography>
           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>
-            Law Firm Dashboard
+            {tenantLabel}
           </Typography>
         </div>
 
@@ -80,7 +95,7 @@ export function DashboardLayout() {
               {user?.fullName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {user?.accountType.replace(/_/g, " ")}
+              {roleLabel}
             </Typography>
           </Box>
           <NavLink to="/profile" style={{ textDecoration: "none" }}>

@@ -11,6 +11,7 @@ export interface CreateLawFirmPayload {
   password: string;
   tenantType: "LAW_FIRM" | "EDUCATION" | "OTHER";
   modulesEnabled: string[];
+  allowedCourseIds?: string[];
 }
 
 export const lawFirmApi = {
@@ -46,8 +47,21 @@ export const lawFirmApi = {
     return data.data;
   },
 
+  async remove(id: string): Promise<void> {
+    await apiClient.delete(`/law-firms/${id}`);
+  },
+
   async activate(id: string): Promise<LawFirmDetail> {
     const { data } = await apiClient.patch<ApiSuccessResponse<LawFirmDetail>>(`/law-firms/${id}/activate`);
+    return data.data;
+  },
+
+  async updateModules(id: string, modulesEnabled: string[], allowedCourseIds?: string[], allowedExamTypes?: string[]): Promise<LawFirmDetail> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<LawFirmDetail>>(`/law-firms/${id}/modules`, {
+      modulesEnabled,
+      allowedCourseIds,
+      allowedExamTypes,
+    });
     return data.data;
   },
 

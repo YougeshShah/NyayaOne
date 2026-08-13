@@ -62,6 +62,10 @@ export const companyStaffRepository = {
     return prisma.user.update({ where: { id }, data: { status }, select: STAFF_SELECT });
   },
 
+  update(id: string, data: { fullName?: string; phone?: string }) {
+    return prisma.user.update({ where: { id }, data, select: STAFF_SELECT });
+  },
+
   updateRole(id: string, roleId: string) {
     return prisma.user.update({ where: { id }, data: { roleId }, select: STAFF_SELECT });
   },

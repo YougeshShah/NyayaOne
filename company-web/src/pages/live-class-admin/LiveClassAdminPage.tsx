@@ -26,7 +26,7 @@ import VideocamIcon from "@mui/icons-material/Videocam";
 import { useForm } from "react-hook-form";
 import { useCoursesAdmin, useSubjectsAdmin } from "../../hooks/useCourseAdmin";
 import { useLiveClassesAdmin, useLiveClassAdminActions } from "../../hooks/useTestLiveAdmin";
-import { CreateLiveClassPayload } from "../../api/testLiveAdmin.api";
+import { CreateLiveClassPayload, LiveClassAdmin } from "../../api/testLiveAdmin.api";
 
 const statusColors: Record<string, "default" | "success" | "error" | "warning"> = {
   SCHEDULED: "default",
@@ -40,9 +40,28 @@ export function LiveClassAdminPage() {
   const [courseId, setCourseId] = useState<string>("");
   const { data: subjects } = useSubjectsAdmin(courseId || undefined);
   const { data: classes, isLoading } = useLiveClassesAdmin(courseId || undefined);
-  const { create, hostJoin, markLive, cancel, uploadRecording } = useLiveClassAdminActions();
+  const { create, hostJoin, markLive, cancel, uploadRecording, update } = useLiveClassAdminActions();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<LiveClassAdmin | null>(null);
+  const editForm = useForm<{ title: string; scheduledAt: string; durationMinutes: number }>();
+
+  const openEdit = (cls: LiveClassAdmin) => {
+    setEditingClass(cls);
+    editForm.reset({
+      title: cls.title,
+      scheduledAt: new Date(cls.scheduledAt).toISOString().slice(0, 16),
+      durationMinutes: cls.durationMinutes,
+    });
+  };
+
+  const onEditSubmit = (values: { title: string; scheduledAt: string; durationMinutes: number }) => {
+    if (!editingClass) return;
+    update.mutate(
+      { id: editingClass.id, payload: { ...values, scheduledAt: new Date(values.scheduledAt).toISOString() } },
+      { onSuccess: () => setEditingClass(null) }
+    );
+  };
   const { register, handleSubmit, reset, formState } = useForm<CreateLiveClassPayload>({
     defaultValues: { durationMinutes: 60, isFreeDemo: false },
   });
@@ -124,6 +143,11 @@ export function LiveClassAdminPage() {
                       </Button>
                     )}
                     {cls.status === "SCHEDULED" && (
+                      <Button size="small" onClick={() => openEdit(cls)}>
+                        Edit
+                      </Button>
+                    )}
+                    {cls.status === "SCHEDULED" && (
                       <Button size="small" color="error" onClick={() => cancel.mutate(cls.id)}>
                         Cancel
                       </Button>
@@ -199,6 +223,36 @@ export function LiveClassAdminPage() {
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={create.isPending}>
               {create.isPending ? "Scheduling..." : "Schedule Class"}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={!!editingClass} onClose={() => setEditingClass(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Edit Live Class</DialogTitle>
+        <Box component="form" onSubmit={editForm.handleSubmit(onEditSubmit)}>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField label="Title" required fullWidth {...editForm.register("title", { required: true })} />
+            <TextField
+              label="Date & Time"
+              type="datetime-local"
+              required
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              {...editForm.register("scheduledAt", { required: true })}
+            />
+            <TextField
+              label="Duration (minutes)"
+              type="number"
+              required
+              fullWidth
+              {...editForm.register("durationMinutes", { required: true, valueAsNumber: true })}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setEditingClass(null)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={update.isPending}>
+              {update.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogActions>
         </Box>

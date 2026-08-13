@@ -25,6 +25,13 @@ export const availableModules = [
   "document_templates",
 ] as const;
 
+export const updateModulesSchema = z.object({
+  modulesEnabled: z.array(z.enum(availableModules)).min(1, "At least one module must stay enabled"),
+  allowedCourseIds: z.array(z.string().uuid()).optional(),
+  allowedExamTypes: z.array(z.string()).optional(),
+});
+export type UpdateModulesInput = z.infer<typeof updateModulesSchema>;
+
 export const createLawFirmSchema = z.object({
   lawFirmName: z.string().min(2, "Organization name is required"),
   lawFirmEmail: z.string().email(),
@@ -34,5 +41,7 @@ export const createLawFirmSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   tenantType: z.enum(tenantTypes).default("LAW_FIRM"),
   modulesEnabled: z.array(z.enum(availableModules)).default(["case_management"]),
+  allowedCourseIds: z.array(z.string().uuid()).default([]),
+  allowedExamTypes: z.array(z.string()).default([]),
 });
 export type CreateLawFirmInput = z.infer<typeof createLawFirmSchema>;

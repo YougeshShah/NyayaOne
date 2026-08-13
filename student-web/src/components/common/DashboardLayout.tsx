@@ -1,17 +1,21 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, Typography, Avatar, IconButton, Box, Container, Button } from "@mui/material";
+import { AppBar, Toolbar, Typography, Avatar, IconButton, Box, Container, Button, Badge } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import TrendingUpIcon from "@mui/icons-material/TrendingUpOutlined";
 import BookmarkIcon from "@mui/icons-material/BookmarkBorderOutlined";
+import ReplayIcon from "@mui/icons-material/Replay";
+import NotificationsIcon from "@mui/icons-material/NotificationsOutlined";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { getAvatarUrl } from "../../api/profile.api";
 import { ChatWidget } from "./ChatWidget";
+import { useMyNotifications } from "../../hooks/useNotifications";
 
 export function DashboardLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const navigate = useNavigate();
+  const { data: notificationsData } = useMyNotifications();
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -32,6 +36,14 @@ export function DashboardLayout() {
           <Button startIcon={<BookmarkIcon />} onClick={() => navigate("/bookmarks")} sx={{ mr: 1 }}>
             Bookmarks
           </Button>
+          <Button startIcon={<ReplayIcon />} onClick={() => navigate("/my-mistakes")} sx={{ mr: 1 }}>
+            Review Mistakes
+          </Button>
+          <IconButton onClick={() => navigate("/notifications")} sx={{ mr: 1 }}>
+            <Badge badgeContent={notificationsData?.unreadCount ?? 0} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
           <Typography variant="body2" sx={{ mr: 2 }}>
             {user?.fullName}
           </Typography>

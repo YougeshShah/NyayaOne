@@ -20,11 +20,19 @@ declare global {
 export function authenticate(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
 
-  if (!header || !header.startsWith("Bearer ")) {
+  // File downloads opened via the mobile app's Linking.openURL (which can't
+  // set custom headers, unlike a normal fetch/axios call) pass the token as
+  // a query param instead — only used for GET download-style routes.
+  const queryToken = typeof req.query.token === "string" ? req.query.token : null;
+
+  let token: string;
+  if (header && header.startsWith("Bearer ")) {
+    token = header.split(" ")[1];
+  } else if (queryToken) {
+    token = queryToken;
+  } else {
     throw AppError.unauthorized("Missing or invalid Authorization header");
   }
-
-  const token = header.split(" ")[1];
 
   try {
     const decoded = verifyAccessToken(token);

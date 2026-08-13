@@ -12,8 +12,10 @@ router.get("/my-attempts", mockTestController.myAttempts);
 router.get("/attempts/:attemptId", mockTestController.getAttemptResult);
 router.get("/:id", mockTestController.getById);
 
-router.post("/", authorize("COMPANY"), mockTestController.create);
-router.patch("/:id/publish", authorize("COMPANY"), mockTestController.publish);
+router.post("/", authorize("COMPANY", "LAW_FIRM_ADMIN"), mockTestController.create);
+router.patch("/:id/publish", authorize("COMPANY", "LAW_FIRM_ADMIN"), mockTestController.publish);
+router.post("/:id/questions", authorize("COMPANY", "LAW_FIRM_ADMIN"), mockTestController.addQuestion);
+router.delete("/:id/questions/:questionId", authorize("COMPANY", "LAW_FIRM_ADMIN"), mockTestController.removeQuestion);
 
 router.post("/:id/start", authorize("STUDENT"), mockTestController.startAttempt);
 router.post("/attempts/:attemptId/submit", authorize("STUDENT"), mockTestController.submitAttempt);

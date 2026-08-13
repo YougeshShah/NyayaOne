@@ -1,5 +1,6 @@
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useBookmarks, useToggleBookmark } from "../../src/hooks";
 
 export default function BookmarksScreen() {
@@ -19,6 +20,13 @@ export default function BookmarksScreen() {
       data={data ?? []}
       keyExtractor={(item) => item.id}
       contentContainerStyle={{ padding: 16 }}
+      ListHeaderComponent={
+        <TouchableOpacity style={reviewLinkStyles.button} onPress={() => router.push("/my-mistakes")}>
+          <Ionicons name="refresh-circle-outline" size={20} color="#2563EB" />
+          <Text style={reviewLinkStyles.text}>Review Mistakes — see everything you've gotten wrong</Text>
+          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+        </TouchableOpacity>
+      }
       renderItem={({ item }) => (
         <View style={styles.card}>
           <View style={{ flex: 1 }}>
@@ -49,4 +57,19 @@ const styles = StyleSheet.create({
   card: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: "#E5E7EB" },
   type: { fontSize: 10, fontWeight: "700", color: "#6B7280", textTransform: "uppercase", marginBottom: 4 },
   preview: { fontSize: 14 },
+});
+
+const reviewLinkStyles = StyleSheet.create({
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+  },
+  text: { flex: 1, fontSize: 13, fontWeight: "600", color: "#1E40AF" },
 });

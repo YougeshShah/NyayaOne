@@ -10,6 +10,8 @@ export interface AuthUser {
   lawFirmId: string | null;
   lawFirmStatus: string | null;
   modulesEnabled?: string[] | null;
+  tenantType?: "LAW_FIRM" | "EDUCATION" | "OTHER" | null;
+  tenantName?: string | null;
 }
 
 export interface LoginPayload {

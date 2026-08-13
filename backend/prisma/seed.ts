@@ -10,6 +10,7 @@ async function main() {
   const permissionDefs = [
     { key: "lawfirm.approve", module: "LawFirm", description: "Approve or reject law firm registrations" },
     { key: "lawfirm.suspend", module: "LawFirm", description: "Suspend an active law firm" },
+    { key: "lawfirm.delete", module: "LawFirm", description: "Permanently delete an organization — Super Admin only" },
     { key: "court.manage", module: "Court", description: "Create/update court records" },
     { key: "library.manage", module: "Library", description: "Upload/edit legal library resources" },
     { key: "notification.broadcast", module: "Notification", description: "Send platform-wide notifications" },
@@ -28,15 +29,12 @@ async function main() {
   // --- Super Admin role (has all permissions) ---
   const allPermissions = await prisma.permission.findMany();
 
-  const superAdminRole = await prisma.role.upsert({
-    where: { name: "Super Admin" },
-    update: {},
-    create: {
-      name: "Super Admin",
-      description: "Full platform access — TrailBlaze Tech",
-      isSystem: true,
-    },
-  });
+  let superAdminRole = await prisma.role.findFirst({ where: { name: "Super Admin", lawFirmId: null } });
+  if (!superAdminRole) {
+    superAdminRole = await prisma.role.create({
+      data: { name: "Super Admin", description: "Full platform access — TrailBlaze Tech", isSystem: true },
+    });
+  }
 
   for (const perm of allPermissions) {
     await prisma.rolePermission.upsert({
@@ -84,11 +82,10 @@ async function main() {
   ];
 
   for (const roleDef of roleDefs) {
-    const role = await prisma.role.upsert({
-      where: { name: roleDef.name },
-      update: {},
-      create: { name: roleDef.name, description: roleDef.description, isSystem: false },
-    });
+    let role = await prisma.role.findFirst({ where: { name: roleDef.name, lawFirmId: null } });
+    if (!role) {
+      role = await prisma.role.create({ data: { name: roleDef.name, description: roleDef.description, isSystem: false } });
+    }
     for (const key of roleDef.permissionKeys) {
       const perm = allPermissions.find((p) => p.key === key);
       if (!perm) continue;

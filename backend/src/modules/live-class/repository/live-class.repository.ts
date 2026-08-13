@@ -57,4 +57,8 @@ export const liveClassRepository = {
   setRecordingUrl(id: string, recordingUrl: string) {
     return prisma.liveClass.update({ where: { id }, data: { recordingUrl } });
   },
+
+  update(id: string, data: { title?: string; description?: string; scheduledAt?: Date; durationMinutes?: number; isFreeDemo?: boolean }) {
+    return prisma.liveClass.update({ where: { id }, data });
+  },
 };

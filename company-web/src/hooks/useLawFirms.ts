@@ -50,5 +50,25 @@ export function useLawFirmActions() {
     onSuccess: invalidate,
   });
 
-  return { approve, suspend, activate, reject, create };
+  const updateModules = useMutation({
+    mutationFn: ({
+      id,
+      modulesEnabled,
+      allowedCourseIds,
+      allowedExamTypes,
+    }: {
+      id: string;
+      modulesEnabled: string[];
+      allowedCourseIds?: string[];
+      allowedExamTypes?: string[];
+    }) => lawFirmApi.updateModules(id, modulesEnabled, allowedCourseIds, allowedExamTypes),
+    onSuccess: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => lawFirmApi.remove(id),
+    onSuccess: invalidate,
+  });
+
+  return { approve, suspend, activate, reject, create, updateModules, remove };
 }

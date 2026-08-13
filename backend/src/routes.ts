@@ -31,6 +31,7 @@ import writingSubmissionRoutes from "./modules/writing-submission/writing-submis
 import chatbotRoutes from "./modules/chatbot/chatbot.routes";
 import contentGeneratorRoutes from "./modules/content-generator/content-generator.routes";
 import paymentRoutes from "./modules/payment/payment.routes";
+import flashcardRoutes from "./modules/flashcard/routes/flashcard.routes";
 
 const router = Router();
 
@@ -62,6 +63,7 @@ router.use("/subjects", subjectRoutes);
 router.use("/mcq", mcqRoutes);
 router.use("/mock-tests", mockTestRoutes);
 router.use("/bookmarks", bookmarkRoutes);
+router.use("/flashcards", flashcardRoutes);
 router.use("/study-progress", studyProgressRoutes);
 router.use("/courses", courseRoutes);
 router.use("/live-classes", liveClassRoutes);

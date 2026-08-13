@@ -32,6 +32,7 @@ export interface LibraryResource {
   chapter: string | null;
   keywords: string[];
   fileUrl: string | null;
+  content: string | null;
   isDownloadable: boolean;
   createdAt: string;
 }

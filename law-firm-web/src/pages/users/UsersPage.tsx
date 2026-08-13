@@ -1,11 +1,15 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "../../store/authStore";
 import {
+  Alert,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   MenuItem,
   Paper,
   Table,
@@ -18,16 +22,54 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import ContentCopyIcon from "@mui/icons-material/ContentCopyOutlined";
 import { useForm } from "react-hook-form";
 import { useFirmUsers, useFirmUserActions } from "../../hooks/useFirmUsers";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { PasswordField } from "../../components/common/PasswordField";
-import { CreateFirmUserPayload } from "../../types/user.types";
+import { CreateFirmUserPayload, FirmUser } from "../../types/user.types";
+import { passwordResetRequestApi } from "../../api/passwordResetRequest.api";
 
 export function UsersPage() {
+  const user = useAuthStore((s) => s.user);
+  const isEducation = user?.tenantType === "EDUCATION";
+  const staffLabel = isEducation ? "Staff" : "Lawyer / Staff";
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data, isLoading } = useFirmUsers({});
-  const { create, updateStatus } = useFirmUserActions();
+  const { create, updateStatus, resetPassword, update } = useFirmUserActions();
+  const [editingUser, setEditingUser] = useState<FirmUser | null>(null);
+  const editForm = useForm<{ fullName: string; phone?: string; barRegistrationNo?: string; specialization?: string }>();
+
+  const openEdit = (u: FirmUser) => {
+    setEditingUser(u);
+    editForm.reset({
+      fullName: u.fullName,
+      phone: u.phone ?? "",
+      barRegistrationNo: u.barRegistrationNo ?? "",
+      specialization: u.specialization ?? "",
+    });
+  };
+
+  const onEditSubmit = (values: { fullName: string; phone?: string; barRegistrationNo?: string; specialization?: string }) => {
+    if (!editingUser) return;
+    update.mutate({ id: editingUser.id, payload: values }, { onSuccess: () => setEditingUser(null) });
+  };
+  const qc = useQueryClient();
+  const { data: pendingRequests } = useQuery({
+    queryKey: ["password-reset-requests"],
+    queryFn: () => passwordResetRequestApi.listPending(),
+  });
+  const resolveRequest = useMutation({
+    mutationFn: (id: string) => passwordResetRequestApi.resolve(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["password-reset-requests"] }),
+  });
+  const [resetResult, setResetResult] = useState<{ name: string; password: string } | null>(null);
+
+  const handleResetPassword = (id: string, name: string) => {
+    resetPassword.mutate(id, {
+      onSuccess: (data) => setResetResult({ name, password: data.newPassword }),
+    });
+  };
 
   const { register, handleSubmit, reset, watch, formState } = useForm<CreateFirmUserPayload>({
     defaultValues: { accountType: "LAWYER" },
@@ -55,9 +97,38 @@ export function UsersPage() {
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-          Add Lawyer / Staff
+          Add {staffLabel}
         </Button>
       </Box>
+
+      {pendingRequests && pendingRequests.length > 0 && (
+        <Paper elevation={0} sx={{ border: "1px solid #FDE68A", bgcolor: "#FFFBEB", borderRadius: 2, p: 2, mb: 3 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+            Pending Password Reset Requests ({pendingRequests.length})
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+            Someone forgot their password — find them in the table below (or Students page) and use "Reset
+            Password", then mark the request resolved.
+          </Typography>
+          {pendingRequests.map((r) => (
+            <Box key={r.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1, borderTop: "1px solid #FDE68A" }}>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>
+                  {r.email}
+                </Typography>
+                {r.note && (
+                  <Typography variant="caption" color="text.secondary">
+                    {r.note}
+                  </Typography>
+                )}
+              </Box>
+              <Button size="small" onClick={() => resolveRequest.mutate(r.id)} disabled={resolveRequest.isPending}>
+                Mark Resolved
+              </Button>
+            </Box>
+          ))}
+        </Paper>
+      )}
 
       <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
         <Table size="small">
@@ -97,14 +168,20 @@ export function UsersPage() {
                 </TableCell>
                 <TableCell align="right">
                   {u.status === "ACTIVE" ? (
-                    <Button size="small" color="error" variant="outlined" onClick={() => updateStatus.mutate({ id: u.id, status: "SUSPENDED" })}>
+                    <Button size="small" color="error" variant="outlined" onClick={() => updateStatus.mutate({ id: u.id, status: "SUSPENDED" })} sx={{ mr: 1 }}>
                       Suspend
                     </Button>
                   ) : (
-                    <Button size="small" variant="contained" onClick={() => updateStatus.mutate({ id: u.id, status: "ACTIVE" })}>
+                    <Button size="small" variant="contained" onClick={() => updateStatus.mutate({ id: u.id, status: "ACTIVE" })} sx={{ mr: 1 }}>
                       Activate
                     </Button>
                   )}
+                  <Button size="small" variant="outlined" onClick={() => openEdit(u)} sx={{ mr: 1 }}>
+                    Edit
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => handleResetPassword(u.id, u.fullName)} disabled={resetPassword.isPending}>
+                    Reset Password
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -113,12 +190,12 @@ export function UsersPage() {
       </TableContainer>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Add Lawyer / Staff</DialogTitle>
+        <DialogTitle>Add {staffLabel}</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onCreate)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField select label="Role" required fullWidth defaultValue="LAWYER" {...register("accountType", { required: true })}>
-              <MenuItem value="LAWYER">Lawyer</MenuItem>
-              <MenuItem value="STAFF">Staff (Receptionist / Assistant / Intern)</MenuItem>
+            <TextField select label="Role" required fullWidth defaultValue={isEducation ? "STAFF" : "LAWYER"} {...register("accountType", { required: true })}>
+              {!isEducation && <MenuItem value="LAWYER">Lawyer</MenuItem>}
+              <MenuItem value="STAFF">{isEducation ? "Staff (Teacher / Coordinator / Admin)" : "Staff (Receptionist / Assistant / Intern)"}</MenuItem>
             </TextField>
             <TextField label="Full Name" required fullWidth {...register("fullName", { required: true })} error={!!formState.errors.fullName} />
             <TextField label="Email" type="email" required fullWidth {...register("email", { required: true })} error={!!formState.errors.email} />
@@ -142,6 +219,65 @@ export function UsersPage() {
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={create.isPending}>
               {create.isPending ? "Saving..." : "Add"}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={!!resetResult} onClose={() => setResetResult(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Password Reset</DialogTitle>
+        <DialogContent>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            New password generated for <strong>{resetResult?.name}</strong>.
+          </Alert>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+            There's no email service configured yet — share this password with them directly (phone, in person,
+            etc). It won't be shown again.
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              bgcolor: "#F3F4F6",
+              borderRadius: 1,
+              px: 2,
+              py: 1.5,
+              fontFamily: "monospace",
+              fontSize: 18,
+              fontWeight: 700,
+            }}
+          >
+            {resetResult?.password}
+            <IconButton size="small" onClick={() => resetResult && navigator.clipboard.writeText(resetResult.password)} sx={{ ml: "auto" }}>
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button variant="contained" onClick={() => setResetResult(null)}>
+            Done
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!editingUser} onClose={() => setEditingUser(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Edit — {editingUser?.fullName}</DialogTitle>
+        <Box component="form" onSubmit={editForm.handleSubmit(onEditSubmit)}>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField label="Full Name" required fullWidth {...editForm.register("fullName", { required: true })} />
+            <TextField label="Phone" fullWidth {...editForm.register("phone")} />
+            {editingUser?.accountType === "LAWYER" && (
+              <>
+                <TextField label="Bar Registration No." fullWidth {...editForm.register("barRegistrationNo")} />
+                <TextField label="Specialization" fullWidth {...editForm.register("specialization")} />
+              </>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setEditingUser(null)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={update.isPending}>
+              {update.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogActions>
         </Box>

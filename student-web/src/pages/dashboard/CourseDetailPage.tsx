@@ -18,6 +18,7 @@ import QuizIcon from "@mui/icons-material/QuizOutlined";
 import TimerIcon from "@mui/icons-material/TimerOutlined";
 import LockIcon from "@mui/icons-material/LockOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircleOutline";
+import StyleIcon from "@mui/icons-material/StyleOutlined";
 import VideocamIcon from "@mui/icons-material/VideocamOutlined";
 import MenuBookIconOutlined from "@mui/icons-material/MenuBookOutlined";
 import { useCourse, useSubjects, useMockTests, useMySubscriptions } from "../../hooks/useCourse";
@@ -77,6 +78,9 @@ export function CourseDetailPage() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Button variant="outlined" startIcon={<MenuBookIconOutlined />} onClick={() => navigate(`/courses/${courseId}/library`)}>
             Library
+          </Button>
+          <Button variant="outlined" startIcon={<StyleIcon />} onClick={() => navigate(`/courses/${courseId}/flashcards`)}>
+            Flashcards
           </Button>
           {isSubscribed ? (
             <Chip icon={<CheckCircleIcon />} label="Subscribed" color="success" />
@@ -164,6 +168,9 @@ export function CourseDetailPage() {
                         <QuizIcon fontSize="small" />
                         <Typography variant="caption">{test._count?.questions ?? 0} questions</Typography>
                       </Box>
+                      {!!(test as any).negativeMarkingPercent && (
+                        <Chip label={`⚠️ ${(test as any).negativeMarkingPercent}% negative marking`} size="small" color="warning" sx={{ height: 20 }} />
+                      )}
                       {test.isFreeDemo && <Chip label="Free" size="small" color="success" sx={{ height: 20 }} />}
                     </Box>
                   </CardContent>

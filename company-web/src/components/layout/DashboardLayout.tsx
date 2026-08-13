@@ -13,12 +13,14 @@ import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import LanguageIcon from "@mui/icons-material/LanguageOutlined";
 import SchoolIcon from "@mui/icons-material/SchoolOutlined";
 import QuizIcon from "@mui/icons-material/QuizOutlined";
+import StyleIcon from "@mui/icons-material/StyleOutlined";
 import AssignmentIcon from "@mui/icons-material/AssignmentOutlined";
 import VideocamIcon from "@mui/icons-material/VideocamOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNoteOutlined";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCameraOutlined";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLongOutlined";
+import LockResetIcon from "@mui/icons-material/LockResetOutlined";
 import CardMembershipIcon from "@mui/icons-material/CardMembershipOutlined";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -71,6 +73,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/courses-admin", labelKey: "coursesAdmin", icon: <SchoolIcon fontSize="small" />, permission: "library.manage" },
       { to: "/mcq-admin", labelKey: "mcqAdmin", icon: <QuizIcon fontSize="small" />, permission: "library.manage" },
+      { to: "/flashcard-admin", labelKey: "flashcardAdmin", icon: <StyleIcon fontSize="small" />, permission: "library.manage" },
       { to: "/mock-test-admin", labelKey: "mockTestAdmin", icon: <AssignmentIcon fontSize="small" />, permission: "library.manage" },
       { to: "/live-class-admin", labelKey: "liveClassAdmin", icon: <VideocamIcon fontSize="small" />, permission: "library.manage" },
       { to: "/writing-grading", labelKey: "writingGrading", icon: <EditNoteIcon fontSize="small" />, permission: "library.manage" },
@@ -99,6 +102,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/notifications", labelKey: "notifications", icon: <NotificationsIcon fontSize="small" />, permission: "notification.broadcast" },
       { to: "/audit-logs", labelKey: "auditLogs", icon: <HistoryIcon fontSize="small" />, permission: "auditlog.view" },
+      { to: "/user-admin", labelKey: "userAdmin", icon: <LockResetIcon fontSize="small" />, permission: "user.manage" },
     ],
   },
 ];

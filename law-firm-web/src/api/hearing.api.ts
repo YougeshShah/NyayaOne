@@ -22,4 +22,9 @@ export const hearingApi = {
     const { data } = await apiClient.post<ApiSuccessResponse<Hearing>>("/hearings", payload);
     return data.data;
   },
+
+  async update(id: string, payload: { hearingDate?: string; judge?: string; notes?: string; status?: string }): Promise<Hearing> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<Hearing>>(`/hearings/${id}`, payload);
+    return data.data;
+  },
 };

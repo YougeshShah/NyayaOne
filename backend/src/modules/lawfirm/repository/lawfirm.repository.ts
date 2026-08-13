@@ -56,6 +56,17 @@ export const lawFirmRepository = {
     });
   },
 
+  updateModules(id: string, modulesEnabled: string[], allowedCourseIds?: string[], allowedExamTypes?: string[]) {
+    return prisma.lawFirm.update({
+      where: { id },
+      data: {
+        modulesEnabled,
+        ...(allowedCourseIds !== undefined ? { allowedCourseIds } : {}),
+        ...(allowedExamTypes !== undefined ? { allowedExamTypes } : {}),
+      },
+    });
+  },
+
   createAuditLog(params: { userId: string; action: string; entityId: string; metadata?: AuditMetadata }) {
     return prisma.auditLog.create({
       data: {
@@ -86,15 +97,19 @@ export const lawFirmRepository = {
     passwordHash: string;
     tenantType: TenantType;
     modulesEnabled: string[];
+    allowedCourseIds: string[];
+    allowedExamTypes: string[];
   }) {
     return prisma.$transaction(async (tx) => {
       const lawFirm = await tx.lawFirm.create({
         data: {
           name: params.lawFirmName,
-          email: params.lawFirmEmail,
+          email: params.lawFirmEmail.toLowerCase().trim(),
           status: "ACTIVE",
           tenantType: params.tenantType,
           modulesEnabled: params.modulesEnabled,
+          allowedCourseIds: params.allowedCourseIds,
+          allowedExamTypes: params.allowedExamTypes,
         },
       });
 
@@ -102,7 +117,7 @@ export const lawFirmRepository = {
         data: {
           accountType: AccountType.LAW_FIRM_ADMIN,
           fullName: params.adminFullName,
-          email: params.adminEmail,
+          email: params.adminEmail.toLowerCase().trim(),
           phone: params.adminPhone,
           passwordHash: params.passwordHash,
           status: "ACTIVE",
@@ -111,6 +126,34 @@ export const lawFirmRepository = {
       });
 
       return { lawFirm, admin };
+    });
+  },
+
+  async deleteCascade(lawFirmId: string) {
+    await prisma.$transaction(async (tx) => {
+      // Students keep their account — just unlink from this institution.
+      await tx.user.updateMany({ where: { lawFirmId, accountType: "STUDENT" }, data: { lawFirmId: null } });
+
+      // Organization-owned learning content.
+      await tx.mockTestQuestion.deleteMany({ where: { mockTest: { hostLawFirmId: lawFirmId } } });
+      await tx.testSection.deleteMany({ where: { mockTest: { hostLawFirmId: lawFirmId } } });
+      await tx.mockTest.deleteMany({ where: { hostLawFirmId: lawFirmId } });
+      await tx.mcqQuestion.deleteMany({ where: { hostLawFirmId: lawFirmId } });
+      await tx.libraryResource.deleteMany({ where: { hostLawFirmId: lawFirmId } }).catch(() => {});
+
+      // Case management data.
+      await tx.document.deleteMany({ where: { lawFirmId } });
+      await tx.hearing.deleteMany({ where: { case: { lawFirmId } } }).catch(() => {});
+      await tx.case.deleteMany({ where: { lawFirmId } });
+      await tx.client.deleteMany({ where: { lawFirmId } });
+
+      // Staff accounts (not students) belong exclusively to this org.
+      await tx.user.deleteMany({ where: { lawFirmId, accountType: { in: ["LAWYER", "STAFF", "LAW_FIRM_ADMIN"] } } });
+
+      // Tenant-specific roles.
+      await tx.role.deleteMany({ where: { lawFirmId } });
+
+      await tx.lawFirm.delete({ where: { id: lawFirmId } });
     });
   },
 };

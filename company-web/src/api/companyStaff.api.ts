@@ -23,6 +23,16 @@ export const companyStaffApi = {
     return data.data;
   },
 
+  async update(id: string, payload: { fullName?: string; phone?: string }): Promise<CompanyStaff> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<CompanyStaff>>(`/company-staff/${id}`, payload);
+    return data.data;
+  },
+
+  async resetPassword(id: string): Promise<{ newPassword: string }> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<{ newPassword: string }>>(`/users/company/${id}/reset-password`);
+    return data.data;
+  },
+
   async updateRole(id: string, roleId: string): Promise<CompanyStaff> {
     const { data } = await apiClient.patch<ApiSuccessResponse<CompanyStaff>>(`/company-staff/${id}/role`, { roleId });
     return data.data;

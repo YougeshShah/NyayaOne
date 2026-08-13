@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../../../common/errors/AppError";
 import { liveClassService } from "../service/live-class.service";
-import { createLiveClassSchema, listLiveClassesQuerySchema, liveClassIdParamSchema } from "../dto/live-class.dto";
+import { createLiveClassSchema, listLiveClassesQuerySchema, liveClassIdParamSchema, updateLiveClassSchema } from "../dto/live-class.dto";
 
 export const liveClassController = {
   async list(req: Request, res: Response) {
@@ -71,5 +71,12 @@ export const liveClassController = {
     const { id } = liveClassIdParamSchema.parse(req.params);
     const result = await liveClassService.cancel(id);
     res.status(200).json({ success: true, data: result });
+  },
+
+  async update(req: Request, res: Response) {
+    const { id } = liveClassIdParamSchema.parse(req.params);
+    const input = updateLiveClassSchema.parse(req.body);
+    const result = await liveClassService.update(id, input);
+    res.status(200).json({ success: true, message: "Live class updated", data: result });
   },
 };

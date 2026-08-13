@@ -3,8 +3,8 @@ import { AccountType } from "@prisma/client";
 
 export const authRepository = {
   findUserByEmail(email: string) {
-    return prisma.user.findUnique({
-      where: { email },
+    return prisma.user.findFirst({
+      where: { email: { equals: email.trim(), mode: "insensitive" } },
       include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
     });
   },
@@ -51,17 +51,26 @@ export const authRepository = {
 
 // Phase 2 — students go straight to ACTIVE (no approval workflow), and
   // have no lawFirmId since they're not tied to any firm.
-  createStudent(params: { fullName: string; email: string; phone?: string; passwordHash: string; addedByLawFirmId?: string; preferredCourseId?: string }) {
+  createStudent(params: {
+    fullName: string;
+    email: string;
+    phone?: string;
+    passwordHash: string;
+    addedByLawFirmId?: string;
+    preferredCourseId?: string;
+    preferredExamType?: string;
+  }) {
     return prisma.user.create({
       data: {
         accountType: AccountType.STUDENT,
         fullName: params.fullName,
-        email: params.email,
+        email: params.email.toLowerCase().trim(),
         phone: params.phone,
         passwordHash: params.passwordHash,
         status: "ACTIVE",
         lawFirmId: params.addedByLawFirmId ?? null,
         preferredCourseId: params.preferredCourseId,
+        preferredExamType: params.preferredExamType,
       },
     });
   },
@@ -72,6 +81,24 @@ export const authRepository = {
       select: { id: true, fullName: true, email: true, phone: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     });
+  },
+
+  findStudentById(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: { id: true, fullName: true, email: true, phone: true, createdAt: true },
+    });
+  },
+
+  updateStudentScoped(id: string, lawFirmId: string, data: { fullName?: string; phone?: string }) {
+    return prisma.user.updateMany({ where: { id, accountType: AccountType.STUDENT, lawFirmId }, data });
+  },
+
+  // Unlinks the student from the institution rather than deleting the
+  // account outright -- their login, progress, and subscriptions stay
+  // intact; they simply stop appearing as this institution's student.
+  removeStudentScoped(id: string, lawFirmId: string) {
+    return prisma.user.updateMany({ where: { id, accountType: AccountType.STUDENT, lawFirmId }, data: { lawFirmId: null } });
   },
 
   storeRefreshToken(userId: string, token: string, expiresAt: Date) {

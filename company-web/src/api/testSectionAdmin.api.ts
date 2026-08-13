@@ -31,8 +31,17 @@ export const testSectionAdminApi = {
     return data.data;
   },
 
-  async create(payload: CreateSectionPayload) {
-    const { data } = await apiClient.post<ApiSuccessResponse<TestSectionAdmin>>("/test-sections", payload);
+  async create(payload: CreateSectionPayload & { audioFile?: File | null }) {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === "audioFile") return;
+      if (value !== undefined && value !== null) formData.append(key, String(value));
+    });
+    if (payload.audioFile) formData.append("audioFile", payload.audioFile);
+
+    const { data } = await apiClient.post<ApiSuccessResponse<TestSectionAdmin>>("/test-sections", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return data.data;
   },
 

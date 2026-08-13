@@ -23,6 +23,10 @@ export const clientApi = {
     return data.data;
   },
 
+  async remove(id: string): Promise<void> {
+    await apiClient.delete(`/clients/${id}`);
+  },
+
   async invite(id: string, password: string): Promise<{ message: string }> {
     const { data } = await apiClient.post<{ success: true; message: string }>(`/clients/${id}/invite`, { password });
     return data;

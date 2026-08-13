@@ -2,10 +2,17 @@ import { Grid, Paper, Typography, Box, List, ListItem, ListItemText, Chip, Linea
 import GavelIcon from "@mui/icons-material/GavelOutlined";
 import PeopleIcon from "@mui/icons-material/PeopleOutlined";
 import EventIcon from "@mui/icons-material/EventOutlined";
+import SchoolIcon from "@mui/icons-material/SchoolOutlined";
+import VideocamIcon from "@mui/icons-material/VideocamOutlined";
+import ArticleIcon from "@mui/icons-material/ArticleOutlined";
 import { useCases } from "../../hooks/useCases";
 import { useClients } from "../../hooks/useClients";
 import { useTodayHearings, useUpcomingHearings } from "../../hooks/useHearings";
 import { useMyFirmSubscription } from "../../hooks/useSubscription";
+import { useInstitutionStudents } from "../../hooks/useInstitutionStudents";
+import { liveClassInstitutionApi } from "../../api/liveClassInstitution.api";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "../../store/authStore";
 import { useTranslation } from "../../i18n/LanguageContext";
 
 interface StatCardProps {
@@ -45,6 +52,96 @@ function StatCard({ label, value, icon, color }: StatCardProps) {
 }
 
 export function DashboardPage() {
+  const user = useAuthStore((s) => s.user);
+  const isEducation = user?.tenantType === "EDUCATION";
+
+  return isEducation ? <EducationDashboard /> : <LawFirmDashboard />;
+}
+
+function EducationDashboard() {
+  const { data: students } = useInstitutionStudents();
+  const { data: liveClasses } = useQuery({ queryKey: ["institution-dashboard-classes"], queryFn: () => liveClassInstitutionApi.list() });
+  const { data: subscription } = useMyFirmSubscription();
+
+  const upcomingClasses = (liveClasses ?? []).filter((c) => c.status === "SCHEDULED").slice(0, 6);
+
+  return (
+    <Box>
+      <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
+        Overview
+      </Typography>
+
+      {subscription && (
+        <Paper elevation={0} sx={{ p: 2.5, mb: 3, border: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Current Plan
+            </Typography>
+            <Typography variant="h6" fontWeight={700}>
+              {subscription.plan.name}{" "}
+              <Chip size="small" label={subscription.status} color={subscription.status === "ACTIVE" ? "success" : subscription.status === "TRIAL" ? "warning" : "error"} sx={{ ml: 1 }} />
+            </Typography>
+          </Box>
+        </Paper>
+      )}
+
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard label="Total Students" value={students?.length ?? "—"} icon={<SchoolIcon />} color="#0F4C3A" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard label="Upcoming Live Classes" value={upcomingClasses.length} icon={<VideocamIcon />} color="#B8860B" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard label="Live Classes Hosted" value={liveClasses?.length ?? "—"} icon={<ArticleIcon />} color="#1D6E52" />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb" }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+              Upcoming Live Classes
+            </Typography>
+            <List dense>
+              {upcomingClasses.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  No live classes scheduled.
+                </Typography>
+              )}
+              {upcomingClasses.map((c) => (
+                <ListItem key={c.id} divider>
+                  <ListItemText primary={c.title} secondary={new Date(c.scheduledAt).toLocaleString()} />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb" }}>
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+              Recently Added Students
+            </Typography>
+            <List dense>
+              {(!students || students.length === 0) && (
+                <Typography variant="body2" color="text.secondary">
+                  No students added yet.
+                </Typography>
+              )}
+              {students?.slice(0, 6).map((s) => (
+                <ListItem key={s.id} divider>
+                  <ListItemText primary={s.fullName} secondary={s.email} />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+}
+
+function LawFirmDashboard() {
   const { t } = useTranslation();
   const { data: allCases } = useCases({ page: 1 });
   const { data: openCases } = useCases({ status: "OPEN", page: 1 });

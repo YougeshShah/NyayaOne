@@ -18,10 +18,20 @@ export function useFirmUserActions() {
     onSuccess: invalidate,
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string } }) =>
+      userApi.update(id, payload),
+    onSuccess: invalidate,
+  });
+
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: UserStatus }) => userApi.updateStatus(id, status),
     onSuccess: invalidate,
   });
 
-  return { create, updateStatus };
+  const resetPassword = useMutation({
+    mutationFn: (id: string) => userApi.resetPassword(id),
+  });
+
+  return { create, updateStatus, resetPassword, update };
 }

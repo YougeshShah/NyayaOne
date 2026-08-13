@@ -24,10 +24,19 @@ export function useCompanyStaffActions() {
     onSuccess: invalidate,
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { fullName?: string; phone?: string } }) => companyStaffApi.update(id, payload),
+    onSuccess: invalidate,
+  });
+
+  const resetPassword = useMutation({
+    mutationFn: (id: string) => companyStaffApi.resetPassword(id),
+  });
+
   const updateRole = useMutation({
     mutationFn: ({ id, roleId }: { id: string; roleId: string }) => companyStaffApi.updateRole(id, roleId),
     onSuccess: invalidate,
   });
 
-  return { create, updateStatus, updateRole };
+  return { create, updateStatus, update, resetPassword, updateRole };
 }

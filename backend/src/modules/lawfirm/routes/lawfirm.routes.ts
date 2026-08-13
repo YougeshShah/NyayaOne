@@ -16,5 +16,7 @@ router.patch("/:id/approve", requirePermission("lawfirm.approve"), lawFirmContro
 router.patch("/:id/suspend", requirePermission("lawfirm.suspend"), lawFirmController.suspend);
 router.patch("/:id/activate", requirePermission("lawfirm.approve"), lawFirmController.activate);
 router.patch("/:id/reject", requirePermission("lawfirm.approve"), lawFirmController.reject);
+router.patch("/:id/modules", requirePermission("lawfirm.approve"), lawFirmController.updateModules);
+router.delete("/:id", requirePermission("lawfirm.delete"), lawFirmController.remove);
 
 export default router;

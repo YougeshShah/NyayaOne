@@ -142,10 +142,25 @@ async function main() {
   }
 
   let created = 0;
+  let updated = 0;
   for (const t of templates) {
     const existing = await prisma.documentTemplate.findFirst({ where: { title: t.title } });
     if (existing) {
-      console.log(`  Skipping (already exists): ${t.title}`);
+      if (existing.fields === null) {
+        await prisma.documentTemplate.update({
+          where: { id: existing.id },
+          data: {
+            category: t.category,
+            description: t.description,
+            bodyTemplate: t.bodyTemplate,
+            fields: t.fields as any,
+          },
+        });
+        updated++;
+        console.log(`  Backfilled fields: ${t.title}`);
+      } else {
+        console.log(`  Skipping (already exists): ${t.title}`);
+      }
       continue;
     }
     await prisma.documentTemplate.create({

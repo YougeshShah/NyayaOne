@@ -52,11 +52,21 @@ export const libraryController = {
       .object({
         title: z.string().min(2, "Title is required"),
         subjectId: z.string().uuid("Subject is required"),
-        content: z.string().min(1, "Content is required"),
+        content: z.string().optional(), // optional when a PDF is uploaded — text gets extracted from it instead
         isFreeDemo: z.coerce.boolean().default(false),
       })
       .parse(req.body);
-    const result = await libraryService.createInstitutionResource(input, req.auth.userId, req.auth.lawFirmId);
+    if (!input.content && !req.file) {
+      throw AppError.badRequest("Provide either written content or upload a PDF");
+    }
+    const fileUrl = req.file ? path.join("library", req.file.filename) : undefined;
+    const result = await libraryService.createInstitutionResource(
+      { ...input, content: input.content ?? "" },
+      req.auth.userId,
+      req.auth.lawFirmId,
+      fileUrl,
+      req.file?.path
+    );
     res.status(201).json({ success: true, message: "Resource published to your students", data: result });
   },
 

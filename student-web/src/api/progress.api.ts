@@ -6,6 +6,8 @@ export interface StudyAnalytics {
   averageScorePercent: number;
   overallCompletionPercent: number;
   subjectsInProgress: number;
+  practiceQuestionsAnswered: number;
+  practiceAccuracyPercent: number;
 }
 
 export interface TestAttemptSummary {

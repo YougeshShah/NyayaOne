@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useLogin } from "../../src/hooks/useAuth";
 import { colors, spacing, radius } from "../../src/theme/theme";
@@ -66,6 +67,10 @@ export default function LoginScreen() {
 
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loginMutation.isPending}>
           <Text style={styles.buttonText}>{loginMutation.isPending ? t("signingIn") : t("signIn")}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push("/(auth)/forgot-password")} style={{ marginTop: 14, alignItems: "center" }}>
+          <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>Forgot password?</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

@@ -21,7 +21,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/EditOutlined";
 import PhonelinkLockIcon from "@mui/icons-material/PhonelinkLockOutlined";
 import { useForm } from "react-hook-form";
-import { useClients, useCreateClient, useUpdateClient, useInviteClient } from "../../hooks/useClients";
+import { useClients, useCreateClient, useUpdateClient, useInviteClient, useDeleteClient } from "../../hooks/useClients";
 import { PasswordField } from "../../components/common/PasswordField";
 import { Client, CreateClientPayload } from "../../types/client.types";
 
@@ -36,6 +36,13 @@ export function ClientsPage() {
   const { data, isLoading } = useClients({ search: search || undefined, page: 1 });
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
+  const deleteClient = useDeleteClient();
+
+  const handleDelete = (client: Client) => {
+    if (window.confirm(`Delete ${client.fullName}? This cannot be undone.`)) {
+      deleteClient.mutate(client.id);
+    }
+  };
   const inviteClient = useInviteClient();
 
   const { register, handleSubmit, reset, formState } = useForm<CreateClientPayload>();
@@ -164,6 +171,15 @@ export function ClientsPage() {
                     title={!client.email ? "Add an email first" : "Grant mobile app access"}
                   >
                     App Access
+                  </Button>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={() => handleDelete(client)}
+                    disabled={!!client._count?.cases || deleteClient.isPending}
+                    title={client._count?.cases ? "Remove from cases first" : "Delete client"}
+                  >
+                    Delete
                   </Button>
                 </TableCell>
               </TableRow>

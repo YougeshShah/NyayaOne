@@ -27,6 +27,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - nyayaone_net
     # No published port — only reachable by other containers on this network,
     # not from the internet. Keeps the database off the public attack surface.
 
@@ -44,6 +46,8 @@ services:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
     volumes:
       - nyayaone_uploads:/app/uploads
+    networks:
+      - nyayaone_net
     # Run migrations on every deploy, then start the server.
     command: sh -c "npx prisma migrate deploy && node dist/server.js"
 
@@ -57,6 +61,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    networks:
+      - nyayaone_net
 
   law-firm-web:
     build:
@@ -68,6 +74,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    networks:
+      - nyayaone_net
 
   student-web:
     build:
@@ -79,6 +87,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    networks:
+      - nyayaone_net
 
   reverse-proxy:
     image: nginx:alpine
@@ -96,6 +106,12 @@ services:
       - company-web
       - law-firm-web
       - student-web
+    networks:
+      - nyayaone_net
+
+networks:
+  nyayaone_net:
+    driver: bridge
 
 volumes:
   nyayaone_pg_data:

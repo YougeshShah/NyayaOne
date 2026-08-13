@@ -13,8 +13,18 @@ export const userApi = {
     return data.data;
   },
 
+  async update(id: string, payload: import("../types/user.types").UpdateFirmUserPayload): Promise<FirmUser> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<FirmUser>>(`/users/${id}`, payload);
+    return data.data;
+  },
+
   async updateStatus(id: string, status: UserStatus): Promise<FirmUser> {
     const { data } = await apiClient.patch<ApiSuccessResponse<FirmUser>>(`/users/${id}/status`, { status });
+    return data.data;
+  },
+
+  async resetPassword(id: string): Promise<{ newPassword: string }> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<{ newPassword: string }>>(`/users/${id}/reset-password`);
     return data.data;
   },
 };

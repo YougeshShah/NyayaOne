@@ -20,6 +20,8 @@ export interface CreateMockTestPayload {
   examType?: string;
   durationMinutes: number;
   questionCount: number;
+  marksPerQuestion?: number;
+  negativeMarkingPercent?: number;
 }
 
 export const mockTestAdminApi = {
@@ -38,6 +40,20 @@ export const mockTestAdminApi = {
   async publish(id: string) {
     const { data } = await apiClient.patch<ApiSuccessResponse<MockTestAdmin>>(`/mock-tests/${id}/publish`);
     return data.data;
+  },
+
+  async getById(id: string): Promise<any> {
+    const { data } = await apiClient.get<ApiSuccessResponse<any>>(`/mock-tests/${id}`);
+    return data.data;
+  },
+
+  async addQuestion(mockTestId: string, questionId: string, marks: number) {
+    const { data } = await apiClient.post<ApiSuccessResponse<any>>(`/mock-tests/${mockTestId}/questions`, { questionId, marks });
+    return data.data;
+  },
+
+  async removeQuestion(mockTestId: string, questionId: string) {
+    await apiClient.delete(`/mock-tests/${mockTestId}/questions/${questionId}`);
   },
 };
 
@@ -94,6 +110,11 @@ export const liveClassAdminApi = {
 
   async uploadRecording(id: string, recordingUrl: string) {
     const { data } = await apiClient.patch<ApiSuccessResponse<LiveClassAdmin>>(`/live-classes/${id}/recording`, { recordingUrl });
+    return data.data;
+  },
+
+  async update(id: string, payload: { title?: string; scheduledAt?: string; durationMinutes?: number }) {
+    const { data } = await apiClient.patch<ApiSuccessResponse<LiveClassAdmin>>(`/live-classes/${id}`, payload);
     return data.data;
   },
 };

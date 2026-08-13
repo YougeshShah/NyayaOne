@@ -16,6 +16,7 @@ router.patch("/:id/mark-live", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClass
 router.patch("/:id/mark-ended", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.markEnded);
 router.patch("/:id/recording", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.uploadRecording);
 router.patch("/:id/cancel", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.cancel);
+router.patch("/:id", authorize("COMPANY", "LAW_FIRM_ADMIN"), liveClassController.update);
 
 router.post("/:id/join", authorize("STUDENT"), liveClassController.joinAsStudent);
 

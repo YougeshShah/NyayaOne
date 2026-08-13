@@ -12,8 +12,9 @@ export function useLogin() {
   return useMutation({
     mutationFn: (payload: LoginPayload) => authApi.login(payload),
     onSuccess: (data) => {
-      if (data.user.accountType !== "LAWYER") {
-        throw new Error("This app is for lawyers only. Use the Client app if you are a client.");
+      const allowedTypes = ["LAWYER", "STAFF", "LAW_FIRM_ADMIN"];
+      if (!allowedTypes.includes(data.user.accountType)) {
+        throw new Error("This app is for law firm/institution staff only. Use the Client or Student app otherwise.");
       }
       setSession(data);
       router.replace("/(tabs)/dashboard");

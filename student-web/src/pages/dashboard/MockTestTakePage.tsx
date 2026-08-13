@@ -17,6 +17,7 @@ import TimerIcon from "@mui/icons-material/TimerOutlined";
 import { RatingWidget } from "../../components/common/RatingWidget";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useMockTestDetail, useStartAttempt, useSubmitAttempt } from "../../hooks/useCourse";
+import { TestAttemptResult } from "../../types/course.types";
 
 type OptionKey = "A" | "B" | "C" | "D";
 
@@ -33,7 +34,7 @@ export function MockTestTakePage() {
   const [answers, setAnswers] = useState<Record<string, OptionKey | null>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [result, setResult] = useState<{ score: number; totalQuestions: number; percentage: number } | null>(null);
+  const [result, setResult] = useState<TestAttemptResult | null>(null);
 
   // Start the attempt as soon as the test detail loads.
   useEffect(() => {
@@ -95,6 +96,11 @@ export function MockTestTakePage() {
           <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
             {result.score} out of {result.totalQuestions} correct
           </Typography>
+          {result.negativeMarkingApplied && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Marks (with negative marking): {result.marksScored} / {result.totalMarks}
+            </Typography>
+          )}
         </Paper>
         {mockTestId && (
           <Paper elevation={0} sx={{ p: 2.5, border: "1px solid #E5E7EB", borderRadius: 3, mb: 3, textAlign: "left" }}>

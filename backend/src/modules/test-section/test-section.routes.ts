@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../../database/prisma";
 import { authenticate } from "../../common/middleware/authenticate";
 import { authorize } from "../../common/middleware/authorize";
+import { audioUpload } from "../../common/middleware/upload";
 import { AppError } from "../../common/errors/AppError";
 
 const sectionTypes = ["MCQ", "READING", "LISTENING", "WRITING", "SPEAKING"] as const;
@@ -34,13 +35,20 @@ router.get("/", async (req: Request, res: Response) => {
   res.status(200).json({ success: true, data: sections });
 });
 
-router.post("/", authorize("COMPANY"), async (req: Request, res: Response) => {
+router.post("/", authorize("COMPANY", "LAW_FIRM_ADMIN"), audioUpload.single("audioFile"), async (req: Request, res: Response) => {
   const input = createSectionSchema.parse(req.body);
-  const section = await prisma.testSection.create({ data: input });
+  if (req.auth?.accountType === "LAW_FIRM_ADMIN") {
+    const test = await prisma.mockTest.findUnique({ where: { id: input.mockTestId } });
+    if (!test || (test as any).hostLawFirmId !== req.auth.lawFirmId) {
+      throw AppError.forbidden("You can only add sections to your own institution's mock tests.");
+    }
+  }
+  const audioUrl = req.file ? `/uploads/audio/${req.file.filename}` : input.audioUrl || undefined;
+  const section = await prisma.testSection.create({ data: { ...input, audioUrl } });
   res.status(201).json({ success: true, data: section });
 });
 
-router.delete("/:id", authorize("COMPANY"), async (req: Request, res: Response) => {
+router.delete("/:id", authorize("COMPANY", "LAW_FIRM_ADMIN"), async (req: Request, res: Response) => {
   const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
   const section = await prisma.testSection.findUnique({ where: { id } });
   if (!section) throw AppError.notFound("Section not found");

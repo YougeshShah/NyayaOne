@@ -20,6 +20,8 @@ export const lawFirmService = {
       passwordHash,
       tenantType: input.tenantType as any,
       modulesEnabled: input.modulesEnabled,
+      allowedCourseIds: input.allowedCourseIds,
+      allowedExamTypes: input.allowedExamTypes,
     });
 
     await lawFirmRepository.createAuditLog({
@@ -49,6 +51,10 @@ export const lawFirmService = {
         email: firm.email,
         status: firm.status,
         registrationNo: firm.registrationNo,
+        modulesEnabled: firm.modulesEnabled,
+        allowedCourseIds: (firm as any).allowedCourseIds,
+        allowedExamTypes: (firm as any).allowedExamTypes,
+        tenantType: (firm as any).tenantType,
         stats: {
           totalUsers: firm._count.users,
           totalClients: firm._count.clients,
@@ -168,5 +174,39 @@ export const lawFirmService = {
     });
 
     return updated;
+  },
+
+  async updateModules(id: string, modulesEnabled: string[], updatedByUserId: string, allowedCourseIds?: string[], allowedExamTypes?: string[]) {
+    const firm = await lawFirmRepository.findById(id);
+    if (!firm) {
+      throw AppError.notFound("Organization not found");
+    }
+
+    const updated = await lawFirmRepository.updateModules(id, modulesEnabled, allowedCourseIds, allowedExamTypes);
+
+    await lawFirmRepository.createAuditLog({
+      userId: updatedByUserId,
+      action: "LAW_FIRM_MODULES_UPDATED",
+      entityId: id,
+      metadata: { firmName: firm.name, previousModules: firm.modulesEnabled, newModules: modulesEnabled, allowedCourseIds, allowedExamTypes },
+    });
+
+    return updated;
+  },
+
+  // Permanently removes an organization and everything that belongs
+  // exclusively to it — cases, clients, documents, hearings, roles, and
+  // any question bank/mock test/library content it created (hostLawFirmId).
+  // Staff accounts (Lawyer/Staff/Admin) are deleted along with it, since
+  // they only exist as employees of this organization. STUDENT accounts
+  // are NOT deleted — they're only unlinked (lawFirmId set to null) so a
+  // student's own login, progress, and history survive their institution
+  // being removed.
+  async remove(id: string) {
+    const firm = await lawFirmRepository.findById(id);
+    if (!firm) {
+      throw AppError.notFound("Organization not found");
+    }
+    await lawFirmRepository.deleteCascade(id);
   },
 };

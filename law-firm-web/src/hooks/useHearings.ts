@@ -29,3 +29,16 @@ export function useCreateHearing() {
     },
   });
 }
+
+export function useUpdateHearing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { hearingDate?: string; judge?: string; notes?: string; status?: string } }) =>
+      hearingApi.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hearings"] });
+      queryClient.invalidateQueries({ queryKey: ["hearings-today"] });
+      queryClient.invalidateQueries({ queryKey: ["hearings-upcoming"] });
+    },
+  });
+}

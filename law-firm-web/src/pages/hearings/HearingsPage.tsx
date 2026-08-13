@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -22,13 +23,13 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useForm, Controller } from "react-hook-form";
-import { useHearings, useCreateHearing } from "../../hooks/useHearings";
+import { useHearings, useCreateHearing, useUpdateHearing } from "../../hooks/useHearings";
 import { useCases } from "../../hooks/useCases";
 import { useCourtsList } from "../../hooks/useCourtsList";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { getCourtDisplayName } from "../../i18n/courtLabels";
 import { StatusBadge } from "../../components/common/StatusBadge";
-import { CreateHearingPayload } from "../../types/hearing.types";
+import { CreateHearingPayload, Hearing } from "../../types/hearing.types";
 
 export function HearingsPage() {
   const { t, language } = useTranslation();
@@ -37,6 +38,28 @@ export function HearingsPage() {
   const { data: cases } = useCases({ page: 1, limit: 100 } as any);
   const { data: courts } = useCourtsList();
   const createHearing = useCreateHearing();
+  const updateHearing = useUpdateHearing();
+
+  const [editingHearing, setEditingHearing] = useState<Hearing | null>(null);
+  const editForm = useForm<{ hearingDate: string; judge?: string; notes?: string; status: string }>();
+
+  const openEdit = (h: Hearing) => {
+    setEditingHearing(h);
+    editForm.reset({
+      hearingDate: new Date(h.hearingDate).toISOString().slice(0, 16),
+      judge: h.judge ?? "",
+      notes: (h as any).notes ?? "",
+      status: h.status,
+    });
+  };
+
+  const onEditSubmit = (values: { hearingDate: string; judge?: string; notes?: string; status: string }) => {
+    if (!editingHearing) return;
+    updateHearing.mutate(
+      { id: editingHearing.id, payload: { ...values, hearingDate: new Date(values.hearingDate).toISOString() } },
+      { onSuccess: () => setEditingHearing(null) }
+    );
+  };
 
   const { register, handleSubmit, reset, control, formState } = useForm<CreateHearingPayload>();
 
@@ -73,19 +96,20 @@ export function HearingsPage() {
               <TableCell>{t("dateAndTime")}</TableCell>
               <TableCell>{t("judge")}</TableCell>
               <TableCell>{t("status")}</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={5} align="center">
                   Loading...
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={5} align="center">
                   No hearings scheduled yet
                 </TableCell>
               </TableRow>
@@ -102,6 +126,11 @@ export function HearingsPage() {
                 <TableCell>{h.judge || "—"}</TableCell>
                 <TableCell>
                   <StatusBadge status={h.status} />
+                </TableCell>
+                <TableCell align="right">
+                  <Button size="small" variant="outlined" onClick={() => openEdit(h)}>
+                    Edit
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -158,8 +187,11 @@ export function HearingsPage() {
                 />
               )}
             />
-            <TextField label="Judge" fullWidth {...register("judge")} />
             <TextField label="Remarks" fullWidth multiline rows={2} {...register("remarks")} />
+            <Typography variant="caption" color="text.secondary">
+              Judge isn't known when scheduling — assignment happens the morning of the hearing (gola).
+              Once the hearing has taken place, use "Edit" on it to record which judge presided and any outcome.
+            </Typography>
             <FormControlLabel
               control={<Checkbox {...register("sendTestReminder")} />}
               label="Also send a test push reminder in ~2 minutes (for verifying notifications work)"
@@ -169,6 +201,48 @@ export function HearingsPage() {
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={createHearing.isPending}>
               {createHearing.isPending ? "Scheduling..." : "Schedule Hearing"}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog open={!!editingHearing} onClose={() => setEditingHearing(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Edit Hearing</DialogTitle>
+        <Box component="form" onSubmit={editForm.handleSubmit(onEditSubmit)}>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Date & Time"
+              type="datetime-local"
+              required
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              {...editForm.register("hearingDate", { required: true })}
+            />
+            <TextField
+              label="Judge (once known / after the gola)"
+              fullWidth
+              placeholder="Fill in once assigned — usually the morning of the hearing"
+              {...editForm.register("judge")}
+            />
+            <TextField
+              label="Hearing Outcome / What Happened"
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="Brief record for the case file — e.g. adjourned to next date, arguments heard, order passed..."
+              {...editForm.register("notes")}
+            />
+            <TextField select label="Status" required fullWidth {...editForm.register("status", { required: true })}>
+              <MenuItem value="SCHEDULED">Scheduled</MenuItem>
+              <MenuItem value="COMPLETED">Completed</MenuItem>
+              <MenuItem value="POSTPONED">Postponed</MenuItem>
+              <MenuItem value="CANCELLED">Cancelled</MenuItem>
+            </TextField>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setEditingHearing(null)}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={updateHearing.isPending}>
+              {updateHearing.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogActions>
         </Box>

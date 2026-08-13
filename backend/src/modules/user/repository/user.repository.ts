@@ -128,4 +128,59 @@ export const userRepository = {
       data: { status },
     });
   },
+
+  resetPasswordScoped(id: string, lawFirmId: string, passwordHash: string) {
+    return prisma.user.updateMany({
+      where: { id, lawFirmId },
+      data: { passwordHash },
+    });
+  },
+
+  // Company staff can reset ANY user's password (institution, law firm,
+  // student) — no lawFirmId scoping, since Company operates across tenants.
+  resetPasswordUnscoped(id: string, passwordHash: string) {
+    return prisma.user.updateMany({
+      where: { id },
+      data: { passwordHash },
+    });
+  },
+
+  updateContactUnscoped(id: string, data: { fullName?: string; email?: string; phone?: string }) {
+    return prisma.user.updateMany({ where: { id }, data });
+  },
+
+  findUserById(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: { id: true, fullName: true, email: true, phone: true, accountType: true, status: true, lawFirmId: true },
+    });
+  },
+
+  findUserByEmail(email: string) {
+    return prisma.user.findUnique({ where: { email }, select: { id: true } });
+  },
+
+  // Company-only — search across ALL organizations, not scoped to one
+  // lawFirmId. Used for cross-tenant admin actions like password reset.
+  searchAcrossAllTenants(search: string) {
+    return prisma.user.findMany({
+      where: {
+        accountType: { not: "COMPANY" },
+        OR: [
+          { fullName: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        accountType: true,
+        status: true,
+        lawFirm: { select: { name: true, tenantType: true } },
+      },
+      take: 20,
+    });
+  },
 };

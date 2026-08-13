@@ -12,3 +12,20 @@ export function useAddInstitutionStudent() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["institution-students"] }),
   });
 }
+
+export function useUpdateInstitutionStudent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { fullName?: string; phone?: string } }) =>
+      institutionStudentApi.update(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["institution-students"] }),
+  });
+}
+
+export function useRemoveInstitutionStudent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => institutionStudentApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["institution-students"] }),
+  });
+}

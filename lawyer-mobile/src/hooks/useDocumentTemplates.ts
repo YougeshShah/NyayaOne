@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Paths, File, DownloadTask } from "expo-file-system";
-import * as Sharing from "expo-sharing";
+import { Paths, File } from "expo-file-system";
+import { Linking } from "react-native";
 import Constants from "expo-constants";
 import { documentTemplateApi } from "../api/documentTemplate.api";
 import { useAuthStore } from "../store/authStore";
@@ -55,8 +55,15 @@ export function useGenerateDocument() {
       const arrayBuffer = await response.arrayBuffer();
       destination.write(new Uint8Array(arrayBuffer));
 
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) await Sharing.shareAsync(destination.uri);
+      // Open the generated file with whatever the device has registered for
+      // PDFs, via the local file:// URI — avoids depending on expo-sharing
+      // (a native module that needs a fresh build to work).
+      try {
+        await Linking.openURL(destination.uri);
+      } catch {
+        // Some Android versions restrict opening file:// URIs directly;
+        // the file is still saved on-device even if this open attempt fails.
+      }
 
       return destination.uri;
     },

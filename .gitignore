@@ -2,3 +2,24 @@
 *firebase-adminsdk*.json
 *.pem
 *.key
+
+# Environment files with real secrets — never commit
+.env
+.env.local
+.env.prod
+.env.*.local
+!.env.prod.example
+!.env.example
+
+# Dependencies (huge, regenerated via npm install)
+node_modules/
+
+# Build output
+dist/
+build/
+.expo/
+
+# OS/editor noise
+.DS_Store
+*.log
+coverage/

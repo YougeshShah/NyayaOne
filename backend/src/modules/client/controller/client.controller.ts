@@ -40,6 +40,13 @@ export const clientController = {
     res.status(200).json({ success: true, message: "Client updated successfully", data: result });
   },
 
+  async remove(req: Request, res: Response) {
+    const lawFirmId = requireFirmContext(req);
+    const { id } = clientIdParamSchema.parse(req.params);
+    await clientService.remove(id, lawFirmId);
+    res.status(200).json({ success: true, message: "Client deleted" });
+  },
+
   async invite(req: Request, res: Response) {
     const lawFirmId = requireFirmContext(req);
     const { id } = clientIdParamSchema.parse(req.params);

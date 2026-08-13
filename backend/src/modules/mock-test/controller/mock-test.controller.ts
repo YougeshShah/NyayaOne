@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { z } from "zod";
 import { AppError } from "../../../common/errors/AppError";
 import { mockTestService } from "../service/mock-test.service";
 import { createMockTestSchema, listMockTestsQuerySchema, mockTestIdParamSchema, submitAttemptSchema } from "../dto/mock-test.dto";
@@ -9,7 +10,11 @@ export const mockTestController = {
     if (req.auth?.accountType === "STUDENT" && !query.courseId) {
       throw AppError.badRequest("courseId is required");
     }
-    const result = await mockTestService.list(query);
+    const result = await mockTestService.list(query, {
+      studentLawFirmId: req.auth?.accountType === "STUDENT" ? req.auth.lawFirmId ?? null : undefined,
+      forLawFirmId: req.auth?.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined,
+      studentExamType: req.auth?.accountType === "STUDENT" ? req.auth.preferredExamType ?? null : undefined,
+    });
     res.status(200).json({ success: true, data: result });
   },
 
@@ -22,14 +27,31 @@ export const mockTestController = {
   async create(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const input = createMockTestSchema.parse(req.body);
-    const result = await mockTestService.create(input, req.auth.userId);
+    const hostLawFirmId = req.auth.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined;
+    const result = await mockTestService.create(input, req.auth.userId, hostLawFirmId);
     res.status(201).json({ success: true, data: result });
   },
 
   async publish(req: Request, res: Response) {
     const { id } = mockTestIdParamSchema.parse(req.params);
-    const result = await mockTestService.publish(id);
+    const requesterLawFirmId = req.auth?.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined;
+    const result = await mockTestService.publish(id, requesterLawFirmId);
     res.status(200).json({ success: true, data: result });
+  },
+
+  async addQuestion(req: Request, res: Response) {
+    const { id } = mockTestIdParamSchema.parse(req.params);
+    const { questionId, marks } = z.object({ questionId: z.string().uuid(), marks: z.coerce.number().int().positive().default(1) }).parse(req.body);
+    const requesterLawFirmId = req.auth?.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined;
+    const result = await mockTestService.addQuestion(id, questionId, marks, requesterLawFirmId);
+    res.status(200).json({ success: true, data: result });
+  },
+
+  async removeQuestion(req: Request, res: Response) {
+    const { id, questionId } = z.object({ id: z.string().uuid(), questionId: z.string().uuid() }).parse(req.params);
+    const requesterLawFirmId = req.auth?.accountType === "LAW_FIRM_ADMIN" ? req.auth.lawFirmId ?? undefined : undefined;
+    await mockTestService.removeQuestion(id, questionId, requesterLawFirmId);
+    res.status(200).json({ success: true, message: "Question removed from test" });
   },
 
   async startAttempt(req: Request, res: Response) {

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { AppError } from "../../../common/errors/AppError";
+import { prisma } from "../../../database/prisma";
 import { courseService } from "../service/course.service";
 import { createCourseSchema, updateCourseSchema, courseIdParamSchema } from "../dto/course.dto";
 import { z } from "zod";
@@ -19,7 +20,33 @@ export const courseController = {
 
   async list(req: Request, res: Response) {
     const activeOnly = req.auth?.accountType !== "COMPANY"; // Company sees inactive courses too, for management
-    const result = await courseService.list(activeOnly);
+    let result = await courseService.list(activeOnly);
+
+    // An institution's own staff (Lawyer/Staff acting under a LAW_FIRM_ADMIN,
+    // or the admin themselves) can only see the sector(s) their organization
+    // was set up to teach — an IELTS-only institute should never see Law in
+    // its own course dropdowns, even though the platform-wide course exists.
+    const isInstitutionStaff =
+      req.auth?.accountType === "LAW_FIRM_ADMIN" || req.auth?.accountType === "LAWYER" || req.auth?.accountType === "STAFF";
+    if (isInstitutionStaff && req.auth?.lawFirmId) {
+      const firm = await prisma.lawFirm.findUnique({ where: { id: req.auth.lawFirmId }, select: { allowedCourseIds: true } });
+      if (firm && firm.allowedCourseIds.length > 0) {
+        result = (result as any[]).filter((c) => firm.allowedCourseIds.includes(c.id));
+      }
+    }
+
+    // An institution-added student should only ever see the course(s) their
+    // institution actually teaches — not every course on the platform. A
+    // self-registered student (lawFirmId null) has no such restriction and
+    // can browse/subscribe to anything, since nobody enrolled them into a
+    // specific sector on their behalf.
+    if (req.auth?.accountType === "STUDENT" && req.auth?.lawFirmId) {
+      const firm = await prisma.lawFirm.findUnique({ where: { id: req.auth.lawFirmId }, select: { allowedCourseIds: true } });
+      if (firm && firm.allowedCourseIds.length > 0) {
+        result = (result as any[]).filter((c) => firm.allowedCourseIds.includes(c.id));
+      }
+    }
+
     res.status(200).json({ success: true, data: result });
   },
 
