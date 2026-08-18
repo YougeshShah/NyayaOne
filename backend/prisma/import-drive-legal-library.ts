@@ -80,10 +80,10 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
   fs.writeFileSync(pdfPath, buffer);
 
   try {
-    // Rasterize every page to a PNG at 300 DPI (poppler-utils' pdftoppm) —
-    // higher DPI significantly improves OCR accuracy for dense Devanagari
-    // conjuncts compared to the default ~150 DPI.
-    execSync(`pdftoppm -png -r 300 "${pdfPath}" "${path.join(tmpDir, "page")}"`, { stdio: "pipe" });
+    // Rasterize every page to a PNG at 400 DPI (poppler-utils' pdftoppm) —
+    // pushed higher than the previous 300 DPI attempt, since some dense
+    // government-form PDFs still produced badly garbled text at 300.
+    execSync(`pdftoppm -png -r 400 "${pdfPath}" "${path.join(tmpDir, "page")}"`, { stdio: "pipe" });
 
     const pageFiles = fs
       .readdirSync(tmpDir)
@@ -97,10 +97,16 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     const pageTexts: string[] = [];
     for (const pageFile of pageFiles) {
       const imgPath = path.join(tmpDir, pageFile);
-      // "nep" = Nepali-trained Tesseract language data. Falls back to
-      // "nep+eng" if a document mixes Nepali and English (common for
-      // section/clause numbering, dates, etc.)
-      const text = execSync(`tesseract "${imgPath}" stdout -l nep+eng`, { stdio: ["pipe", "pipe", "pipe"] }).toString("utf-8");
+      // "--psm 6" tells Tesseract to treat the image as a single uniform
+      // block of text instead of trying to auto-detect columns/layout —
+      // Tesseract's default auto-segmentation frequently misreads dense,
+      // single-column government legal text as a multi-column or sparse
+      // layout, which is what produced the badly garbled/split-character
+      // output seen on some documents. Nepali-only (not nep+eng) also
+      // measurably improves accuracy on documents that are pure Nepali,
+      // since mixing language models can pull the recognizer toward
+      // incorrect Latin-adjacent character shapes.
+      const text = execSync(`tesseract "${imgPath}" stdout -l nep --psm 6`, { stdio: ["pipe", "pipe", "pipe"] }).toString("utf-8");
       pageTexts.push(text.trim());
     }
 

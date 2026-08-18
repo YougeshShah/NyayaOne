@@ -6,6 +6,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -203,7 +204,14 @@ export function ClientsPage() {
             <TextField label="Phone" fullWidth {...register("phone")} />
             <TextField label="Email" fullWidth helperText="Required if you want to grant mobile app access later" {...register("email")} />
             <TextField label="Address" fullWidth {...register("address")} />
-            <TextField label="Identification Type (e.g. Citizenship)" fullWidth {...register("identificationType")} />
+            <TextField select label="Identification Type" fullWidth defaultValue="" {...register("identificationType")}>
+              <MenuItem value="">-- Select --</MenuItem>
+              <MenuItem value="नागरिकता प्रमाणपत्र">नागरिकता प्रमाणपत्र (Citizenship Certificate)</MenuItem>
+              <MenuItem value="राहदानी">राहदानी (Passport)</MenuItem>
+              <MenuItem value="मतदाता परिचयपत्र">मतदाता परिचयपत्र (Voter ID)</MenuItem>
+              <MenuItem value="राष्ट्रिय परिचयपत्र">राष्ट्रिय परिचयपत्र (National ID)</MenuItem>
+              <MenuItem value="ड्राइभिङ लाइसेन्स">ड्राइभिङ लाइसेन्स (Driving License)</MenuItem>
+            </TextField>
             <TextField label="Identification No." fullWidth {...register("identificationNo")} />
             <TextField label="Notes" fullWidth multiline rows={2} {...register("notes")} />
           </DialogContent>

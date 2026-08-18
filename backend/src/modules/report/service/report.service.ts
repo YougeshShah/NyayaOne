@@ -38,6 +38,22 @@ async function fetchClientsForReport(lawFirmId: string) {
 }
 
 export const reportService = {
+  // JSON list variants -- same underlying query and same filter (status
+  // for cases) as the Excel/PDF exports, so what a user sees on screen
+  // always matches what they'd get in the downloaded file. Used for the
+  // "View List" preview in the UI, separate from the download buttons.
+  async casesList(lawFirmId: string, status?: CaseStatus) {
+    return fetchCasesForReport(lawFirmId, status);
+  },
+
+  async hearingsList(lawFirmId: string) {
+    return fetchUpcomingHearingsForReport(lawFirmId);
+  },
+
+  async clientsList(lawFirmId: string) {
+    return fetchClientsForReport(lawFirmId);
+  },
+
   async casesExcel(lawFirmId: string, status?: CaseStatus): Promise<Buffer> {
     const cases = await fetchCasesForReport(lawFirmId, status);
 

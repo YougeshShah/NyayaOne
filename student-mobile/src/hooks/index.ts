@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authApi, courseApi, subjectApi, mcqApi, mockTestApi, liveClassApi, libraryApi, bookmarkApi, chatbotApi, profileApi, notificationApi, flashcardApi } from "../api";
+import { authApi, courseApi, subjectApi, mcqApi, mockTestApi, liveClassApi, libraryApi, bookmarkApi, chatbotApi, profileApi, notificationApi, flashcardApi, precedentApi} from "../api";
 import { useAuthStore } from "../store/authStore";
 import { ChatMessage } from "../types";
 
@@ -148,4 +148,24 @@ export function useSubmitFamiliarity() {
     mutationFn: ({ id, familiarity }: { id: string; familiarity: "AGAIN" | "GOOD" | "EASY" }) => flashcardApi.submitFamiliarity(id, familiarity),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["flashcards"] }),
   });
+}
+
+
+export function usePrecedentSearch(params: { search?: string; category?: string; page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: ["precedents", params],
+    queryFn: () => precedentApi.search(params),
+  });
+}
+
+export function usePrecedentDetail(id: string | undefined) {
+  return useQuery({
+    queryKey: ["precedent-detail", id],
+    queryFn: () => precedentApi.getById(id as string),
+    enabled: !!id,
+  });
+}
+
+export function usePrecedentCategories() {
+  return useQuery({ queryKey: ["precedent-categories"], queryFn: () => precedentApi.listCategories() });
 }

@@ -59,6 +59,7 @@ export const authRepository = {
     addedByLawFirmId?: string;
     preferredCourseId?: string;
     preferredExamType?: string;
+    status?: "ACTIVE" | "PENDING_VERIFICATION";
   }) {
     return prisma.user.create({
       data: {
@@ -67,7 +68,7 @@ export const authRepository = {
         email: params.email.toLowerCase().trim(),
         phone: params.phone,
         passwordHash: params.passwordHash,
-        status: "ACTIVE",
+        status: params.status ?? "ACTIVE",
         lawFirmId: params.addedByLawFirmId ?? null,
         preferredCourseId: params.preferredCourseId,
         preferredExamType: params.preferredExamType,
@@ -75,10 +76,10 @@ export const authRepository = {
     });
   },
 
-  findStudentsByLawFirmId(lawFirmId: string) {
+  findStudentsByLawFirmId(lawFirmId: string, status?: "ACTIVE" | "PENDING_VERIFICATION") {
     return prisma.user.findMany({
-      where: { accountType: AccountType.STUDENT, lawFirmId },
-      select: { id: true, fullName: true, email: true, phone: true, createdAt: true },
+      where: { accountType: AccountType.STUDENT, lawFirmId, ...(status ? { status } : {}) },
+      select: { id: true, fullName: true, email: true, phone: true, status: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     });
   },
@@ -90,7 +91,7 @@ export const authRepository = {
     });
   },
 
-  updateStudentScoped(id: string, lawFirmId: string, data: { fullName?: string; phone?: string }) {
+  updateStudentScoped(id: string, lawFirmId: string, data: { fullName?: string; phone?: string; status?: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED"; preferredCourseId?: string; preferredExamType?: string }) {
     return prisma.user.updateMany({ where: { id, accountType: AccountType.STUDENT, lawFirmId }, data });
   },
 

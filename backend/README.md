@@ -1,6 +1,6 @@
 # NyayaOne Backend — Phase 0 / Phase 1 Foundation
 
-Legal Technology Platform backend for TrailBlaze Tech.
+Legal Technology Platform backend for Technocraftx.
 Clean Architecture: `controller → service → repository → database`.
 
 ## Local Setup (Ubuntu)
@@ -44,7 +44,7 @@ When prompted for a migration name, type: `init`
 npm run prisma:seed
 ```
 This creates:
-- Login: `admin@trailblazetech.com`
+- Login: `admin@technocraftx.com`
 - Password: `ChangeMe123!`
 
 ⚠️ Change this password after first login (once the "change password" endpoint is built).
@@ -69,7 +69,7 @@ Test login:
 ```bash
 curl -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@trailblazetech.com","password":"ChangeMe123!"}'
+  -d '{"email":"admin@technocraftx.com","password":"ChangeMe123!"}'
 ```
 
 ### 8. Inspect the database visually (optional)

@@ -4,6 +4,13 @@ import { LawFirmStatus, Prisma, AccountType, TenantType } from "@prisma/client";
 type AuditMetadata = Record<string, unknown>;
 
 export const lawFirmRepository = {
+  findPublicInstitutions() {
+    return prisma.lawFirm.findMany({
+      where: { tenantType: "EDUCATION", status: "ACTIVE", slug: { not: null } },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: "asc" },
+    });
+  },
   async findMany(params: { status?: LawFirmStatus; search?: string; skip: number; take: number }) {
     const where: Prisma.LawFirmWhereInput = {
       ...(params.status ? { status: params.status } : {}),

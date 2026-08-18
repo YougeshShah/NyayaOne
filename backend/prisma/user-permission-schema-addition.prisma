@@ -1,0 +1,38 @@
+// ------------------------------------------------------------
+// USER PERMISSION — individual override on top of role-based
+// permissions. Real-world need: two staff can share the same role
+// (e.g. "Librarian"), but one of them personally needs one extra
+// permission the role doesn't grant, or needs one role-permission
+// specifically taken away from them — without creating a whole new
+// role just for one person.
+//
+// granted: true  = explicit GRANT, gives this permission even if the
+//                   user's role doesn't include it
+// granted: false = explicit REVOKE, takes this permission away even
+//                   if the user's role does include it
+//
+// An explicit row here always wins over the role's default — this
+// mirrors how most real RBAC systems (AWS IAM, Django) handle
+// individual-over-group overrides. No row for a given permission
+// means "no override, just use whatever the role says" (today's
+// behavior, unchanged).
+//
+// Works for ANY account type that has a User row and a roleId —
+// Company staff, tenant (Law Firm/Institution) staff, and students
+// alike, since this is keyed on userId + permissionId generically.
+// ------------------------------------------------------------
+
+model UserPermission {
+  id           String     @id @default(uuid())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
+  granted      Boolean // true = extra grant beyond the role, false = revoke despite the role
+  grantedBy    String // userId of whoever set this override, for audit purposes
+  reason       String? // optional note on why this individual override exists
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+}

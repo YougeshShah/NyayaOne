@@ -84,6 +84,7 @@ export const userRepository = {
     accountType: AccountType;
     barRegistrationNo?: string;
     specialization?: string;
+    roleId?: string;
   }) {
     return prisma.user.create({
       data: {
@@ -96,6 +97,7 @@ export const userRepository = {
         status: "ACTIVE", // created directly by firm admin, no separate email verification step yet
         barRegistrationNo: data.accountType === "LAWYER" ? data.barRegistrationNo : undefined,
         specialization: data.accountType === "LAWYER" ? data.specialization : undefined,
+        roleId: data.roleId,
       },
       select: {
         id: true,
@@ -114,7 +116,7 @@ export const userRepository = {
   updateScoped(
     id: string,
     lawFirmId: string,
-    data: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string }
+    data: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string; roleId?: string | null }
   ) {
     return prisma.user.updateMany({
       where: { id, lawFirmId },

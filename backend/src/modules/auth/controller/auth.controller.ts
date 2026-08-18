@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { emailVerificationService } from "../../email-verification/service/email-verification.service";
 import path from "path";
 import { z } from "zod";
 import { authService } from "../service/auth.service";
@@ -15,6 +16,12 @@ export const authController = {
   async registerStudent(req: Request, res: Response) {
     const input = registerStudentSchema.parse(req.body);
     const result = await authService.registerStudent(input);
+    // Fire off the verification email -- failure here shouldn't block the
+    // registration itself (the account exists either way; the student can
+    // request a fresh code from the login/verify screen if this one fails).
+    emailVerificationService.sendCode(input.email, "REGISTRATION").catch((err) => {
+      console.error("Failed to send registration verification email:", err);
+    });
     res.status(201).json({ success: true, data: result });
   },
 
@@ -29,14 +36,23 @@ export const authController = {
 
   async listInstitutionStudents(req: Request, res: Response) {
     if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
-    const result = await authService.listInstitutionStudents(req.auth.lawFirmId);
+    const status = req.query.status as "ACTIVE" | "PENDING_VERIFICATION" | undefined;
+    const result = await authService.listInstitutionStudents(req.auth.lawFirmId, status);
     res.status(200).json({ success: true, data: result });
   },
 
   async updateInstitutionStudent(req: Request, res: Response) {
     if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const input = z.object({ fullName: z.string().min(2).optional(), phone: z.string().optional() }).parse(req.body);
+    const input = z
+      .object({
+        fullName: z.string().min(2).optional(),
+        phone: z.string().optional(),
+        status: z.enum(["ACTIVE", "PENDING_VERIFICATION", "SUSPENDED"]).optional(),
+        preferredCourseId: z.string().uuid().optional(),
+        preferredExamType: z.string().optional(),
+      })
+      .parse(req.body);
     const result = await authService.updateInstitutionStudent(id, req.auth.lawFirmId, input);
     res.status(200).json({ success: true, message: "Student updated", data: result });
   },

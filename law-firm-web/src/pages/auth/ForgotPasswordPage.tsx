@@ -1,60 +1,75 @@
 import { useState } from "react";
-import { Alert, Box, Button, Paper, TextField, Typography, Link as MuiLink } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Alert, Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
-import { authApi } from "../../api/auth.api";
-
-interface FormValues {
-  email: string;
-  note?: string;
-}
+import { apiClient } from "../../api/client";
 
 export function ForgotPasswordPage() {
-  const [submitted, setSubmitted] = useState(false);
-  const { register, handleSubmit, formState } = useForm<FormValues>();
+  const [step, setStep] = useState<"request" | "reset">("request");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [success, setSuccess] = useState(false);
 
-  const requestReset = useMutation({
-    mutationFn: (values: FormValues) => authApi.requestPasswordReset(values.email, values.note),
-    onSuccess: () => setSubmitted(true),
+  const requestCode = useMutation({
+    mutationFn: () => apiClient.post("/email-verification/send-code", { email, purpose: "PASSWORD_RESET" }),
+    onSuccess: () => setStep("reset"),
+  });
+
+  const resetPassword = useMutation({
+    mutationFn: () => apiClient.post("/email-verification/reset-password", { email, code, newPassword }),
+    onSuccess: () => setSuccess(true),
   });
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#0F4C3A",
-      }}
-    >
-      <Paper elevation={8} sx={{ p: 4, width: 420, borderRadius: 3 }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#F9FAFB" }}>
+      <Paper elevation={0} sx={{ p: 4, width: 420, borderRadius: 3, border: "1px solid #E5E7EB" }}>
         <Typography variant="h5" fontWeight={700} textAlign="center" sx={{ mb: 0.5 }}>
-          Forgot Password?
+          {step === "request" ? "Forgot Password" : "Reset Password"}
         </Typography>
         <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
-          Submit your email and TrailBlaze support or your organization's admin will reset it for you.
+          {step === "request" ? "Enter your email and we'll send you a code" : "Enter the code and your new password"}
         </Typography>
 
-        {submitted ? (
-          <Alert severity="success">Request submitted — someone will reach out to reset your password shortly.</Alert>
+        {success ? (
+          <Alert severity="success">Password reset successfully. You can now log in with your new password.</Alert>
+        ) : step === "request" ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {requestCode.isError && <Alert severity="error">Something went wrong. Please try again.</Alert>}
+            <TextField label="Email" type="email" required fullWidth value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Button variant="contained" size="large" onClick={() => requestCode.mutate()} disabled={requestCode.isPending || !email}>
+              {requestCode.isPending ? "Sending..." : "Send Code"}
+            </Button>
+          </Box>
         ) : (
-          <Box component="form" onSubmit={handleSubmit((v) => requestReset.mutate(v))} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {requestReset.isError && <Alert severity="error">Something went wrong — please try again.</Alert>}
-            <TextField label="Your Account Email" type="email" required fullWidth {...register("email", { required: true })} error={!!formState.errors.email} />
-            <TextField label="Note (optional)" fullWidth multiline rows={2} {...register("note")} />
-            <Button type="submit" variant="contained" size="large" disabled={requestReset.isPending}>
-              {requestReset.isPending ? "Submitting..." : "Submit Request"}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {resetPassword.isError && <Alert severity="error">Invalid or expired code. Please try again.</Alert>}
+            <TextField
+              label="6-Digit Code"
+              required
+              fullWidth
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputProps={{ maxLength: 6, style: { letterSpacing: 8, fontSize: 24, textAlign: "center" } }}
+            />
+            <TextField
+              label="New Password"
+              type="password"
+              required
+              fullWidth
+              helperText="Minimum 8 characters"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => resetPassword.mutate()}
+              disabled={resetPassword.isPending || code.length !== 6 || newPassword.length < 8}
+            >
+              {resetPassword.isPending ? "Resetting..." : "Reset Password"}
             </Button>
           </Box>
         )}
-
-        <Typography variant="body2" textAlign="center" sx={{ mt: 3 }}>
-          <MuiLink component={Link} to="/login">
-            Back to Sign In
-          </MuiLink>
-        </Typography>
       </Paper>
     </Box>
   );

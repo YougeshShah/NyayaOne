@@ -21,6 +21,7 @@ export interface CreateFirmUserPayload {
   accountType: StaffAccountType;
   barRegistrationNo?: string;
   specialization?: string;
+  roleId?: string;
 }
 
 export interface UpdateFirmUserPayload {

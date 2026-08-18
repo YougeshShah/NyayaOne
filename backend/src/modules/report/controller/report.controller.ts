@@ -23,6 +23,23 @@ function sendPdf(res: Response, buffer: Buffer, filename: string) {
 }
 
 export const reportController = {
+  async casesListJson(req: Request, res: Response) {
+    const lawFirmId = requireFirmContext(req);
+    const status = req.query.status as CaseStatus | undefined;
+    const items = await reportService.casesList(lawFirmId, status);
+    res.status(200).json({ success: true, data: { items } });
+  },
+  async hearingsListJson(req: Request, res: Response) {
+    const lawFirmId = requireFirmContext(req);
+    const items = await reportService.hearingsList(lawFirmId);
+    res.status(200).json({ success: true, data: { items } });
+  },
+  async clientsListJson(req: Request, res: Response) {
+    const lawFirmId = requireFirmContext(req);
+    const items = await reportService.clientsList(lawFirmId);
+    res.status(200).json({ success: true, data: { items } });
+  },
+
   async cases(req: Request, res: Response) {
     const lawFirmId = requireFirmContext(req);
     const format = (req.query.format as string) === "pdf" ? "pdf" : "excel";

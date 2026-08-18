@@ -15,6 +15,7 @@ export interface DocumentTemplate {
   id: string;
   title: string;
   category: string | null;
+  bodyTemplate: string;
   fields: TemplateField[];
 }
 

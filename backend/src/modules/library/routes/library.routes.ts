@@ -14,7 +14,7 @@ router.get("/categories", authenticate, libraryController.listCategories);
 router.get("/:id", authenticate, libraryController.getById);
 router.get("/:id/download", authenticate, libraryController.download);
 
-// Write access: only TrailBlaze Tech (Company) manages the legal library.
+// Write access: only Technocraftx (Company) manages the legal library.
 const uploadMiddleware = (req: Request, res: Response, next: NextFunction) => {
   libraryUpload.single("file")(req, res, (err) => {
     if (err) return next(mapMulterError(err));
@@ -28,7 +28,7 @@ router.delete("/:id", authenticate, authorize("COMPANY"), requirePermission("lib
 
 // Institution's own staff — a simpler, text-only path (no PDF upload) so
 // an institute can publish their own notes/materials without needing
-// TrailBlaze's document-management tooling. Scoped to their own tenant
+// Technocraftx's document-management tooling. Scoped to their own tenant
 // automatically (see controller).
 router.post(
   "/institution",

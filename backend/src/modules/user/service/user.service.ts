@@ -57,6 +57,7 @@ export const userService = {
       accountType: input.accountType,
       barRegistrationNo: input.barRegistrationNo,
       specialization: input.specialization,
+      roleId: input.roleId,
     });
 
     return user;

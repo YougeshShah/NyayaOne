@@ -10,13 +10,16 @@ export interface LiveClassInstitution {
   durationMinutes: number;
   isFreeDemo: boolean;
   status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED";
+  jitsiRoomName?: string;
   course?: { name: string };
+  host?: { id: string; fullName: string } | null;
   _count?: { attendees: number };
 }
 
 export interface CourseOption {
   id: string;
   name: string;
+  category?: "LAW" | "LANGUAGE" | "OTHER";
 }
 
 export const liveClassInstitutionApi = {
@@ -53,5 +56,15 @@ export const liveClassInstitutionApi = {
 
   async cancel(id: string) {
     await apiClient.patch(`/live-classes/${id}/cancel`);
+  },
+  async remove(id: string) {
+    await apiClient.delete(`/live-classes/${id}`);
+  },
+  async uploadRecording(id: string, recordingUrl: string) {
+    await apiClient.patch(`/live-classes/${id}/recording`, { recordingUrl });
+  },
+  async listAttendees(id: string): Promise<{ id: string; joinedAt: string; student: { id: string; fullName: string; email: string } }[]> {
+    const { data } = await apiClient.get<ApiSuccessResponse<any[]>>(`/live-classes/${id}/attendees`);
+    return data.data;
   },
 };

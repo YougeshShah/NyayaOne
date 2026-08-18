@@ -18,6 +18,7 @@ export default function CourseDetailScreen() {
   };
 
   const isSubscribed = (subscriptions ?? []).some((s) => s.courseId === id && (s.status === "ACTIVE" || s.status === "TRIAL"));
+  const isLanguageCourse = (subscriptions ?? []).some((s: any) => s.courseId === id && s.course?.category === "LANGUAGE");
 
   if (isLoading) {
     return (
@@ -46,6 +47,12 @@ export default function CourseDetailScreen() {
             <Ionicons name="albums-outline" size={22} color="#2563EB" />
             <Text style={styles.quickActionLabel}>Flashcards</Text>
           </TouchableOpacity>
+          {isLanguageCourse && (
+            <TouchableOpacity style={styles.quickAction} onPress={() => router.push(`/speaking/${id}`)}>
+              <Ionicons name="mic-outline" size={22} color="#2563EB" />
+              <Text style={styles.quickActionLabel}>Speaking</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Practice by Subject</Text>

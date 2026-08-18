@@ -3,6 +3,7 @@ import { AppError } from "../../../common/errors/AppError";
 import { liveClassRepository } from "../repository/live-class.repository";
 import { courseService } from "../../course/service/course.service";
 import { CreateLiveClassInput, ListLiveClassesQuery } from "../dto/live-class.dto";
+import { lawFirmRepository } from "../../lawfirm/repository/lawfirm.repository";
 
 // Free public Jitsi Meet server — no API key, no per-minute cost. Self-hosting
 // is a drop-in swap later (just change this base URL) if usage outgrows what
@@ -20,12 +21,13 @@ function generateRoomName(title: string): string {
 }
 
 export const liveClassService = {
-  async list(query: ListLiveClassesQuery, opts: { studentLawFirmId?: string | null; forLawFirmId?: string } = {}) {
+  async list(query: ListLiveClassesQuery, opts: { studentLawFirmId?: string | null; forLawFirmId?: string; onlyHostId?: string } = {}) {
     return liveClassRepository.findMany({
       courseId: query.courseId,
       upcomingOnly: query.upcomingOnly,
       studentLawFirmId: opts.studentLawFirmId,
       forLawFirmId: opts.forLawFirmId,
+      onlyHostId: opts.onlyHostId,
     });
   },
 
@@ -42,9 +44,22 @@ export const liveClassService = {
     return liveClass;
   },
 
-  async create(input: CreateLiveClassInput, hostId: string, hostLawFirmId?: string) {
+  async create(input: CreateLiveClassInput, creatorId: string, hostLawFirmId?: string) {
+    // Same "Sector Access" check as Mock Test/Flashcard/MCQ/Library -- an
+    // institution can only schedule classes for courses Company granted it.
+    if (hostLawFirmId) {
+      const firm = await lawFirmRepository.findById(hostLawFirmId);
+      const allowed = (firm as any)?.allowedCourseIds ?? [];
+      if (allowed.length > 0 && !allowed.includes(input.courseId)) {
+        throw AppError.forbidden("Your institution doesn't have Sector Access to this course.");
+      }
+    }
     const jitsiRoomName = generateRoomName(input.title);
-    return liveClassRepository.create({
+    // If the creator explicitly picked a teacher/staff to host it,
+    // that person hosts -- otherwise the creator hosts it themselves,
+    // same behavior as before hostId existed.
+    const hostId = input.hostId || creatorId;
+    const liveClass = await liveClassRepository.create({
       courseId: input.courseId,
       subjectId: input.subjectId,
       title: input.title,
@@ -56,6 +71,14 @@ export const liveClassService = {
       isFreeDemo: input.isFreeDemo,
       hostLawFirmId,
     });
+
+    // Record the full host list -- the primary host always gets an entry
+    // (isPrimary: true) alongside any additional co-hosts, so
+    // liveClass.cohosts is always the complete picture, not just the extras.
+    const allHostIds = [hostId, ...(input.cohostIds ?? []).filter((id) => id !== hostId)];
+    await liveClassRepository.setCohosts(liveClass.id, hostId, allHostIds);
+
+    return liveClass;
   },
 
   /**
@@ -86,13 +109,35 @@ export const liveClassService = {
   },
 
   // The host (Company or institution instructor) joins the same room without a subscription check.
-  async joinAsHost(liveClassId: string) {
+  async joinAsHost(liveClassId: string, requesterId: string, requesterAccountType: string) {
     const liveClass = await this.getById(liveClassId);
+    // Only the specific teacher/staff assigned to host this class may join
+    // as host -- being a Law Firm Admin no longer grants automatic access
+    // to every class, only the one(s) actually assigned to them. Company
+    // staff retain access for platform-level oversight/support.
+    const isAssignedHost = liveClass.hostId === requesterId;
+    const isCompanyStaff = requesterAccountType === "COMPANY";
+    if (!isAssignedHost && !isCompanyStaff) {
+      throw AppError.forbidden("Only the teacher assigned to host this class may join as host.");
+    }
     return {
       meetingUrl: `${JITSI_BASE_URL}/${liveClass.jitsiRoomName}`,
       roomName: liveClass.jitsiRoomName,
       title: liveClass.title,
     };
+  },
+
+  async remove(id: string) {
+    const cls = await this.getById(id);
+    if (cls.status === "LIVE") {
+      throw AppError.badRequest("Cannot delete a class that is currently live. End it first.");
+    }
+    await liveClassRepository.delete(id);
+  },
+
+  async listAttendees(id: string) {
+    await this.getById(id); // 404 if the class doesn't exist
+    return liveClassRepository.listAttendees(id);
   },
 
   async markLive(id: string) {
@@ -115,7 +160,7 @@ export const liveClassService = {
     return liveClassRepository.setStatus(id, "CANCELLED");
   },
 
-  async update(id: string, input: { title?: string; description?: string; scheduledAt?: string; durationMinutes?: number; isFreeDemo?: boolean }) {
+  async update(id: string, input: { title?: string; description?: string; scheduledAt?: string; durationMinutes?: number; isFreeDemo?: boolean; hostId?: string }) {
     const cls = await this.getById(id);
     if (cls.status !== "SCHEDULED") {
       throw AppError.badRequest(`Only a SCHEDULED class can be edited. Current status: ${cls.status}`);
@@ -126,6 +171,7 @@ export const liveClassService = {
       scheduledAt: input.scheduledAt ? new Date(input.scheduledAt) : undefined,
       durationMinutes: input.durationMinutes,
       isFreeDemo: input.isFreeDemo,
+      hostId: input.hostId,
     });
   },
 };

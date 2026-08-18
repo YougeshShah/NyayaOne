@@ -1,0 +1,64 @@
+// ------------------------------------------------------------
+// IELTS SPEAKING MODULE
+// ------------------------------------------------------------
+// Built as a standalone framework first — recording, storage, and
+// submission tracking all work today with zero AI cost. Every AI-grading
+// field below is nullable, so a submission simply sits at
+// PENDING_GRADING until the company decides to pay for and wire up an
+// actual grading pipeline (speech-to-text + LLM scoring) later. Nothing
+// here needs to change when that happens — just fill these fields in
+// from whatever grading job runs.
+
+model SpeakingPrompt {
+  id               String   @id @default(uuid())
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  part             Int // 1, 2, or 3 -- matches real IELTS Speaking structure
+  title            String // e.g. "Describe a memorable trip"
+  promptText       String // the full question or cue-card text
+  prepTimeSeconds  Int? // Part 2 cue cards get ~1 min prep; Part 1/3 usually none
+  speakTimeSeconds Int // how long the student is expected to speak
+  isPublished      Boolean  @default(true)
+  createdBy        String
+  createdAt        DateTime @default(now())
+
+  submissions SpeakingSubmission[]
+
+  @@index([courseId])
+}
+
+enum SpeakingSubmissionStatus {
+  PENDING_GRADING // recording uploaded, no AI grading run yet (today's default -- and forever, until AI is wired up)
+  GRADED
+  GRADING_FAILED // AI pipeline attempted and errored -- kept separate from PENDING so it's visible for retry, not silently stuck
+}
+
+model SpeakingSubmission {
+  id              String   @id @default(uuid())
+  student         User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId       String
+  prompt          SpeakingPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  promptId        String
+
+  recordingUrl    String // path to the stored video/audio file (local disk today, swappable to cloud storage later without schema change)
+  recordingType   String // "video" | "audio" -- camera+mic vs mic-only submission
+  durationSeconds Int?
+
+  status          SpeakingSubmissionStatus @default(PENDING_GRADING)
+
+  // Everything below stays null until a real grading pipeline exists.
+  transcript          String? // filled in by speech-to-text once that's wired up
+  fluencyScore         Float? // IELTS band-style sub-scores (0-9 scale)
+  lexicalScore          Float?
+  grammarScore          Float?
+  pronunciationScore    Float?
+  overallBand           Float?
+  aiFeedback             String? // qualitative written feedback from the grading model
+  gradedAt               DateTime?
+
+  createdAt       DateTime @default(now())
+
+  @@index([studentId])
+  @@index([promptId])
+  @@index([status])
+}

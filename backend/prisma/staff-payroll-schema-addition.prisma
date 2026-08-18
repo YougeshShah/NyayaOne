@@ -1,0 +1,47 @@
+// ------------------------------------------------------------
+// STAFF SALARY & PAYMENT — the "expense" side of institution accounting,
+// mirroring the student-fee "revenue" side but in reverse (institution
+// pays staff, rather than students paying the institution). Categorized
+// by role (Teacher, Admin, Support, etc.) since real-world coaching
+// institutes pay these differently -- fixed monthly for most staff,
+// per-class/hourly for visiting or part-time teachers.
+// ------------------------------------------------------------
+
+enum SalaryType {
+  FIXED_MONTHLY
+  PER_CLASS
+  HOURLY
+}
+
+model StaffSalary {
+  id         String     @id @default(uuid())
+  staffId    String
+  staff      User       @relation("StaffSalaryRecord", fields: [staffId], references: [id], onDelete: Cascade)
+  lawFirmId  String // which institution this staff member's salary record belongs to
+  lawFirm    LawFirm    @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  category   String // "Teacher", "Admin", "Support", etc. -- free text so each institution can use its own labels
+  salaryType SalaryType
+  amount     Float // NPR -- monthly amount if FIXED_MONTHLY, per-class or per-hour rate otherwise
+  updatedBy  String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  payments StaffPayment[]
+
+  @@unique([staffId, lawFirmId])
+  @@index([lawFirmId])
+}
+
+model StaffPayment {
+  id            String      @id @default(uuid())
+  staffSalary   StaffSalary @relation(fields: [staffSalaryId], references: [id], onDelete: Cascade)
+  staffSalaryId String
+  amount        Float // NPR -- actual amount paid this time (may differ from the salary record if hourly/per-class)
+  paidForPeriod String? // e.g. "2026-08" for a monthly salary, or a date range description for hourly/per-class pay
+  paymentMethod String // "CASH" | "BANK_TRANSFER" | "QR_SCAN"
+  receiptNumber String?
+  recordedBy    String
+  createdAt     DateTime    @default(now())
+
+  @@index([staffSalaryId])
+}

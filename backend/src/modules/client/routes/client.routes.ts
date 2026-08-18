@@ -2,6 +2,7 @@ import { Router } from "express";
 import { clientController } from "../controller/client.controller";
 import { authenticate } from "../../../common/middleware/authenticate";
 import { authorize } from "../../../common/middleware/authorize";
+import { requireTenantPermission } from "../../../common/middleware/requireTenantPermission";
 
 const router = Router();
 
@@ -10,8 +11,8 @@ router.use(authenticate, authorize("LAW_FIRM_ADMIN", "LAWYER", "STAFF"));
 
 router.get("/", clientController.list);
 router.get("/:id", clientController.getById);
-router.post("/", clientController.create);
-router.patch("/:id", clientController.update);
+router.post("/", requireTenantPermission("client.manage"), clientController.create);
+router.patch("/:id", requireTenantPermission("client.manage"), clientController.update);
 router.delete("/:id", authorize("LAW_FIRM_ADMIN"), clientController.remove);
 router.post("/:id/invite", authorize("LAW_FIRM_ADMIN", "LAWYER"), clientController.invite);
 

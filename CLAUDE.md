@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository overview
 
-NyayaOne is a multi-tenant legal-tech platform (TrailBlaze Tech) for Nepali law firms. It is a monorepo of five independent apps that all talk to one Express/Prisma backend:
+NyayaOne is a multi-tenant legal-tech platform (Technocraftx) for Nepali law firms. It is a monorepo of five independent apps that all talk to one Express/Prisma backend:
 
 | App | Stack | Who uses it |
 |---|---|---|
 | `backend/` | Express + TypeScript + Prisma + PostgreSQL | REST API for everything below |
-| `company-web/` | Vite + React + MUI | TrailBlaze staff "Company Control Center" (approve firms, manage courts, library, subscriptions) |
-| `law-firm-web/` | Vite + React + MUI | Law firm admin/lawyer dashboard (cases, clients, hearings, reports) |
-| `lawyer-mobile/` | Expo + expo-router + React Native | Lawyer mobile app |
+| `company-web/` | Vite + React + MUI | Technocraftx staff "Company Control Center" (approve firms, manage courts, library, subscriptions, precedent DB, speaking prompts, usage limits) |
+| `law-firm-web/` | Vite + React + MUI | Law firm / institution admin dashboard (cases, clients, hearings, reports, live classes, staff & role management) |
+| `student-web/` | Vite + React + MUI | Student learning-platform web portal (courses, practice, mock tests, speaking, live classes) |
+| `lawyer-mobile/` | Expo + expo-router + React Native | Lawyer/institution-staff mobile app |
 | `client-mobile/` | Expo + expo-router + React Native | Client-facing mobile portal |
+| `student-mobile/` | Expo + expo-router + React Native | Student mobile app (courses, practice, speaking, live classes) |
 
-Each app has its own `package.json`, `node_modules`, and is developed/built independently — there is no shared workspace tooling (no turborepo/nx/lerna).
+Each app has its own `package.json`, `node_modules`, and is developed/built independently — there is no shared workspace tooling (no turborepo/nx/lerna). Note: `student-web`/`student-mobile` use a flatter `src/api/index.ts` + `src/hooks/index.ts` pattern (all API/hooks in one file each) rather than one file per domain like the other four apps.
 
 ## Common commands
 
@@ -29,7 +31,7 @@ npm test                 # jest --runInBand (no test files currently exist in th
 npm run prisma:generate  # regenerate Prisma client after schema.prisma changes
 npm run prisma:migrate   # create + apply a dev migration
 npm run prisma:studio    # DB GUI at http://localhost:5555
-npm run prisma:seed      # bootstraps Super Admin (admin@trailblazetech.com) + RBAC roles
+npm run prisma:seed      # bootstraps Super Admin (admin@technocraftx.com) + RBAC roles
 npm run prisma:seed-courts
 
 docker compose up -d     # local Postgres (see backend/docker-compose.yml)
@@ -95,6 +97,21 @@ Throw `AppError` (see `src/common/errors/AppError.ts`, static helpers `badReques
 ### Document templates
 
 `DocumentTemplate` (Company-managed, `{{placeholder}}` bodies) + the `document-template` module let a lawyer pick a template and a case, and the backend fills placeholders from that case's real data — see `document-template/service/*` for the supported placeholder list.
+
+### Precedent (नजिर) database
+10,553 scraped Supreme Court judgments imported from nkp.gov.np, full-text searchable via a PostgreSQL generated `tsvector` column (`searchVector` on `Precedent` — declared `Unsupported("tsvector")` in `schema.prisma` since Prisma can't manage generated columns; **never run `prisma db push`/`migrate dev` casually on this schema, it will try to alter/drop that column and fail — use `prisma migrate diff --script` and manually strip any `ALTER TABLE "Precedent"` line, or apply hand-written SQL directly instead**). `fullContent` is stored verbatim (public court record, never edited) — only whitespace/formatting cleanup scripts under `backend/prisma/*.ts` (e.g. `fix-precedent-fragmentation.ts`) have ever touched it, never the words. Access is gated by the `precedent_search` module on `LawFirm.modulesEnabled` (Company must explicitly enable it per institution) plus `requirePermission("precedent.manage")` — Company-only — for edit/delete.
+
+### IELTS Speaking module
+`SpeakingPrompt` (Part 1/2/3 questions, Company/Institution-authored) + `SpeakingSubmission` (student's video/audio recording). Framework-only by design — every AI-grading field (`transcript`, `fluencyScore`, `overallBand`, `aiFeedback`, etc.) is nullable and stays null until a real speech-to-text + LLM grading pipeline is wired up later (no AI cost incurred yet, submissions just sit at `PENDING_GRADING`). Recordings are streamed back via an authenticated endpoint (`GET /speaking/submissions/:id/recording`), never served as a public static URL — unlike avatars, these are personal recordings. Web records via `MediaRecorder`; mobile via `expo-camera`'s `CameraView`. Both auto-start recording + a countdown timer the instant camera/mic permission is granted, and auto-upload the instant recording stops — no manual "upload" step. Gated by the `speaking_prompts` module (Company-toggleable per institution) — deliberately NOT blanket-enabled for every EDUCATION tenant, since only IELTS-type institutions need it.
+
+### Usage limits (Practice / Mock Test / Speaking)
+`UsageLimit` sets a per-course cap on how many times a student may start a Practice session / Mock Test attempt / Speaking submission, resolved per-student: **an institution's own row (`lawFirmId` = their id) takes priority over Company's platform-wide default (`lawFirmId = null`) if both exist for the same course** — a direct (non-institution) student always uses Company's default. `null` on any limit field = unlimited. Enforcement lives in `usage-limit/service/usage-limit.service.ts`'s `enforce()`, called from `mockTestService.startAttempt()`, `speakingService.createSubmission()`, and the new `practiceSessionService.start()` (Practice previously had no session/attempt boundary at all — `PracticeSession` was added specifically to give it one). Because `lawFirmId` is nullable and part of what's conceptually a "one row per course per firm-or-default" constraint, **all lookups use `findFirst`/manual create-or-update, never `findUnique` on a compound key including `lawFirmId`** — Prisma's generated types reject `null` there, and Postgres doesn't treat repeated `NULL`s as a uniqueness violation anyway.
+
+### Sector Access (`LawFirm.allowedCourseIds`)
+An institution only sees/can add content to the specific courses Company has granted it (e.g. an IELTS-only institute can't touch the Law course even though `student_platform` is enabled generally). Empty array = no restriction. **This check must be duplicated in every content-creation service that takes a `hostLawFirmId`** — it is NOT centralized. As of this writing it's wired into: Mock Test, Flashcard, MCQ (institution create), Library (institution resource — resolved via the resource's `subjectId` → `courseId`), and Live Class. When adding a new institution-content-creation feature, copy this pattern (`lawFirmRepository.findById(hostLawFirmId)` → check `allowedCourseIds.includes(courseId)` before allowing the write) rather than assuming it's inherited from somewhere central.
+
+### Live Class enhancements
+Beyond basic scheduling: a class can be assigned to a specific teacher/staff member (`hostId`, defaults to the creator if left unset) — `joinAsHost` checks the requester's id against `hostId` (Company staff always pass, for oversight), and the class-list endpoint restricts a regular `LAWYER`/`STAFF` account to only their own assigned classes (`LAW_FIRM_ADMIN` still sees everything for their institution). `hostId` has no Prisma relation to `User` (it's a plain string field) — the repository does a manual batched secondary query to attach host names rather than `include`, to avoid a schema migration. Recording is a manually-pasted URL (`PATCH /:id/recording`), not a file upload — Jitsi's own recording feature (or any external tool) produces the file, the link just gets attached afterward. `GET /:id/attendees` lists who joined (`LiveClassAttendance`, recorded automatically when a student calls the join endpoint).
 
 ### Subscriptions
 

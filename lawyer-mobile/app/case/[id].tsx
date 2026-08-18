@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useCaseDetail } from "../../src/hooks/useDomainData";
@@ -13,6 +13,7 @@ import { useTranslation } from "../../src/i18n/LanguageContext";
 export default function CaseDetailScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { data: caseData, isLoading } = useCaseDetail(id);
   const { data: documents } = useCaseDocuments(id);
   const uploadDoc = useUploadDocument(id);
@@ -73,6 +74,19 @@ export default function CaseDetailScreen() {
         />
         {caseData.remarks ? <InfoRow label={t("remarks")} value={caseData.remarks} /> : null}
       </Card>
+
+      <TouchableOpacity
+        style={styles.generateDocButton}
+        onPress={() =>
+          router.push({
+            pathname: "/document/generate",
+            params: { caseId: id, clientId: caseData.clients[0]?.client.id },
+          })
+        }
+      >
+        <Ionicons name="document-text-outline" size={18} color="#fff" />
+        <Text style={styles.generateDocButtonText}>Generate Document</Text>
+      </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>{t("hearingHistory")}</Text>
       {caseData.hearings.length === 0 && (
@@ -169,4 +183,15 @@ const styles = StyleSheet.create({
   docRow: { flexDirection: "row", alignItems: "center" },
   docName: { fontSize: 13, fontWeight: "700", color: colors.textPrimary },
   docMeta: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  generateDocButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingVertical: 13,
+    borderRadius: 10,
+    marginBottom: spacing.lg,
+  },
+  generateDocButtonText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });

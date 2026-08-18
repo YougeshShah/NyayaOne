@@ -2,6 +2,7 @@ import { AppError } from "../../../common/errors/AppError";
 import { mcqRepository } from "../repository/mcq.repository";
 import { courseService } from "../../course/service/course.service";
 import { CreateMcqInput, UpdateMcqInput, ListMcqQuery } from "../dto/mcq.dto";
+import { lawFirmRepository } from "../../lawfirm/repository/lawfirm.repository";
 
 // Case-insensitive, whitespace-trimmed comparison — IELTS itself is
 // somewhat lenient on minor formatting, this is the practical baseline.
@@ -168,6 +169,11 @@ export const mcqService = {
     createdBy: string,
     hostLawFirmId: string
   ) {
+    const firm = await lawFirmRepository.findById(hostLawFirmId);
+    const allowed = (firm as any)?.allowedCourseIds ?? [];
+    if (allowed.length > 0 && !allowed.includes(input.courseId)) {
+      throw AppError.forbidden("Your institution doesn't have Sector Access to this course.");
+    }
     if (input.sectionType === "WRITING" || input.sectionType === "SPEAKING") {
       throw AppError.badRequest(
         input.sectionType === "WRITING"

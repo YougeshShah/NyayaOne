@@ -9,14 +9,22 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [interestedCourseId, setInterestedCourseId] = useState<string | null>(null);
+  const [institutionCode, setInstitutionCode] = useState("");
   const [showCoursePicker, setShowCoursePicker] = useState(false);
   const register = useRegister();
   const { data: courses } = usePublicCourses();
 
   const handleSubmit = () => {
     register.mutate(
-      { fullName, email, phone: phone || undefined, password, interestedCourseId: interestedCourseId ?? undefined },
-      { onSuccess: () => router.replace("/(auth)/login") }
+      {
+        fullName,
+        email,
+        phone: phone || undefined,
+        password,
+        interestedCourseId: interestedCourseId ?? undefined,
+        institutionSlug: institutionCode.trim() || undefined,
+      },
+      { onSuccess: () => router.replace({ pathname: "/(auth)/verify-email", params: { email } }) }
     );
   };
 
@@ -35,6 +43,13 @@ export default function RegisterScreen() {
         <TextInput style={styles.input} placeholder="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
         <TextInput style={styles.input} placeholder="Phone (optional)" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
         <TextInput style={styles.input} placeholder="Password (min 8 characters)" secureTextEntry value={password} onChangeText={setPassword} />
+        <TextInput
+          style={styles.input}
+          placeholder="Institution Code (optional -- given by your institute)"
+          autoCapitalize="none"
+          value={institutionCode}
+          onChangeText={setInstitutionCode}
+        />
 
         <TouchableOpacity style={styles.input} onPress={() => setShowCoursePicker((v) => !v)}>
           <Text style={{ color: selectedCourseName ? "#111827" : "#9CA3AF", fontSize: 15 }}>

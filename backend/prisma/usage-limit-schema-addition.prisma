@@ -1,0 +1,51 @@
+// ------------------------------------------------------------
+// USAGE LIMITS — dynamic, per-course caps on Practice / Mock Test /
+// Speaking attempts. Company sets a default (lawFirmId = null, applies to
+// direct/non-institution students). An institution can set its own limit
+// for the same course (lawFirmId = their own id) — their students use
+// THIS row instead of Company's default, since an institution's own
+// policy (set during in-person counseling, per the real-world use case
+// described) should govern its own students.
+//
+// null on any limit field = unlimited for that module.
+// ------------------------------------------------------------
+
+model UsageLimit {
+  id            String   @id @default(uuid())
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lawFirmId     String? // null = Company's default (for direct students); set = this institution's own policy for their students
+  lawFirm       LawFirm? @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+
+  practiceLimit Int? // total practice sessions allowed for this course (lifetime of the subscription) -- null = unlimited
+  mockTestLimit Int? // total mock test attempts allowed
+  speakingLimit Int? // total speaking test submissions allowed
+
+  updatedBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([courseId, lawFirmId])
+  @@index([courseId])
+}
+
+// ------------------------------------------------------------
+// PRACTICE SESSION — the one usage-tracking model that didn't already
+// exist. Mock Test already has TestAttempt, Speaking already has
+// SpeakingSubmission -- both are reused as-is for counting "how many
+// times has this student used this module for this course", this model
+// fills the same role for Practice (MCQ solving), which previously had
+// no session/attempt boundary at all.
+// ------------------------------------------------------------
+
+model PracticeSession {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  startedAt DateTime @default(now())
+
+  @@index([studentId])
+  @@index([courseId])
+}

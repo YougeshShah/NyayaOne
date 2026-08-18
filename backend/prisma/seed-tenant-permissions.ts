@@ -23,6 +23,7 @@ const tenantPermissionDefs = [
 
   // Shared — tenant self-administration
   { key: "tenant_staff.manage", module: "TenantStaff", description: "Add/remove own staff and manage their roles" },
+  { key: "accounting.manage", module: "Accounting", description: "Manage fees, discounts, payments, and staff payroll" },
 ];
 
 async function main() {

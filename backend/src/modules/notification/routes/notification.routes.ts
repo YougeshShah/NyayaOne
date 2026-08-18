@@ -12,7 +12,7 @@ router.use(authenticate);
 router.get("/my", notificationController.myNotifications);
 router.patch("/my/:id/read", notificationController.markRead);
 
-// Only Company (TrailBlaze Tech) can broadcast notifications and view the sent log.
+// Only Company (Technocraftx) can broadcast notifications and view the sent log.
 router.post("/", authorize("COMPANY"), requirePermission("notification.broadcast"), notificationController.send);
 router.get("/", authorize("COMPANY"), notificationController.listSent);
 

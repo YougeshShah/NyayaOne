@@ -43,7 +43,7 @@ export const courtService = {
   },
 
   /**
-   * Only TrailBlaze Tech (Company) can create courts. Court "type" is free text
+   * Only Technocraftx (Company) can create courts. Court "type" is free text
    * (not a hardcoded enum) so new court categories can be added in the future
    * without a schema migration — satisfies the "allow adding new court types" requirement.
    */

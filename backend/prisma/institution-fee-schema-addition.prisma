@@ -1,0 +1,45 @@
+// ------------------------------------------------------------
+// INSTITUTION FEE MANAGEMENT — course fee per institution, per-student
+// discounts, and manual/QR payment recording. Real-world pattern: an
+// institution sets its own fee for a course, can grant individual
+// students a discount (scholarship, sibling discount, referral, etc.),
+// and records payments made outside a card/wallet gateway (cash, bank
+// transfer, or QR-code scan) by hand once the money has actually arrived.
+// ------------------------------------------------------------
+
+model CourseFee {
+  id         String   @id @default(uuid())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lawFirmId  String? // null = Company's own price for direct students; set = this institution's own price for their students
+  lawFirm    LawFirm? @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  amount     Float // NPR
+  updatedBy  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([courseId])
+  @@index([lawFirmId])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model StudentDiscount {
+  id          String       @id @default(uuid())
+  studentId   String
+  student     User         @relation("StudentDiscounts", fields: [studentId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  type        DiscountType
+  value       Float // percentage (0-100) if PERCENTAGE, or NPR amount if FIXED_AMOUNT
+  reason      String? // "Sibling discount", "Merit scholarship", "Staff referral", etc.
+  grantedBy   String
+  createdAt   DateTime     @default(now())
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+}

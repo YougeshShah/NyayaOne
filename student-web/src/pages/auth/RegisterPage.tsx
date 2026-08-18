@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useRegister } from "../../hooks/useAuth";
 import { RegisterPayload } from "../../types/auth.types";
 import { publicCourseApi } from "../../api/publicCourse.api";
+import { detectInstitutionSlug } from "../../utils/detectInstitutionSlug";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -15,10 +16,11 @@ export function RegisterPage() {
   const { data: courses } = useQuery({ queryKey: ["public-courses"], queryFn: () => publicCourseApi.list() });
 
   const onSubmit = (values: RegisterPayload) => {
-    registerMutation.mutate(values, {
+    const institutionSlug = detectInstitutionSlug();
+    registerMutation.mutate({ ...values, institutionSlug }, {
       onSuccess: () => {
         setSuccess(true);
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => navigate("/verify-email", { state: { email: values.email } }), 1500);
       },
     });
   };

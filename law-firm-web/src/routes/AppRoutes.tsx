@@ -14,6 +14,11 @@ import { ResourcesPage } from "../pages/resources/ResourcesPage";
 import { InstitutionMockTestAdminPage } from "../pages/mock-tests/InstitutionMockTestAdminPage";
 import { ReportsPage } from "../pages/reports/ReportsPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
+import { SpeakingPromptAdminPage } from "../pages/speaking-admin/SpeakingPromptAdminPage";
+import { AccountingPage } from "../pages/accounting/AccountingPage";
+import { PendingApprovalsPage } from "../pages/students/PendingApprovalsPage";
+import { UsageLimitAdminPage } from "../pages/usage-limit-admin/UsageLimitAdminPage";
+import { PrecedentSearchPage } from "../pages/precedents/PrecedentSearchPage";
 import { ProfilePage } from "../pages/profile/ProfilePage";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
@@ -39,6 +44,11 @@ export function AppRoutes() {
           <Route path="/mock-tests" element={<InstitutionMockTestAdminPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/library" element={<LibraryPage />} />
+          <Route path="/speaking-admin" element={<SpeakingPromptAdminPage />} />
+          <Route path="/accounting" element={<AccountingPage />} />
+          <Route path="/pending-approvals" element={<PendingApprovalsPage />} />
+          <Route path="/usage-limits" element={<UsageLimitAdminPage />} />
+          <Route path="/precedents" element={<PrecedentSearchPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>

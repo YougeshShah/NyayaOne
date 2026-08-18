@@ -38,6 +38,9 @@ export default function RootLayout() {
           <Stack.Screen name="practice/[courseId]" options={{ headerShown: true, title: "Practice" }} />
           <Stack.Screen name="mock-test/[id]" options={{ headerShown: true, title: "Mock Test" }} />
           <Stack.Screen name="library/[courseId]" options={{ headerShown: true, title: "Library" }} />
+          <Stack.Screen name="precedents" options={{ headerShown: true, title: "नजिर खोज" }} />
+          <Stack.Screen name="speaking-test" options={{ headerShown: true, title: "Speaking Test" }} />
+          <Stack.Screen name="speaking/[courseId]" options={{ headerShown: true, title: "Speaking Practice" }} />
         </Stack>
       </AuthGate>
     </QueryClientProvider>

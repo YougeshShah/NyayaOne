@@ -12,7 +12,7 @@ router.get("/types", authenticate, courtController.listTypes);
 router.get("/provinces", authenticate, courtController.listProvinces);
 router.get("/:id", authenticate, courtController.getById);
 
-// Write access: only TrailBlaze Tech (Company) manages the master court list.
+// Write access: only Technocraftx (Company) manages the master court list.
 router.post("/", authenticate, authorize("COMPANY"), requirePermission("court.manage"), courtController.create);
 router.patch("/:id", authenticate, authorize("COMPANY"), requirePermission("court.manage"), courtController.update);
 router.patch("/:id/deactivate", authenticate, authorize("COMPANY"), requirePermission("court.manage"), courtController.deactivate);

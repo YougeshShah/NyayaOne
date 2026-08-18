@@ -157,6 +157,7 @@ model Permission {
   description String?
   module      String // e.g. "LawFirm", "Case", "Library"
   roles       RolePermission[]
+  userOverrides UserPermission[]
   createdAt   DateTime @default(now())
 }
 
@@ -182,6 +183,14 @@ model RolePermission {
 model LawFirm {
   id              String        @id @default(uuid())
   name            String
+  // URL-safe unique identifier for this institution's own entry point
+  // (e.g. "raju-law-institute") -- used for subdomain-based routing once
+  // deployed (raju-law-institute.nyayaone.com), and via a "?org=" query
+  // param during local development before real subdomains are set up.
+  // A student registering through THIS institution's specific entry point
+  // is automatically tied to it (not visible to/approvable by any other
+  // institution).
+  slug            String?       @unique
   registrationNo  String?       @unique
   status          LawFirmStatus @default(PENDING)
   address         String?
@@ -215,6 +224,11 @@ model LawFirm {
   hostedLiveClasses LiveClass[] // classes this institution's own staff scheduled
   hostedLibraryResources LibraryResource[] // resources this institution's own staff uploaded
   hostedMcqQuestions McqQuestion[] // MCQs this institution's own staff wrote
+  usageLimits     UsageLimit[]
+  invoices        Invoice[]
+  courseFees      CourseFee[]
+  paymentQrCodeUrl String? // uploaded QR code image (bank/wallet) students scan to pay this institution directly
+  staffSalaries   StaffSalary[]
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -244,6 +258,7 @@ model User {
   // RBAC — used mainly for COMPANY accounts with custom roles.
   role          Role?        @relation(fields: [roleId], references: [id])
   roleId        String?
+  individualPermissions UserPermission[]
 
   // Student-only — captured at registration ("what are you preparing
   // for?"), used purely to personalize the dashboard on first login.
@@ -282,6 +297,12 @@ model User {
   writingSubmissions  WritingSubmission[]  @relation("StudentWritingSubmissions")
   feedbackGiven       Feedback[]           @relation("StudentFeedback")
   payments            PaymentTransaction[] @relation("StudentPayments")
+  speakingSubmissions SpeakingSubmission[]
+  practiceSessions PracticeSession[]
+  liveClassHostings LiveClassHost[]
+  studentDiscounts StudentDiscount[] @relation("StudentDiscounts")
+  staffSalaryRecords StaffSalary[] @relation("StaffSalaryRecord")
+  emailVerified Boolean @default(false)
 
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -656,6 +677,7 @@ model FirmSubscription {
 
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
+  invoices   Invoice[]
 
   @@index([planId])
   @@index([status])
@@ -895,6 +917,11 @@ model Course {
   mockTests     MockTest[]
   paymentTransactions PaymentTransaction[]
   flashcards    Flashcard[]
+  speakingPrompts SpeakingPrompt[]
+  usageLimits UsageLimit[]
+  practiceSessions PracticeSession[]
+  courseFees CourseFee[]
+  studentDiscounts StudentDiscount[]
 
   @@index([category])
 }
@@ -945,6 +972,7 @@ model LiveClass {
 
   attendees LiveClassAttendance[]
   feedback  Feedback[]
+  cohosts   LiveClassHost[]
 
   @@index([courseId])
   @@index([scheduledAt])
@@ -1071,6 +1099,7 @@ model Feedback {
 enum PaymentGateway {
   ESEWA
   KHALTI
+  MANUAL // cash, bank transfer, or QR-code scan -- recorded by institution staff after the fact
 }
 
 enum PaymentStatus {
@@ -1089,7 +1118,11 @@ model PaymentTransaction {
   transactionUuid   String         @unique // our own reference — eSewa's transaction_uuid, Khalti's purchase_order_id
   khaltiPidx        String?        @unique // Khalti-specific payment identifier, set only for Khalti transactions
   amount            Float
+  discountAmount    Float?         // amount deducted via a StudentDiscount, if any -- amount above is what was actually charged/expected after this deduction
   status            PaymentStatus  @default(PENDING)
+  paymentMethod     String?        // "CASH" | "BANK_TRANSFER" | "QR_SCAN" -- only meaningful when gateway = MANUAL
+  receiptNumber     String?        // institution's own paper/physical receipt number, for manual payments
+  recordedBy        String?        // staff userId who manually confirmed this payment (gateway = MANUAL only)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
@@ -1194,3 +1227,384 @@ model FlashcardProgress {
 }
 
 
+// ------------------------------------------------------------
+// PRECEDENT (नजिर) — Supreme Court / High Court judgment database.
+// Separate from LibraryResource (which holds Acts/Regulations) since
+// precedents have their own structured metadata (court, judges, parties,
+// case type) and are searched differently — full-text across the entire
+// judgment body, not just title/category.
+//
+// hostLawFirmId mirrors the LibraryResource/McqQuestion pattern: null =
+// company-wide (visible to any institution once granted the
+// "precedent_search" module), set = that institution's own upload,
+// visible only to them.
+// ------------------------------------------------------------
+
+model Precedent {
+  id             String   @id @default(uuid())
+  sourceId       String?  @unique // original nkp.gov.np numeric id -- makes re-import idempotent (upsert by this, never duplicates)
+  sourceUrl      String?
+
+  title          String // e.g. "निर्णय नं. ९१०० - उत्प्रेषण"
+  caseType       String? // the "मुद्दाः" field as scraped, e.g. "उत्प्रेषण" -- kept as-is even though format is inconsistent
+  category       String? // auto-detected broad category (Criminal, Family/Property, Constitutional, Civil, Land, Tax, Labor, Court Procedure) -- this is what lawyers filter by
+
+  court          String? // e.g. "सर्वोच्च अदालत"
+  benchType      String? // e.g. "विशेष इजलास"
+  judges         String? // comma-joined judge names as extracted
+  decisionDate   String? // as scraped (Bikram Sambat format varies) -- kept as text, not a real Date, since BS dates aren't directly convertible
+  caseNumber     String? // रिट/मुद्दा नं.
+  petitioner     String? // निवेदक
+  respondent     String? // विपक्षी
+
+  fullContent    String // the entire scraped judgment text -- always populated even if the structured fields above failed to extract, so nothing is ever unsearchable
+
+  hostLawFirmId  String? // null = company-wide; set = this institution's own upload
+  uploadedBy     String
+  createdAt      DateTime @default(now())
+
+  // Generated column (added via raw SQL migration, not managed by Prisma) --
+  // declaring it as Unsupported tells Prisma "this column exists, don't
+  // try to add/drop/alter it" so `db push`/`migrate dev` never touches it.
+  searchVector   Unsupported("tsvector")?
+
+  @@index([category])
+  @@index([caseType])
+  @@index([hostLawFirmId])
+}
+
+// ------------------------------------------------------------
+// USER PERMISSION — individual override on top of role-based
+// permissions. Real-world need: two staff can share the same role
+// (e.g. "Librarian"), but one of them personally needs one extra
+// permission the role doesn't grant, or needs one role-permission
+// specifically taken away from them — without creating a whole new
+// role just for one person.
+//
+// granted: true  = explicit GRANT, gives this permission even if the
+//                   user's role doesn't include it
+// granted: false = explicit REVOKE, takes this permission away even
+//                   if the user's role does include it
+//
+// An explicit row here always wins over the role's default — this
+// mirrors how most real RBAC systems (AWS IAM, Django) handle
+// individual-over-group overrides. No row for a given permission
+// means "no override, just use whatever the role says" (today's
+// behavior, unchanged).
+//
+// Works for ANY account type that has a User row and a roleId —
+// Company staff, tenant (Law Firm/Institution) staff, and students
+// alike, since this is keyed on userId + permissionId generically.
+// ------------------------------------------------------------
+
+model UserPermission {
+  id           String     @id @default(uuid())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
+  granted      Boolean // true = extra grant beyond the role, false = revoke despite the role
+  grantedBy    String // userId of whoever set this override, for audit purposes
+  reason       String? // optional note on why this individual override exists
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+}
+
+// ------------------------------------------------------------
+// IELTS SPEAKING MODULE
+// ------------------------------------------------------------
+// Built as a standalone framework first — recording, storage, and
+// submission tracking all work today with zero AI cost. Every AI-grading
+// field below is nullable, so a submission simply sits at
+// PENDING_GRADING until the company decides to pay for and wire up an
+// actual grading pipeline (speech-to-text + LLM scoring) later. Nothing
+// here needs to change when that happens — just fill these fields in
+// from whatever grading job runs.
+
+model SpeakingPrompt {
+  id               String   @id @default(uuid())
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  part             Int // 1, 2, or 3 -- matches real IELTS Speaking structure
+  title            String // e.g. "Describe a memorable trip"
+  promptText       String // the full question or cue-card text
+  prepTimeSeconds  Int? // Part 2 cue cards get ~1 min prep; Part 1/3 usually none
+  speakTimeSeconds Int // how long the student is expected to speak
+  isPublished      Boolean  @default(true)
+  createdBy        String
+  createdAt        DateTime @default(now())
+
+  submissions SpeakingSubmission[]
+
+  @@index([courseId])
+}
+
+enum SpeakingSubmissionStatus {
+  PENDING_GRADING // recording uploaded, no AI grading run yet (today's default -- and forever, until AI is wired up)
+  GRADED
+  GRADING_FAILED // AI pipeline attempted and errored -- kept separate from PENDING so it's visible for retry, not silently stuck
+}
+
+model SpeakingSubmission {
+  id              String   @id @default(uuid())
+  student         User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId       String
+  prompt          SpeakingPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  promptId        String
+
+  recordingUrl    String // path to the stored video/audio file (local disk today, swappable to cloud storage later without schema change)
+  recordingType   String // "video" | "audio" -- camera+mic vs mic-only submission
+  durationSeconds Int?
+
+  status          SpeakingSubmissionStatus @default(PENDING_GRADING)
+
+  // Everything below stays null until a real grading pipeline exists.
+  transcript          String? // filled in by speech-to-text once that's wired up
+  fluencyScore         Float? // IELTS band-style sub-scores (0-9 scale)
+  lexicalScore          Float?
+  grammarScore          Float?
+  pronunciationScore    Float?
+  overallBand           Float?
+  aiFeedback             String? // qualitative written feedback from the grading model
+  gradedAt               DateTime?
+
+  createdAt       DateTime @default(now())
+
+  @@index([studentId])
+  @@index([promptId])
+  @@index([status])
+}
+// ------------------------------------------------------------
+// USAGE LIMITS — dynamic, per-course caps on Practice / Mock Test /
+// Speaking attempts. Company sets a default (lawFirmId = null, applies to
+// direct/non-institution students). An institution can set its own limit
+// for the same course (lawFirmId = their own id) — their students use
+// THIS row instead of Company's default, since an institution's own
+// policy (set during in-person counseling, per the real-world use case
+// described) should govern its own students.
+//
+// null on any limit field = unlimited for that module.
+// ------------------------------------------------------------
+
+model UsageLimit {
+  id            String   @id @default(uuid())
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lawFirmId     String? // null = Company's default (for direct students); set = this institution's own policy for their students
+  lawFirm       LawFirm? @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+
+  practiceLimit Int? // total practice sessions allowed for this course (lifetime of the subscription) -- null = unlimited
+  mockTestLimit Int? // total mock test attempts allowed
+  speakingLimit Int? // total speaking test submissions allowed
+
+  updatedBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([courseId, lawFirmId])
+  @@index([courseId])
+}
+
+// ------------------------------------------------------------
+// PRACTICE SESSION — the one usage-tracking model that didn't already
+// exist. Mock Test already has TestAttempt, Speaking already has
+// SpeakingSubmission -- both are reused as-is for counting "how many
+// times has this student used this module for this course", this model
+// fills the same role for Practice (MCQ solving), which previously had
+// no session/attempt boundary at all.
+// ------------------------------------------------------------
+
+model PracticeSession {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  startedAt DateTime @default(now())
+
+  @@index([studentId])
+  @@index([courseId])
+}
+
+// ------------------------------------------------------------
+// INVOICE — real-world billing for law firm/institution subscriptions.
+// There is no payment gateway integration for firm-level billing (same
+// as FirmSubscription's existing design note) -- Company staff manually
+// create an invoice, mark it paid once payment is confirmed out-of-band
+// (bank transfer, cash, eSewa/Khalti QR shown in person, etc.), and this
+// becomes the paper trail / receipt history for that firm.
+// ------------------------------------------------------------
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id                 String            @id @default(uuid())
+  invoiceNumber      String            @unique // e.g. "INV-2026-0001", sequential per year
+  lawFirmId          String
+  lawFirm            LawFirm           @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  subscriptionId     String?
+  subscription       FirmSubscription? @relation(fields: [subscriptionId], references: [id])
+  amount             Float // NPR
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  status             InvoiceStatus     @default(PENDING)
+  paymentMethod      String? // "Bank Transfer" | "Cash" | "eSewa" | "Khalti" | "Cheque" -- free text, manually entered
+  paymentReference   String? // transaction id / cheque no. / bank reference, for the paper trail
+  paidAt             DateTime?
+  notes              String?
+  createdBy          String // Company user id who created/issued this invoice
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([lawFirmId])
+  @@index([status])
+}
+
+// ------------------------------------------------------------
+// LIVE CLASS HOST — supports assigning 2+ teachers to the same live
+// class (co-teaching). The original `hostId` field on LiveClass stays
+// as-is for backward compatibility (existing code reading "the" host
+// keeps working) -- this join table adds the FULL list of co-hosts,
+// which always includes the original hostId (marked isPrimary: true)
+// plus any additional teachers assigned afterward.
+// ------------------------------------------------------------
+
+model LiveClassHost {
+  id          String    @id @default(uuid())
+  liveClass   LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+  liveClassId String
+  host        User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  hostId      String
+  isPrimary   Boolean   @default(false) // the class's original/main host
+  createdAt   DateTime  @default(now())
+
+  @@unique([liveClassId, hostId])
+  @@index([liveClassId])
+  @@index([hostId])
+}
+
+// ------------------------------------------------------------
+// INSTITUTION FEE MANAGEMENT — course fee per institution, per-student
+// discounts, and manual/QR payment recording. Real-world pattern: an
+// institution sets its own fee for a course, can grant individual
+// students a discount (scholarship, sibling discount, referral, etc.),
+// and records payments made outside a card/wallet gateway (cash, bank
+// transfer, or QR-code scan) by hand once the money has actually arrived.
+// ------------------------------------------------------------
+
+model CourseFee {
+  id         String   @id @default(uuid())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lawFirmId  String? // null = Company's own price for direct students; set = this institution's own price for their students
+  lawFirm    LawFirm? @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  amount     Float // NPR
+  updatedBy  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([courseId])
+  @@index([lawFirmId])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model StudentDiscount {
+  id          String       @id @default(uuid())
+  studentId   String
+  student     User         @relation("StudentDiscounts", fields: [studentId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  type        DiscountType
+  value       Float // percentage (0-100) if PERCENTAGE, or NPR amount if FIXED_AMOUNT
+  reason      String? // "Sibling discount", "Merit scholarship", "Staff referral", etc.
+  grantedBy   String
+  createdAt   DateTime     @default(now())
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+}
+
+// ------------------------------------------------------------
+// STAFF SALARY & PAYMENT — the "expense" side of institution accounting,
+// mirroring the student-fee "revenue" side but in reverse (institution
+// pays staff, rather than students paying the institution). Categorized
+// by role (Teacher, Admin, Support, etc.) since real-world coaching
+// institutes pay these differently -- fixed monthly for most staff,
+// per-class/hourly for visiting or part-time teachers.
+// ------------------------------------------------------------
+
+enum SalaryType {
+  FIXED_MONTHLY
+  PER_CLASS
+  HOURLY
+}
+
+model StaffSalary {
+  id         String     @id @default(uuid())
+  staffId    String
+  staff      User       @relation("StaffSalaryRecord", fields: [staffId], references: [id], onDelete: Cascade)
+  lawFirmId  String // which institution this staff member's salary record belongs to
+  lawFirm    LawFirm    @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  category   String // "Teacher", "Admin", "Support", etc. -- free text so each institution can use its own labels
+  salaryType SalaryType
+  amount     Float // NPR -- monthly amount if FIXED_MONTHLY, per-class or per-hour rate otherwise
+  updatedBy  String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  payments StaffPayment[]
+
+  @@unique([staffId, lawFirmId])
+  @@index([lawFirmId])
+}
+
+model StaffPayment {
+  id            String      @id @default(uuid())
+  staffSalary   StaffSalary @relation(fields: [staffSalaryId], references: [id], onDelete: Cascade)
+  staffSalaryId String
+  amount        Float // NPR -- actual amount paid this time (may differ from the salary record if hourly/per-class)
+  paidForPeriod String? // e.g. "2026-08" for a monthly salary, or a date range description for hourly/per-class pay
+  paymentMethod String // "CASH" | "BANK_TRANSFER" | "QR_SCAN"
+  receiptNumber String?
+  recordedBy    String
+  createdAt     DateTime    @default(now())
+
+  @@index([staffSalaryId])
+}
+
+// ------------------------------------------------------------
+// EMAIL VERIFICATION CODE — automated 6-digit code sent via email
+// (Gmail SMTP), used for both registration email verification and
+// password reset. Separate from PasswordResetRequest (the older manual
+// admin-ticket flow) -- that stays as a fallback for someone who's
+// entirely lost access to their email; this is the normal automated path.
+// ------------------------------------------------------------
+
+enum VerificationPurpose {
+  REGISTRATION
+  PASSWORD_RESET
+}
+
+model EmailVerificationCode {
+  id        String              @id @default(uuid())
+  email     String
+  code      String // 6-digit code
+  purpose   VerificationPurpose
+  expiresAt DateTime // codes are short-lived (e.g. 10 minutes)
+  usedAt    DateTime? // null = not yet used; set once consumed, so a code can't be replayed
+  createdAt DateTime            @default(now())
+
+  @@index([email, purpose])
+}

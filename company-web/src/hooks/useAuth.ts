@@ -12,7 +12,7 @@ export function useLogin() {
     mutationFn: (payload: LoginPayload) => authApi.login(payload),
     onSuccess: (data) => {
       if (data.user.accountType !== "COMPANY") {
-        throw new Error("This portal is for TrailBlaze Tech company staff only.");
+        throw new Error("This portal is for Technocraftx company staff only.");
       }
       setSession(data);
       navigate("/dashboard");

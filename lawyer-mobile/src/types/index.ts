@@ -27,6 +27,7 @@ export interface AuthUser {
   lawFirmStatus: string | null;
   phone?: string;
   avatarUrl?: string | null;
+  tenantType?: "LAW_FIRM" | "EDUCATION" | "OTHER" | null;
 }
 
 export interface LoginPayload {

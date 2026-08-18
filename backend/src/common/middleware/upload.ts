@@ -133,3 +133,77 @@ export function mapMulterError(err: unknown): AppError {
   }
   return AppError.badRequest("File upload failed");
 }
+// ------------------------------------------------------------
+// APPEND THIS TO THE END OF src/common/middleware/upload.ts
+// ------------------------------------------------------------
+
+// Speaking test recordings — video or audio, own folder, own (larger) size
+// cap since a 2-minute video runs much bigger than a document or even a
+// listening audio clip. Stored per-student so recordings are easy to
+// locate/clean up per user if needed later.
+const SPEAKING_MAX_SIZE_BYTES = 80 * 1024 * 1024; // 80MB — generous for a ~2 min video recording at reasonable quality
+const SPEAKING_ALLOWED_MIME_TYPES = new Set([
+  "video/webm",
+  "video/mp4",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/ogg",
+  "audio/webm",
+]);
+
+const speakingStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "speaking");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || (file.mimetype.startsWith("video") ? ".webm" : ".mp3");
+    const safeName = `${req.auth?.userId || "student"}-${Date.now()}-${uuidv4()}${ext}`;
+    cb(null, safeName);
+  },
+});
+
+function speakingFileFilter(req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  if (!SPEAKING_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    return cb(new Error("Unsupported recording format. Allowed: WEBM/MP4 video, or MP3/WAV/OGG audio."));
+  }
+  cb(null, true);
+}
+
+export const speakingUpload = multer({
+  storage: speakingStorage,
+  fileFilter: speakingFileFilter,
+  limits: { fileSize: SPEAKING_MAX_SIZE_BYTES },
+});
+// ============================================================
+// APPEND THIS TO THE END OF src/common/middleware/upload.ts
+// ============================================================
+
+// Institution payment QR codes -- small image, own folder.
+const QR_CODE_MAX_SIZE_BYTES = 3 * 1024 * 1024; // 3MB, same reasoning as avatars -- a QR code image never needs to be huge
+const qrCodeStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "payment-qr");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.auth?.lawFirmId || "firm"}-${Date.now()}${ext}`);
+  },
+});
+function qrCodeFileFilter(req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  const imageTypes = new Set(["image/jpeg", "image/png", "image/jpg", "image/webp"]);
+  if (!imageTypes.has(file.mimetype)) {
+    return cb(new Error("Payment QR code must be an image (JPG, PNG, or WEBP)"));
+  }
+  cb(null, true);
+}
+export const qrCodeUpload = multer({
+  storage: qrCodeStorage,
+  fileFilter: qrCodeFileFilter,
+  limits: { fileSize: QR_CODE_MAX_SIZE_BYTES },
+});

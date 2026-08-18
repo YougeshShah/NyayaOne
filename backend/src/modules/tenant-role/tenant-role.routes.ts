@@ -18,6 +18,27 @@ function requireTenantAdmin(req: Request, res: Response, next: () => void) {
   next();
 }
 
+// Returns the CURRENT user's own effective permission keys -- LAW_FIRM_ADMIN
+// gets every permission (matches requireTenantPermission's always-pass
+// rule), other staff get whatever their assigned Role grants. Used by the
+// frontend to show/hide nav items like Accounting for the right people,
+// without needing a failed request first.
+router.get("/my-permissions", async (req: Request, res: Response) => {
+  if (!req.auth) throw AppError.unauthorized();
+
+  if (req.auth.accountType === "LAW_FIRM_ADMIN") {
+    const allPermissions = await prisma.permission.findMany({ select: { key: true } });
+    return res.status(200).json({ success: true, data: allPermissions.map((p) => p.key) });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.auth.userId },
+    include: { role: { include: { permissions: { include: { permission: true } } } } },
+  });
+  const keys = user?.role?.permissions.map((rp) => rp.permission.key) ?? [];
+  res.status(200).json({ success: true, data: keys });
+});
+
 // Any tenant staff can view their own tenant's roles/permission matrix.
 router.get("/roles", async (req: Request, res: Response) => {
   if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");

@@ -26,6 +26,7 @@ import AddIcon from "@mui/icons-material/Add";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import { useForm } from "react-hook-form";
 import { liveClassInstitutionApi } from "../../api/liveClassInstitution.api";
+import { userApi } from "../../api/user.api";
 
 const statusColors: Record<string, "default" | "success" | "error"> = {
   SCHEDULED: "default",
@@ -41,12 +42,15 @@ interface FormValues {
   scheduledAt: string;
   durationMinutes: number;
   isFreeDemo: boolean;
+  hostId?: string; // teacher/staff assigned to host this class -- empty = the creator hosts it themselves
+  cohostIds?: string[]; // additional teachers co-hosting this class alongside hostId
 }
 
 export function LiveClassesPage() {
   const qc = useQueryClient();
   const { data: classes, isLoading } = useQuery({ queryKey: ["institution-live-classes"], queryFn: () => liveClassInstitutionApi.list() });
   const { data: courses } = useQuery({ queryKey: ["institution-courses"], queryFn: () => liveClassInstitutionApi.courses() });
+  const { data: staffList } = useQuery({ queryKey: ["institution-staff-for-liveclass"], queryFn: () => userApi.list({}) });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const { register, handleSubmit, reset, formState } = useForm<FormValues>({
@@ -60,6 +64,23 @@ export function LiveClassesPage() {
   });
   const markLive = useMutation({ mutationFn: (id: string) => liveClassInstitutionApi.markLive(id), onSuccess: invalidate });
   const cancel = useMutation({ mutationFn: (id: string) => liveClassInstitutionApi.cancel(id), onSuccess: invalidate });
+  const remove = useMutation({ mutationFn: (id: string) => liveClassInstitutionApi.remove(id), onSuccess: invalidate });
+  const uploadRecording = useMutation({
+    mutationFn: ({ id, url }: { id: string; url: string }) => liveClassInstitutionApi.uploadRecording(id, url),
+    onSuccess: () => {
+      invalidate();
+      setRecordingDialogId(null);
+      setRecordingUrlInput("");
+    },
+  });
+  const [recordingDialogId, setRecordingDialogId] = useState<string | null>(null);
+  const [attendeesDialogId, setAttendeesDialogId] = useState<string | null>(null);
+  const { data: attendees } = useQuery({
+    queryKey: ["live-class-attendees", attendeesDialogId],
+    queryFn: () => liveClassInstitutionApi.listAttendees(attendeesDialogId as string),
+    enabled: !!attendeesDialogId,
+  });
+  const [recordingUrlInput, setRecordingUrlInput] = useState("");
   const hostJoin = useMutation({ mutationFn: (id: string) => liveClassInstitutionApi.hostJoin(id) });
 
   const onCreate = (values: FormValues) => {
@@ -97,6 +118,7 @@ export function LiveClassesPage() {
             <TableRow>
               <TableCell>Title</TableCell>
               <TableCell>Course</TableCell>
+              <TableCell>Teacher</TableCell>
               <TableCell>Scheduled</TableCell>
               <TableCell align="center">Status</TableCell>
               <TableCell align="right">Actions</TableCell>
@@ -105,7 +127,7 @@ export function LiveClassesPage() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   Loading...
                 </TableCell>
               </TableRow>
@@ -117,6 +139,7 @@ export function LiveClassesPage() {
                   {cls.isFreeDemo && <Chip label="Free" size="small" color="success" sx={{ ml: 1, height: 18 }} />}
                 </TableCell>
                 <TableCell>{cls.course?.name}</TableCell>
+                <TableCell>{cls.host?.fullName || "—"}</TableCell>
                 <TableCell>{new Date(cls.scheduledAt).toLocaleString()}</TableCell>
                 <TableCell align="center">
                   <Chip label={cls.status} size="small" color={statusColors[cls.status]} />
@@ -127,9 +150,34 @@ export function LiveClassesPage() {
                       Start / Join
                     </Button>
                   )}
+                  {(cls.status === "SCHEDULED" || cls.status === "LIVE") && cls.jitsiRoomName && (
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://meet.jit.si/${cls.jitsiRoomName}`);
+                      }}
+                    >
+                      Copy Link
+                    </Button>
+                  )}
                   {cls.status === "SCHEDULED" && (
                     <Button size="small" color="error" onClick={() => cancel.mutate(cls.id)}>
                       Cancel
+                    </Button>
+                  )}
+                  {(cls.status === "LIVE" || cls.status === "ENDED") && (
+                    <Button size="small" onClick={() => setAttendeesDialogId(cls.id)}>
+                      Attendees ({cls._count?.attendees ?? 0})
+                    </Button>
+                  )}
+                  {cls.status === "ENDED" && !(cls as any).recordingUrl && (
+                    <Button size="small" onClick={() => setRecordingDialogId(cls.id)}>
+                      Add Recording
+                    </Button>
+                  )}
+                  {cls.status !== "LIVE" && (
+                    <Button size="small" color="error" onClick={() => { if (window.confirm("Delete this class permanently? This cannot be undone.")) remove.mutate(cls.id); }}>
+                      Delete
                     </Button>
                   )}
                 </TableCell>
@@ -137,7 +185,7 @@ export function LiveClassesPage() {
             ))}
             {classes?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   No live classes scheduled yet.
                 </TableCell>
               </TableRow>
@@ -163,6 +211,28 @@ export function LiveClassesPage() {
                 </MenuItem>
               ))}
             </TextField>
+            <TextField select label="Assign Teacher (optional — defaults to you)" fullWidth defaultValue="" {...register("hostId")}>
+              <MenuItem value="">— Host it myself —</MenuItem>
+              {staffList?.items.map((s: any) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.fullName}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Additional Teachers (co-host, optional)"
+              fullWidth
+              SelectProps={{ multiple: true }}
+              defaultValue={[]}
+              {...register("cohostIds")}
+            >
+              {staffList?.items.map((s: any) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.fullName}
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
               label="Scheduled Date & Time"
               type="datetime-local"
@@ -181,6 +251,53 @@ export function LiveClassesPage() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog open={!!recordingDialogId} onClose={() => setRecordingDialogId(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Add Recording Link</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Paste the link to the recording once it's uploaded elsewhere (e.g. Google Drive, YouTube unlisted, or
+            your own storage). Subscribed students will be able to watch it from this page.
+          </Typography>
+          <TextField
+            label="Recording URL"
+            fullWidth
+            value={recordingUrlInput}
+            onChange={(e) => setRecordingUrlInput(e.target.value)}
+            placeholder="https://..."
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setRecordingDialogId(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={!recordingUrlInput.trim() || uploadRecording.isPending}
+            onClick={() => recordingDialogId && uploadRecording.mutate({ id: recordingDialogId, url: recordingUrlInput.trim() })}
+          >
+            {uploadRecording.isPending ? "Saving..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!attendeesDialogId} onClose={() => setAttendeesDialogId(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Attendees</DialogTitle>
+        <DialogContent>
+          {attendees?.length === 0 && <Typography color="text.secondary">No one has joined yet.</Typography>}
+          {attendees?.map((a) => (
+            <Box key={a.id} sx={{ py: 1, borderBottom: "1px solid #F3F4F6" }}>
+              <Typography variant="body2" fontWeight={600}>
+                {a.student.fullName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {a.student.email} — joined {new Date(a.joinedAt).toLocaleTimeString()}
+              </Typography>
+            </Box>
+          ))}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setAttendeesDialogId(null)}>Close</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

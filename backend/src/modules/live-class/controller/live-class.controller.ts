@@ -11,9 +11,14 @@ export const liveClassController = {
       throw AppError.badRequest("courseId is required");
     }
     const isInstitutionStaff = req.auth?.accountType === "LAW_FIRM_ADMIN" || req.auth?.accountType === "LAWYER" || req.auth?.accountType === "STAFF";
+    // Institution admin sees every class their institution scheduled (for
+    // oversight); a regular teacher/staff member (LAWYER/STAFF, not the
+    // admin) only sees classes specifically assigned to them.
+    const isRegularStaff = req.auth?.accountType === "LAWYER" || req.auth?.accountType === "STAFF";
     const result = await liveClassService.list(query, {
       studentLawFirmId: req.auth?.accountType === "STUDENT" ? req.auth.lawFirmId : undefined,
       forLawFirmId: isInstitutionStaff ? req.auth?.lawFirmId ?? undefined : undefined,
+      onlyHostId: isRegularStaff ? req.auth?.userId : undefined,
     });
     res.status(200).json({ success: true, data: result });
   },
@@ -43,8 +48,21 @@ export const liveClassController = {
   },
 
   async joinAsHost(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
     const { id } = liveClassIdParamSchema.parse(req.params);
-    const result = await liveClassService.joinAsHost(id);
+    const result = await liveClassService.joinAsHost(id, req.auth.userId, req.auth.accountType);
+    res.status(200).json({ success: true, data: result });
+  },
+
+  async remove(req: Request, res: Response) {
+    const { id } = liveClassIdParamSchema.parse(req.params);
+    await liveClassService.remove(id);
+    res.status(200).json({ success: true, message: "Live class deleted" });
+  },
+
+  async listAttendees(req: Request, res: Response) {
+    const { id } = liveClassIdParamSchema.parse(req.params);
+    const result = await liveClassService.listAttendees(id);
     res.status(200).json({ success: true, data: result });
   },
 

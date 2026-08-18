@@ -17,6 +17,7 @@ export interface DocumentTemplate {
   title: string;
   category: string | null;
   description: string | null;
+  bodyTemplate: string;
   fields: TemplateField[];
 }
 

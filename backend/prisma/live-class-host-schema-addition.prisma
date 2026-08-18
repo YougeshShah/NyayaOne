@@ -1,0 +1,22 @@
+// ------------------------------------------------------------
+// LIVE CLASS HOST — supports assigning 2+ teachers to the same live
+// class (co-teaching). The original `hostId` field on LiveClass stays
+// as-is for backward compatibility (existing code reading "the" host
+// keeps working) -- this join table adds the FULL list of co-hosts,
+// which always includes the original hostId (marked isPrimary: true)
+// plus any additional teachers assigned afterward.
+// ------------------------------------------------------------
+
+model LiveClassHost {
+  id          String    @id @default(uuid())
+  liveClass   LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+  liveClassId String
+  host        User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  hostId      String
+  isPrimary   Boolean   @default(false) // the class's original/main host
+  createdAt   DateTime  @default(now())
+
+  @@unique([liveClassId, hostId])
+  @@index([liveClassId])
+  @@index([hostId])
+}

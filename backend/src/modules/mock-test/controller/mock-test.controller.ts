@@ -57,7 +57,7 @@ export const mockTestController = {
   async startAttempt(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const { id } = mockTestIdParamSchema.parse(req.params);
-    const result = await mockTestService.startAttempt(req.auth.userId, id);
+    const result = await mockTestService.startAttempt(req.auth.userId, id, req.auth.lawFirmId ?? null);
     res.status(201).json({ success: true, data: result });
   },
 

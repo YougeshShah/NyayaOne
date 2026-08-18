@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { usageStatusApi } from "../../api/usageStatus.api";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -19,6 +21,7 @@ import TimerIcon from "@mui/icons-material/TimerOutlined";
 import LockIcon from "@mui/icons-material/LockOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircleOutline";
 import StyleIcon from "@mui/icons-material/StyleOutlined";
+import MicIcon from "@mui/icons-material/MicOutlined";
 import VideocamIcon from "@mui/icons-material/VideocamOutlined";
 import MenuBookIconOutlined from "@mui/icons-material/MenuBookOutlined";
 import { useCourse, useSubjects, useMockTests, useMySubscriptions } from "../../hooks/useCourse";
@@ -32,6 +35,11 @@ export function CourseDetailPage() {
   const [subscribeOpen, setSubscribeOpen] = useState(false);
 
   const { data: course } = useCourse(courseId);
+  const { data: usageStatus } = useQuery({
+    queryKey: ["usage-status", courseId],
+    queryFn: () => usageStatusApi.getStatus(courseId as string),
+    enabled: !!courseId,
+  });
   const { data: subjects } = useSubjects(courseId);
   const { data: mockTests } = useMockTests(courseId);
   const { data: liveClasses } = useLiveClasses(courseId);
@@ -82,6 +90,11 @@ export function CourseDetailPage() {
           <Button variant="outlined" startIcon={<StyleIcon />} onClick={() => navigate(`/courses/${courseId}/flashcards`)}>
             Flashcards
           </Button>
+          {course?.category === "LANGUAGE" && (
+            <Button variant="outlined" startIcon={<MicIcon />} onClick={() => navigate(`/courses/${courseId}/speaking`)}>
+              Speaking
+            </Button>
+          )}
           {isSubscribed ? (
             <Chip icon={<CheckCircleIcon />} label="Subscribed" color="success" />
           ) : (
@@ -90,6 +103,19 @@ export function CourseDetailPage() {
           </Button>
         )}
       </Box>
+      {usageStatus && (
+        <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+          {!usageStatus.practice.unlimited && (
+            <Chip size="small" label={`Practice: ${usageStatus.practice.remaining}/${usageStatus.practice.limit} left`} variant="outlined" />
+          )}
+          {!usageStatus.mockTest.unlimited && (
+            <Chip size="small" label={`Mock Test: ${usageStatus.mockTest.remaining}/${usageStatus.mockTest.limit} left`} variant="outlined" />
+          )}
+          {!usageStatus.speaking.unlimited && (
+            <Chip size="small" label={`Speaking: ${usageStatus.speaking.remaining}/${usageStatus.speaking.limit} left`} variant="outlined" />
+          )}
+        </Box>
+      )}
       </Box>
 
       {!isSubscribed && (

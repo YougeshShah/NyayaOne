@@ -21,7 +21,7 @@ export function LoginPage() {
           <Typography variant="h4" className={styles.brandTitle}>
             NyayaOne
           </Typography>
-          <Typography className={styles.brandSubtitle}>Company Control Center — TrailBlaze Tech</Typography>
+          <Typography className={styles.brandSubtitle}>Company Control Center — Technocraftx</Typography>
         </div>
 
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>

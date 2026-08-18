@@ -3,6 +3,8 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
 import BusinessIcon from "@mui/icons-material/BusinessOutlined";
 import GavelIcon from "@mui/icons-material/GavelOutlined";
+import AssessmentIcon from "@mui/icons-material/AssessmentOutlined";
+import MicIcon from "@mui/icons-material/MicOutlined";
 import NotificationsIcon from "@mui/icons-material/NotificationsOutlined";
 import HistoryIcon from "@mui/icons-material/HistoryOutlined";
 import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
@@ -64,6 +66,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/courts", labelKey: "courts", icon: <GavelIcon fontSize="small" />, permission: "court.manage" },
       { to: "/library", labelKey: "legalLibrary", icon: <MenuBookIcon fontSize="small" />, permission: "library.manage" },
+      { to: "/precedents", labelKey: "precedentSearch", icon: <GavelIcon fontSize="small" />, permission: "library.manage" },
       { to: "/document-templates", labelKey: "documentTemplates", icon: <DescriptionIcon fontSize="small" />, permission: null },
     ],
   },
@@ -74,6 +77,8 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/courses-admin", labelKey: "coursesAdmin", icon: <SchoolIcon fontSize="small" />, permission: "library.manage" },
       { to: "/mcq-admin", labelKey: "mcqAdmin", icon: <QuizIcon fontSize="small" />, permission: "library.manage" },
       { to: "/flashcard-admin", labelKey: "flashcardAdmin", icon: <StyleIcon fontSize="small" />, permission: "library.manage" },
+      { to: "/speaking-admin", labelKey: "speakingPrompts", icon: <MicIcon fontSize="small" />, permission: "library.manage" },
+      { to: "/usage-limits", labelKey: "usageLimits", icon: <AssessmentIcon fontSize="small" />, permission: "library.manage" },
       { to: "/mock-test-admin", labelKey: "mockTestAdmin", icon: <AssignmentIcon fontSize="small" />, permission: "library.manage" },
       { to: "/live-class-admin", labelKey: "liveClassAdmin", icon: <VideocamIcon fontSize="small" />, permission: "library.manage" },
       { to: "/writing-grading", labelKey: "writingGrading", icon: <EditNoteIcon fontSize="small" />, permission: "library.manage" },

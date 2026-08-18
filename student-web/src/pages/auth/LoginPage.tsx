@@ -1,10 +1,14 @@
-import { Alert, Box, Button, Paper, TextField, Typography, Link as MuiLink } from "@mui/material";
+import { Alert, Box, Button, Paper, TextField, Typography, Link as MuiLink , IconButton, InputAdornment } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useLogin } from "../../hooks/useAuth";
 import { LoginPayload } from "../../types/auth.types";
 
 export function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const login = useLogin();
   const { register, handleSubmit, formState } = useForm<LoginPayload>();
@@ -38,7 +42,23 @@ export function LoginPage() {
             </Alert>
           )}
           <TextField label="Email" type="email" required fullWidth {...register("email", { required: true })} error={!!formState.errors.email} />
-          <TextField label="Password" type="password" required fullWidth {...register("password", { required: true })} error={!!formState.errors.password} />
+          <TextField
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            required
+            fullWidth
+            {...register("password", { required: true })}
+            error={!!formState.errors.password}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword((s) => !s)} edge="end" size="small">
+                    {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
           <Button type="submit" variant="contained" size="large" disabled={login.isPending}>
             {login.isPending ? "Signing in..." : "Sign In"}
           </Button>

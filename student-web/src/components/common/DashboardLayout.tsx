@@ -4,18 +4,24 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import TrendingUpIcon from "@mui/icons-material/TrendingUpOutlined";
 import BookmarkIcon from "@mui/icons-material/BookmarkBorderOutlined";
 import ReplayIcon from "@mui/icons-material/Replay";
+import GavelIcon from "@mui/icons-material/GavelOutlined";
 import NotificationsIcon from "@mui/icons-material/NotificationsOutlined";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { getAvatarUrl } from "../../api/profile.api";
 import { ChatWidget } from "./ChatWidget";
 import { useMyNotifications } from "../../hooks/useNotifications";
+import { useMySubscriptions } from "../../hooks/useCourse";
 
 export function DashboardLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const navigate = useNavigate();
   const { data: notificationsData } = useMyNotifications();
+  const { data: subscriptions } = useMySubscriptions();
+  const hasLawSubscription = subscriptions?.some(
+    (s) => s.course.category === "LAW" && (s.status === "ACTIVE" || s.status === "TRIAL")
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -39,6 +45,11 @@ export function DashboardLayout() {
           <Button startIcon={<ReplayIcon />} onClick={() => navigate("/my-mistakes")} sx={{ mr: 1 }}>
             Review Mistakes
           </Button>
+          {hasLawSubscription && (
+            <Button startIcon={<GavelIcon />} onClick={() => navigate("/precedents")} sx={{ mr: 1 }}>
+              नजिर खोज
+            </Button>
+          )}
           <IconButton onClick={() => navigate("/notifications")} sx={{ mr: 1 }}>
             <Badge badgeContent={notificationsData?.unreadCount ?? 0} color="error">
               <NotificationsIcon />

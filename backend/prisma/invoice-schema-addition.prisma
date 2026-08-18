@@ -1,0 +1,38 @@
+// ------------------------------------------------------------
+// INVOICE — real-world billing for law firm/institution subscriptions.
+// There is no payment gateway integration for firm-level billing (same
+// as FirmSubscription's existing design note) -- Company staff manually
+// create an invoice, mark it paid once payment is confirmed out-of-band
+// (bank transfer, cash, eSewa/Khalti QR shown in person, etc.), and this
+// becomes the paper trail / receipt history for that firm.
+// ------------------------------------------------------------
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id                 String            @id @default(uuid())
+  invoiceNumber      String            @unique // e.g. "INV-2026-0001", sequential per year
+  lawFirmId          String
+  lawFirm            LawFirm           @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  subscriptionId     String?
+  subscription       FirmSubscription? @relation(fields: [subscriptionId], references: [id])
+  amount             Float // NPR
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  status             InvoiceStatus     @default(PENDING)
+  paymentMethod      String? // "Bank Transfer" | "Cash" | "eSewa" | "Khalti" | "Cheque" -- free text, manually entered
+  paymentReference   String? // transaction id / cheque no. / bank reference, for the paper trail
+  paidAt             DateTime?
+  notes              String?
+  createdBy          String // Company user id who created/issued this invoice
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([lawFirmId])
+  @@index([status])
+}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PermissionOverrideDialog } from "../../components/permissions/PermissionOverrideDialog";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
@@ -36,11 +37,11 @@ export function StudentsPage() {
   const updateStudent = useUpdateInstitutionStudent();
   const removeStudent = useRemoveInstitutionStudent();
   const [editingStudent, setEditingStudent] = useState<InstitutionStudent | null>(null);
-  const editForm = useForm<{ fullName: string; phone?: string }>();
+  const editForm = useForm<{ fullName: string; phone?: string; preferredCourseId?: string; preferredExamType?: string }>();
 
   const openEdit = (s: InstitutionStudent) => {
     setEditingStudent(s);
-    editForm.reset({ fullName: s.fullName, phone: s.phone ?? "" });
+    editForm.reset({ fullName: s.fullName, phone: s.phone ?? "", preferredCourseId: (s as any).preferredCourseId ?? "", preferredExamType: (s as any).preferredExamType ?? "" });
   };
 
   const onEditSubmit = (values: { fullName: string; phone?: string }) => {
@@ -55,6 +56,7 @@ export function StudentsPage() {
   };
   const { data: courses } = useQuery({ queryKey: ["institution-courses"], queryFn: () => liveClassInstitutionApi.courses() });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [permissionUserId, setPermissionUserId] = useState<string | null>(null);
   const [resetResult, setResetResult] = useState<{ name: string; password: string } | null>(null);
   const { register, handleSubmit, reset, formState, watch } = useForm<AddStudentPayload>();
   const selectedStudentCourseId = watch("interestedCourseId");
@@ -119,6 +121,9 @@ export function StudentsPage() {
                   </Button>
                   <Button size="small" variant="outlined" onClick={() => handleResetPassword(s.id, s.fullName)} disabled={resetPassword.isPending} sx={{ mr: 1 }}>
                     Reset Password
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => setPermissionUserId(s.id)} sx={{ mr: 1 }}>
+                    Permissions
                   </Button>
                   <Button size="small" color="error" variant="outlined" onClick={() => handleRemove(s)}>
                     Remove
@@ -222,6 +227,8 @@ export function StudentsPage() {
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField label="Full Name" required fullWidth {...editForm.register("fullName", { required: true })} />
             <TextField label="Phone" fullWidth {...editForm.register("phone")} />
+            <TextField label="Preparing For (Course ID, optional)" fullWidth {...editForm.register("preferredCourseId")} helperText="Leave as-is unless changing their focus course" />
+            <TextField label="Exam Level (optional)" fullWidth {...editForm.register("preferredExamType")} helperText="e.g. KHARIDAR, SECTION_OFFICER" />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setEditingStudent(null)}>Cancel</Button>
@@ -231,6 +238,7 @@ export function StudentsPage() {
           </DialogActions>
         </Box>
       </Dialog>
+      <PermissionOverrideDialog userId={permissionUserId} onClose={() => setPermissionUserId(null)} />
     </Box>
   );
 }

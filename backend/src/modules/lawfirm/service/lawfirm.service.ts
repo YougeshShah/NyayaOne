@@ -4,6 +4,9 @@ import { lawFirmRepository } from "../repository/lawfirm.repository";
 import { ListLawFirmsQuery, CreateLawFirmInput } from "../dto/lawfirm.dto";
 
 export const lawFirmService = {
+  async listPublicInstitutions() {
+    return lawFirmRepository.findPublicInstitutions();
+  },
   async create(input: CreateLawFirmInput, createdByUserId: string) {
     const existing = await lawFirmRepository.findUserByEmail(input.adminEmail);
     if (existing) {

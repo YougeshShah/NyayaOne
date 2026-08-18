@@ -17,7 +17,7 @@ export const translations = {
 
     // Legal Library page
     legalLibrary: "Legal Library",
-    libraryIntro: "Search Nepal's laws, regulations, and court decisions — curated by TrailBlaze Tech.",
+    libraryIntro: "Search Nepal's laws, regulations, and court decisions — curated by Technocraftx.",
     searchLibraryPlaceholder: "Search by title, act name, keyword — or a word inside the document itself",
     type: "Type",
     allTypes: "All Types",
@@ -73,7 +73,7 @@ export const translations = {
 
     // Legal Library page
     legalLibrary: "कानुनी पुस्तकालय",
-    libraryIntro: "नेपालका कानून, नियमावली, र अदालतका फैसलाहरू खोज्नुहोस् — TrailBlaze Tech ले संकलन गरेको।",
+    libraryIntro: "नेपालका कानून, नियमावली, र अदालतका फैसलाहरू खोज्नुहोस् — Technocraftx ले संकलन गरेको।",
     searchLibraryPlaceholder: "शीर्षक, ऐनको नाम, शब्द अनुसार खोज्नुहोस् — वा कागजात भित्रको शब्द",
     type: "प्रकार",
     allTypes: "सबै प्रकार",

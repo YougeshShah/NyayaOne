@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PermissionOverrideDialog } from "../../components/permissions/PermissionOverrideDialog";
 import {
   Alert,
   Box,
@@ -29,6 +30,7 @@ import { CreateCompanyStaffPayload, CompanyStaff } from "../../types/companyStaf
 
 export function CompanyStaffPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [permissionUserId, setPermissionUserId] = useState<string | null>(null);
   const [editingStaff, setEditingStaff] = useState<CompanyStaff | null>(null);
   const [resetResult, setResetResult] = useState<{ name: string; password: string } | null>(null);
   const { data, isLoading } = useCompanyStaff({ page: 1 });
@@ -71,7 +73,7 @@ export function CompanyStaffPage() {
             Company Staff
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.pagination.total ?? 0} TrailBlaze Tech team members
+            {data?.pagination.total ?? 0} Technocraftx team members
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
@@ -143,6 +145,9 @@ export function CompanyStaffPage() {
                   </Button>
                   <Button size="small" variant="outlined" onClick={() => handleResetPassword(s.id, s.fullName)} disabled={resetPassword.isPending}>
                     Reset Password
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => setPermissionUserId(s.id)} sx={{ ml: 1 }}>
+                    Permissions
                   </Button>
                 </TableCell>
               </TableRow>
@@ -246,6 +251,7 @@ export function CompanyStaffPage() {
           </Button>
         </DialogActions>
       </Dialog>
+      <PermissionOverrideDialog userId={permissionUserId} onClose={() => setPermissionUserId(null)} />
     </Box>
   );
 }

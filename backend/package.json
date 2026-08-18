@@ -1,7 +1,7 @@
 {
   "name": "nyayaone-backend",
   "version": "1.0.0",
-  "description": "NyayaOne - Legal Technology Platform Backend (TrailBlaze Tech)",
+  "description": "NyayaOne - Legal Technology Platform Backend (Technocraftx)",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
@@ -18,9 +18,9 @@
   "keywords": [
     "nyayaone",
     "legal-tech",
-    "trailblaze"
+    "technocraftx"
   ],
-  "author": "TrailBlaze Tech",
+  "author": "Technocraftx",
   "license": "UNLICENSED",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
@@ -28,6 +28,7 @@
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "csv-parse": "^7.0.2",
     "dotenv": "^16.4.5",
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
@@ -37,6 +38,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^9.0.5",
     "pdf-parse": "^1.1.4",
     "pdfkit": "^0.15.0",
     "puppeteer": "^23.0.0",
@@ -55,6 +57,7 @@
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.14.15",
+    "@types/nodemailer": "^8.0.1",
     "@types/pdfkit": "^0.13.4",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^7.18.0",

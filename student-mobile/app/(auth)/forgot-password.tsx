@@ -1,64 +1,86 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
-import { Link, router } from "expo-router";
-import { useRequestPasswordReset } from "../../src/hooks";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { router } from "expo-router";
+import { useMutation } from "@tanstack/react-query";
+import { emailVerificationApi } from "../../src/api";
 
 export default function ForgotPasswordScreen() {
+  const [step, setStep] = useState<"request" | "reset">("request");
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const requestReset = useRequestPasswordReset();
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
+  const requestCode = useMutation({
+    mutationFn: () => emailVerificationApi.sendCode(email, "PASSWORD_RESET"),
+    onSuccess: () => setStep("reset"),
+  });
+
+  const resetPassword = useMutation({
+    mutationFn: () => emailVerificationApi.resetPassword(email, code, newPassword),
+    onSuccess: () => router.replace("/(auth)/login"),
+  });
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <Text style={styles.title}>Forgot Password?</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>{step === "request" ? "Forgot Password" : "Reset Password"}</Text>
       <Text style={styles.subtitle}>
-        We don't have automatic email reset set up yet — submit your email and your institution or our support
-        team will reset it for you directly.
+        {step === "request" ? "Enter your email and we'll send you a code" : "Enter the code and your new password"}
       </Text>
 
-      {submitted ? (
-        <View style={styles.successBox}>
-          <Text style={styles.successText}>
-            Request submitted. Your institution admin or our support team will reach out to reset your password
-            shortly.
-          </Text>
-        </View>
+      {step === "request" ? (
+        <>
+          {requestCode.isError && <Text style={styles.errorText}>Something went wrong. Please try again.</Text>}
+          <TextInput style={styles.input} placeholder="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+          <TouchableOpacity
+            style={[styles.button, (requestCode.isPending || !email) && styles.buttonDisabled]}
+            onPress={() => requestCode.mutate()}
+            disabled={requestCode.isPending || !email}
+          >
+            {requestCode.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Code</Text>}
+          </TouchableOpacity>
+        </>
       ) : (
         <>
+          {resetPassword.isError && <Text style={styles.errorText}>Invalid or expired code. Please try again.</Text>}
           <TextInput
-            style={styles.input}
-            placeholder="Your Account Email"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
+            style={[styles.input, styles.codeInput]}
+            placeholder="000000"
+            keyboardType="number-pad"
+            maxLength={6}
+            value={code}
+            onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, 6))}
           />
+          <TextInput style={styles.input} placeholder="New Password (min 8 characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
           <TouchableOpacity
-            style={[styles.button, !email.trim() && { opacity: 0.5 }]}
-            disabled={!email.trim() || requestReset.isPending}
-            onPress={() => requestReset.mutate(email.trim(), { onSuccess: () => setSubmitted(true) })}
+            style={[styles.button, (resetPassword.isPending || code.length !== 6 || newPassword.length < 8) && styles.buttonDisabled]}
+            onPress={() => resetPassword.mutate()}
+            disabled={resetPassword.isPending || code.length !== 6 || newPassword.length < 8}
           >
-            {requestReset.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Submit Request</Text>}
+            {resetPassword.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Reset Password</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => requestCode.mutate()} disabled={requestCode.isPending} style={styles.link}>
+            <Text style={styles.linkText}>Resend Code</Text>
           </TouchableOpacity>
         </>
       )}
 
-      <TouchableOpacity onPress={() => router.back()} style={styles.link}>
-        <Text style={styles.linkText}>Back to Sign In</Text>
+      <TouchableOpacity onPress={() => router.replace("/(auth)/login")} style={styles.link}>
+        <Text style={styles.linkText}>Back to Login</Text>
       </TouchableOpacity>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#2563EB" },
-  title: { fontSize: 24, fontWeight: "800", color: "#fff", textAlign: "center", marginBottom: 8 },
-  subtitle: { fontSize: 14, color: "#DBEAFE", textAlign: "center", marginBottom: 28, lineHeight: 20 },
-  input: { backgroundColor: "#fff", borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 15 },
-  button: { backgroundColor: "#1E40AF", borderRadius: 10, padding: 16, alignItems: "center", marginTop: 8 },
+  container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#fff" },
+  title: { fontSize: 24, fontWeight: "700", textAlign: "center", marginBottom: 8 },
+  subtitle: { fontSize: 14, color: "#6B7280", textAlign: "center", marginBottom: 24 },
+  errorText: { color: "#DC2626", textAlign: "center", marginBottom: 12 },
+  input: { borderWidth: 1, borderColor: "#D1D5DB", borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 16 },
+  codeInput: { textAlign: "center", letterSpacing: 8, fontSize: 22 },
+  button: { backgroundColor: "#2563EB", borderRadius: 10, padding: 14, alignItems: "center", marginTop: 8 },
+  buttonDisabled: { opacity: 0.5 },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  successBox: { backgroundColor: "#DCFCE7", borderRadius: 10, padding: 16 },
-  successText: { color: "#166534", fontSize: 14, lineHeight: 20 },
-  link: { marginTop: 24, alignItems: "center" },
-  linkText: { color: "#fff", fontWeight: "700", textDecorationLine: "underline" },
+  link: { marginTop: 16, alignItems: "center" },
+  linkText: { color: "#2563EB", fontWeight: "600" },
 });

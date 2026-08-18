@@ -1,9 +1,21 @@
 import { AppError } from "../../../common/errors/AppError";
 import { flashcardRepository } from "../repository/flashcard.repository";
 import { CreateFlashcardInput, UpdateFlashcardInput } from "../dto/flashcard.dto";
+import { lawFirmRepository } from "../../lawfirm/repository/lawfirm.repository";
 
 export const flashcardService = {
   async create(input: CreateFlashcardInput, createdBy: string, hostLawFirmId?: string) {
+    // Same "Sector Access" check as Mock Test -- an institution can only
+    // add content to courses Company has specifically granted it (e.g. an
+    // IELTS-only institute can't add Law flashcards even though the
+    // student_platform module is enabled for them generally).
+    if (hostLawFirmId) {
+      const firm = await lawFirmRepository.findById(hostLawFirmId);
+      const allowed = (firm as any)?.allowedCourseIds ?? [];
+      if (allowed.length > 0 && !allowed.includes((input as any).courseId)) {
+        throw AppError.forbidden("Your institution doesn't have Sector Access to this course.");
+      }
+    }
     return flashcardRepository.create({ ...input, createdBy, hostLawFirmId });
   },
 

@@ -4,6 +4,10 @@ import { listLawFirmsQuerySchema, lawFirmIdParamSchema, suspendLawFirmSchema, cr
 import { AppError } from "../../../common/errors/AppError";
 
 export const lawFirmController = {
+  async listPublic(req: Request, res: Response) {
+    const result = await lawFirmService.listPublicInstitutions();
+    res.status(200).json({ success: true, data: result });
+  },
   async create(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const input = createLawFirmSchema.parse(req.body);

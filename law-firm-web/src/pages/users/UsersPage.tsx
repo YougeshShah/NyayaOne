@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { PermissionOverrideDialog } from "../../components/permissions/PermissionOverrideDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { tenantRoleApi } from "../../api/tenantRole.api";
 import { useAuthStore } from "../../store/authStore";
 import {
   Alert,
@@ -35,6 +37,7 @@ export function UsersPage() {
   const isEducation = user?.tenantType === "EDUCATION";
   const staffLabel = isEducation ? "Staff" : "Lawyer / Staff";
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [permissionUserId, setPermissionUserId] = useState<string | null>(null);
   const { data, isLoading } = useFirmUsers({});
   const { create, updateStatus, resetPassword, update } = useFirmUserActions();
   const [editingUser, setEditingUser] = useState<FirmUser | null>(null);
@@ -55,6 +58,10 @@ export function UsersPage() {
     update.mutate({ id: editingUser.id, payload: values }, { onSuccess: () => setEditingUser(null) });
   };
   const qc = useQueryClient();
+  const { data: tenantRoles } = useQuery({
+    queryKey: ["tenant-roles"],
+    queryFn: () => tenantRoleApi.listRoles(),
+  });
   const { data: pendingRequests } = useQuery({
     queryKey: ["password-reset-requests"],
     queryFn: () => passwordResetRequestApi.listPending(),
@@ -72,7 +79,7 @@ export function UsersPage() {
   };
 
   const { register, handleSubmit, reset, watch, formState } = useForm<CreateFirmUserPayload>({
-    defaultValues: { accountType: "LAWYER" },
+    defaultValues: { accountType: isEducation ? "STAFF" : "LAWYER" },
   });
   const accountType = watch("accountType");
 
@@ -90,7 +97,7 @@ export function UsersPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>
-            Lawyers & Staff
+            {isEducation ? "Staff" : "Lawyers & Staff"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {data?.pagination.total ?? 0} team members
@@ -136,8 +143,9 @@ export function UsersPage() {
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>Role</TableCell>
-              <TableCell>Bar No.</TableCell>
+              {!isEducation && <TableCell>Bar No.</TableCell>}
               <TableCell>Status</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -162,7 +170,24 @@ export function UsersPage() {
                 <TableCell>{u.fullName}</TableCell>
                 <TableCell>{u.email}</TableCell>
                 <TableCell>{u.accountType}</TableCell>
-                <TableCell>{u.barRegistrationNo || "—"}</TableCell>
+                <TableCell>
+                  <TextField
+                    select
+                    size="small"
+                    variant="standard"
+                    value={(u as any).roleId || ""}
+                    onChange={(e) => update.mutate({ id: u.id, payload: { roleId: e.target.value || null } as any })}
+                    sx={{ minWidth: 140 }}
+                  >
+                    <MenuItem value="">— None —</MenuItem>
+                    {tenantRoles?.map((r) => (
+                      <MenuItem key={r.id} value={r.id}>
+                        {r.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </TableCell>
+                {!isEducation && <TableCell>{u.barRegistrationNo || "—"}</TableCell>}
                 <TableCell>
                   <StatusBadge status={u.status} />
                 </TableCell>
@@ -182,6 +207,9 @@ export function UsersPage() {
                   <Button size="small" variant="outlined" onClick={() => handleResetPassword(u.id, u.fullName)} disabled={resetPassword.isPending}>
                     Reset Password
                   </Button>
+                  <Button size="small" variant="outlined" onClick={() => setPermissionUserId(u.id)} sx={{ ml: 1 }}>
+                    Permissions
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -196,6 +224,14 @@ export function UsersPage() {
             <TextField select label="Role" required fullWidth defaultValue={isEducation ? "STAFF" : "LAWYER"} {...register("accountType", { required: true })}>
               {!isEducation && <MenuItem value="LAWYER">Lawyer</MenuItem>}
               <MenuItem value="STAFF">{isEducation ? "Staff (Teacher / Coordinator / Admin)" : "Staff (Receptionist / Assistant / Intern)"}</MenuItem>
+            </TextField>
+            <TextField select label="Assign Role (optional)" fullWidth defaultValue="" {...register("roleId")}>
+              <MenuItem value="">— None —</MenuItem>
+              {tenantRoles?.map((r) => (
+                <MenuItem key={r.id} value={r.id}>
+                  {r.name}
+                </MenuItem>
+              ))}
             </TextField>
             <TextField label="Full Name" required fullWidth {...register("fullName", { required: true })} error={!!formState.errors.fullName} />
             <TextField label="Email" type="email" required fullWidth {...register("email", { required: true })} error={!!formState.errors.email} />
@@ -282,6 +318,7 @@ export function UsersPage() {
           </DialogActions>
         </Box>
       </Dialog>
+      <PermissionOverrideDialog userId={permissionUserId} onClose={() => setPermissionUserId(null)} />
     </Box>
   );
 }

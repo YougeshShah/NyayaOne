@@ -4,6 +4,8 @@ import { AppError } from "../../../common/errors/AppError";
 import { libraryRepository } from "../repository/library.repository";
 import { CreateLibraryResourceInput, UpdateLibraryResourceInput, ListLibraryResourcesQuery } from "../dto/library.dto";
 import { courseService } from "../../course/service/course.service";
+import { prisma } from "../../../database/prisma";
+import { lawFirmRepository } from "../../lawfirm/repository/lawfirm.repository";
 import { logger } from "../../../common/utils/logger";
 
 /**
@@ -88,6 +90,17 @@ export const libraryService = {
     fileUrl?: string,
     absoluteFilePath?: string
   ) {
+    // Same "Sector Access" check as Mock Test/Flashcard/MCQ -- resolve the
+    // course from the subject, then check it's in this institution's
+    // allowed list.
+    const subject = await prisma.subject.findUnique({ where: { id: input.subjectId } });
+    if (subject) {
+      const firm = await lawFirmRepository.findById(hostLawFirmId);
+      const allowed = (firm as any)?.allowedCourseIds ?? [];
+      if (allowed.length > 0 && !allowed.includes(subject.courseId)) {
+        throw AppError.forbidden("Your institution doesn't have Sector Access to this course.");
+      }
+    }
     const extractedText = absoluteFilePath ? await extractPdfText(absoluteFilePath) : undefined;
     return libraryRepository.create({
       title: input.title,

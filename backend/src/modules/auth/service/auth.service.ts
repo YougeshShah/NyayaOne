@@ -11,7 +11,7 @@ const REFRESH_TOKEN_TTL_DAYS = 7;
 export const authService = {
   /**
    * A law firm self-registers along with its first admin user.
-   * The firm starts as PENDING and must be approved by TrailBlaze Tech (Company)
+   * The firm starts as PENDING and must be approved by Technocraftx (Company)
    * before the admin/lawyers can fully operate — see LawFirm.status.
    */
   async registerLawFirm(input: RegisterLawFirmInput) {
@@ -34,7 +34,7 @@ export const authService = {
     return {
       lawFirm: { id: lawFirm.id, name: lawFirm.name, status: lawFirm.status },
       admin: { id: admin.id, fullName: admin.fullName, email: admin.email },
-      message: "Registration submitted. Your firm is pending approval from TrailBlaze Tech.",
+      message: "Registration submitted. Your firm is pending approval from Technocraftx.",
     };
   },
 
@@ -48,15 +48,32 @@ export const authService = {
       throw AppError.conflict("An account with this email already exists");
     }
 
+    // Self-registration on a specific institution's subdomain
+    // (input.institutionSlug, silently detected from the URL the student
+    // registered on -- never picked manually) needs that institution's
+    // approval before the account is usable -- same PENDING_VERIFICATION
+    // status Law Firm registration already uses, just applied here too.
+    // addedByLawFirmId (institution staff adding a student directly,
+    // existing flow) stays immediately ACTIVE as before.
+    let institutionIdFromSlug: string | undefined;
+    if (input.institutionSlug) {
+      const firm = await prisma.lawFirm.findFirst({ where: { slug: input.institutionSlug, tenantType: "EDUCATION", status: "ACTIVE" } });
+      if (!firm) throw AppError.notFound("This institution could not be found.");
+      institutionIdFromSlug = firm.id;
+    }
+    const effectiveLawFirmId = addedByLawFirmId || institutionIdFromSlug;
+    const needsApproval = !addedByLawFirmId && !!institutionIdFromSlug;
+
     const passwordHash = await hashPassword(input.password);
     const student = await authRepository.createStudent({
       fullName: input.fullName,
       email: input.email,
       phone: input.phone,
       passwordHash,
-      addedByLawFirmId,
+      addedByLawFirmId: effectiveLawFirmId,
       preferredCourseId: input.interestedCourseId,
       preferredExamType: input.preferredExamType,
+      status: needsApproval ? "PENDING_VERIFICATION" : "ACTIVE",
     });
 
     // An institution adding their own student is enrolling them in a
@@ -73,11 +90,15 @@ export const authService = {
     };
   },
 
-  async listInstitutionStudents(lawFirmId: string) {
-    return authRepository.findStudentsByLawFirmId(lawFirmId);
+  async listInstitutionStudents(lawFirmId: string, status?: "ACTIVE" | "PENDING_VERIFICATION") {
+    return authRepository.findStudentsByLawFirmId(lawFirmId, status);
   },
 
-  async updateInstitutionStudent(id: string, lawFirmId: string, input: { fullName?: string; phone?: string }) {
+  async updateInstitutionStudent(
+    id: string,
+    lawFirmId: string,
+    input: { fullName?: string; phone?: string; status?: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED"; preferredCourseId?: string; preferredExamType?: string }
+  ) {
     const result = await authRepository.updateStudentScoped(id, lawFirmId, input);
     if (result.count === 0) throw AppError.notFound("Student not found in your institution");
     return authRepository.findStudentById(id);
@@ -101,6 +122,21 @@ export const authService = {
 
     if (user.status === "SUSPENDED") {
       throw AppError.forbidden("Your account has been suspended. Contact support.");
+    }
+
+    // A student who self-registered under a specific institution needs
+    // that institution to approve them first -- mirrors how a Law Firm
+    // itself needs Company's approval before its staff can log in, one
+    // level down. Students added directly BY an institution (existing
+    // flow) are created ACTIVE and never hit this.
+    if (user.status === "PENDING_VERIFICATION" && user.accountType === "STUDENT") {
+      throw AppError.forbidden("Your registration is pending approval from your institution. You'll be able to log in once they approve it.");
+    }
+    // Email must be verified via the code sent at registration -- separate
+    // from institution approval above; a student could be approved by
+    // their institution but still not have confirmed their own email yet.
+    if (user.accountType === "STUDENT" && !user.emailVerified) {
+      throw AppError.forbidden("Please verify your email before logging in. Check your inbox for the verification code.");
     }
 
     // Law firm tenants must be ACTIVE (approved by Company) before their own

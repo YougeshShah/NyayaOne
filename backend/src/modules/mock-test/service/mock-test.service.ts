@@ -1,4 +1,5 @@
 import { AppError } from "../../../common/errors/AppError";
+import { usageLimitService } from "../../usage-limit/service/usage-limit.service";
 import { mockTestRepository } from "../repository/mock-test.repository";
 import { mcqRepository } from "../../mcq/repository/mcq.repository";
 import { courseService } from "../../course/service/course.service";
@@ -105,12 +106,14 @@ export const mockTestService = {
    * free-demo tests are open to everyone, everything else needs an active
    * course subscription.
    */
-  async startAttempt(studentId: string, mockTestId: string) {
+  async startAttempt(studentId: string, mockTestId: string, studentLawFirmId: string | null) {
     const test = await this.getById(mockTestId);
     if (!test.isPublished) throw AppError.badRequest("This mock test is not published yet");
 
     const allowed = await courseService.canAccess(studentId, (test as any).courseId, (test as any).isFreeDemo);
     if (!allowed) throw AppError.forbidden("Subscribe to this course to take this mock test.");
+
+    await usageLimitService.enforce(studentId, (test as any).courseId, studentLawFirmId, "mockTest");
 
     const attempt = await mockTestRepository.createAttempt(studentId, mockTestId, test.questions.length);
     return { attemptId: attempt.id, totalQuestions: test.questions.length, durationMinutes: test.durationMinutes };

@@ -14,6 +14,7 @@ export interface RegisterPayload {
   phone?: string;
   password: string;
   interestedCourseId?: string;
+  institutionSlug?: string; // silently detected from the subdomain -- never shown to the student
 }
 
 export interface LoginPayload {

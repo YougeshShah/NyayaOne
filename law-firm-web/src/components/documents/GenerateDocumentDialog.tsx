@@ -9,11 +9,11 @@ import {
   MenuItem,
   TextField,
   Typography,
-  Chip,
   CircularProgress,
 } from "@mui/material";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { useDocumentTemplates, useDocumentTemplateDetail, useGenerateDocument } from "../../hooks/useDocumentTemplates";
+import { InlineDocumentFillForm } from "./InlineDocumentFillForm";
 
 interface GenerateDocumentDialogProps {
   open: boolean;
@@ -33,14 +33,12 @@ export function GenerateDocumentDialog({ open, onClose, caseId, clientId }: Gene
 
   const [values, setValues] = useState<Record<string, string>>({});
 
-  // Step 1 options: distinct categories (court/tribunal), sorted, "अन्य" last for uncategorized
   const categories = useMemo(() => {
     const set = new Set<string>();
     templates?.items.forEach((t) => set.add(t.category || OTHER_CATEGORY));
     return Array.from(set).sort((a, b) => (a === OTHER_CATEGORY ? 1 : b === OTHER_CATEGORY ? -1 : a.localeCompare(b)));
   }, [templates]);
 
-  // Step 2 options: documents within the chosen category only
   const documentsInCategory = useMemo(() => {
     if (!category) return [];
     return (templates?.items ?? [])
@@ -66,7 +64,6 @@ export function GenerateDocumentDialog({ open, onClose, caseId, clientId }: Gene
   }, [open]);
 
   const manualFields = template?.fields?.filter((f) => !f.autoFillSource) ?? [];
-  const autoFields = template?.fields?.filter((f) => f.autoFillSource) ?? [];
 
   const handleGenerate = () => {
     if (!templateId) return;
@@ -74,7 +71,7 @@ export function GenerateDocumentDialog({ open, onClose, caseId, clientId }: Gene
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Generate Document</DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <TextField select label="Step 1 — Court / Tribunal / Category" fullWidth value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -106,39 +103,23 @@ export function GenerateDocumentDialog({ open, onClose, caseId, clientId }: Gene
 
         {template && !loadingTemplate && (
           <>
-            {autoFields.length > 0 && (
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                  Filled automatically from this case:
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {autoFields.map((f) => (
-                    <Chip key={f.key} label={f.label} size="small" color="success" variant="outlined" />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {manualFields.length === 0 && autoFields.length > 0 && (
+            {manualFields.length === 0 && (template.fields?.length ?? 0) > 0 && (
               <Typography variant="body2" color="text.secondary">
                 Every field on this document fills automatically — nothing else to type.
               </Typography>
             )}
 
-            {manualFields.map((field) => (
-              <TextField
-                key={field.key}
-                label={field.label}
-                required={field.required}
-                fullWidth
-                multiline={field.type === "textarea"}
-                rows={field.type === "textarea" ? 3 : undefined}
-                type={field.type === "date" ? "date" : field.type === "number" ? "number" : "text"}
-                InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
-                value={values[field.key] || ""}
-                onChange={(e) => setValues((v) => ({ ...v, [field.key]: e.target.value }))}
-              />
-            ))}
+            {/* The document itself, with fillable inputs sitting exactly
+                where each blank was in the original form -- instead of a
+                separate list of fields disconnected from their context,
+                a lawyer sees the actual sentence around each blank while
+                typing, the same way they'd fill a paper form. */}
+            <InlineDocumentFillForm
+              bodyTemplate={template.bodyTemplate}
+              fields={template.fields ?? []}
+              values={values}
+              onChange={(key, value) => setValues((v) => ({ ...v, [key]: value }))}
+            />
           </>
         )}
       </DialogContent>

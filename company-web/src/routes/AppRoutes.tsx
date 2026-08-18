@@ -8,12 +8,15 @@ import { CourtsPage } from "../pages/courts/CourtsPage";
 import { NotificationsPage } from "../pages/notifications/NotificationsPage";
 import { AuditLogsPage } from "../pages/audit-logs/AuditLogsPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
+import { PrecedentSearchPage } from "../pages/precedents/PrecedentSearchPage";
 import { CompanyStaffPage } from "../pages/company-staff/CompanyStaffPage";
 import { SubscriptionsPage } from "../pages/subscriptions/SubscriptionsPage";
 import { DocumentTemplatesPage } from "../pages/document-templates/DocumentTemplatesPage";
 import { CoursesAdminPage } from "../pages/courses-admin/CoursesAdminPage";
 import { McqAdminPage } from "../pages/mcq-admin/McqAdminPage";
 import { FlashcardAdminPage } from "../pages/flashcard-admin/FlashcardAdminPage";
+import { SpeakingPromptAdminPage } from "../pages/speaking-admin/SpeakingPromptAdminPage";
+import { UsageLimitAdminPage } from "../pages/usage-limit-admin/UsageLimitAdminPage";
 import { MockTestAdminPage } from "../pages/mock-test-admin/MockTestAdminPage";
 import { LiveClassAdminPage } from "../pages/live-class-admin/LiveClassAdminPage";
 import { GrantSubscriptionPage } from "../pages/grant-subscription/GrantSubscriptionPage";
@@ -41,12 +44,15 @@ export function AppRoutes() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/audit-logs" element={<AuditLogsPage />} />
           <Route path="/library" element={<LibraryPage />} />
+          <Route path="/precedents" element={<PrecedentSearchPage />} />
           <Route path="/company-staff" element={<CompanyStaffPage />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
           <Route path="/document-templates" element={<DocumentTemplatesPage />} />
           <Route path="/courses-admin" element={<CoursesAdminPage />} />
           <Route path="/mcq-admin" element={<McqAdminPage />} />
           <Route path="/flashcard-admin" element={<FlashcardAdminPage />} />
+          <Route path="/speaking-admin" element={<SpeakingPromptAdminPage />} />
+          <Route path="/usage-limits" element={<UsageLimitAdminPage />} />
           <Route path="/mock-test-admin" element={<MockTestAdminPage />} />
           <Route path="/live-class-admin" element={<LiveClassAdminPage />} />
           <Route path="/grant-subscription" element={<GrantSubscriptionPage />} />

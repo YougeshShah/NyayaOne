@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useDocumentTemplates, useDocumentTemplateDetail, useGenerateDocument } from "../../src/hooks/useDocumentTemplates";
 import { PickerModal } from "../../src/components/PickerModal";
+import { InlineDocumentFillForm } from "../../src/components/documents/InlineDocumentFillForm";
 import { colors, spacing, radius } from "../../src/theme/theme";
 
 export default function GenerateDocumentScreen() {
@@ -35,9 +36,6 @@ export default function GenerateDocumentScreen() {
     setTemplateId(null);
     setValues({});
   }, [category]);
-
-  const manualFields = template?.fields.filter((f) => !f.autoFillSource) ?? [];
-  const autoFields = template?.fields.filter((f) => f.autoFillSource) ?? [];
 
   const handleGenerate = () => {
     if (!templateId || !caseId) return;
@@ -74,34 +72,17 @@ export default function GenerateDocumentScreen() {
 
       {template && !loadingTemplate && (
         <>
-          {autoFields.length > 0 && (
-            <View style={styles.autoFillBox}>
-              <Text style={styles.autoFillTitle}>Filled automatically from this case:</Text>
-              <View style={styles.chipRow}>
-                {autoFields.map((f) => (
-                  <View key={f.key} style={styles.chip}>
-                    <Text style={styles.chipText}>{f.label}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {manualFields.map((field) => (
-            <View key={field.key}>
-              <Text style={styles.label}>
-                {field.label} {field.required ? "*" : ""}
-              </Text>
-              <TextInput
-                style={[styles.input, field.type === "textarea" && styles.textarea]}
-                multiline={field.type === "textarea"}
-                keyboardType={field.type === "number" ? "numeric" : "default"}
-                value={values[field.key] || ""}
-                onChangeText={(v) => setValues((prev) => ({ ...prev, [field.key]: v }))}
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-          ))}
+          {/* The document itself, with fillable inputs positioned right
+              where each blank was in the original form — instead of a
+              separate list disconnected from the surrounding sentence. */}
+          <View style={{ marginTop: spacing.md }}>
+            <InlineDocumentFillForm
+              bodyTemplate={template.bodyTemplate}
+              fields={template.fields}
+              values={values}
+              onChange={(key, value) => setValues((prev) => ({ ...prev, [key]: value }))}
+            />
+          </View>
 
           <TouchableOpacity style={styles.generateButton} onPress={handleGenerate} disabled={generateDoc.isPending}>
             {generateDoc.isPending ? (
@@ -159,22 +140,6 @@ const styles = StyleSheet.create({
   },
   selectText: { fontSize: 14, color: colors.textPrimary },
   selectPlaceholder: { fontSize: 14, color: "#9CA3AF" },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  textarea: { minHeight: 80, textAlignVertical: "top" },
-  autoFillBox: { backgroundColor: "#F0FDF4", borderRadius: radius.sm, padding: spacing.sm, marginTop: spacing.md },
-  autoFillTitle: { fontSize: 12, color: colors.textSecondary, marginBottom: 6 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  chip: { backgroundColor: "#DCFCE7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  chipText: { fontSize: 11, color: "#166534", fontWeight: "600" },
   generateButton: {
     flexDirection: "row",
     backgroundColor: colors.primary,

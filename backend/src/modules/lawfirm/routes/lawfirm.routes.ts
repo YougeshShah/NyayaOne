@@ -6,7 +6,12 @@ import { requirePermission } from "../../../common/middleware/requirePermission"
 
 const router = Router();
 
-// All law firm management routes are restricted to COMPANY (TrailBlaze Tech) accounts.
+// Public — no login required. Lets the student registration page show a
+// "which institution?" picker before an account even exists. Only
+// EDUCATION-type, ACTIVE institutions with a slug set are eligible.
+router.get("/public", lawFirmController.listPublic);
+
+// All law firm management routes are restricted to COMPANY (Technocraftx) accounts.
 router.use(authenticate, authorize("COMPANY"));
 
 router.get("/", lawFirmController.list);

@@ -1,6 +1,6 @@
 # NyayaOne — Company Control Center (Web Dashboard)
 
-Web dashboard used by **TrailBlaze Tech** to manage the entire NyayaOne platform:
+Web dashboard used by **Technocraftx** to manage the entire NyayaOne platform:
 approve/suspend law firms, manage courts, and (in later phases) view platform analytics,
 manage the legal library, and send notifications.
 
@@ -45,7 +45,7 @@ Opens at: `http://localhost:3000`
 
 ### 4. Login
 Use the Super Admin account created by the backend seed script:
-- Email: `admin@trailblazetech.com`
+- Email: `admin@technocraftx.com`
 - Password: `ChangeMe123!`
 
 ## What's Built (Phase 1 so far)

@@ -91,6 +91,20 @@ export default function ProfileScreen() {
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
       </TouchableOpacity>
 
+      <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/precedents")}>
+        <Ionicons name="library-outline" size={20} color={colors.primary} />
+        <Text style={styles.actionButtonText}>नजिर खोज (Precedent Search)</Text>
+        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      {user?.tenantType === "EDUCATION" && (
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/live-classes")}>
+          <Ionicons name="videocam-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>Live Classes</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={styles.actionButton} onPress={() => setLanguage(language === "en" ? "ne" : "en")}>
         <Ionicons name="language-outline" size={20} color={colors.primary} />
         <Text style={styles.actionButtonText}>{t("language")}</Text>

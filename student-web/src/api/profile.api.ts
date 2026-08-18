@@ -46,5 +46,5 @@ export function getStaticBaseUrl(): string {
 
 export function getAvatarUrl(avatarUrl: string | null | undefined): string | undefined {
   if (!avatarUrl) return undefined;
-  return `${getStaticBaseUrl()}/${avatarUrl}`;
+  return `${getStaticBaseUrl()}/uploads/${avatarUrl}`;
 }

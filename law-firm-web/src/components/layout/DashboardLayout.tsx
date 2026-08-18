@@ -1,12 +1,15 @@
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "../../api/client";
 import { NavLink, Outlet } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardOutlined";
 import PeopleIcon from "@mui/icons-material/PeopleOutlined";
-import GavelIcon from "@mui/icons-material/GavelOutlined";
 import EventIcon from "@mui/icons-material/EventOutlined";
 import BadgeIcon from "@mui/icons-material/BadgeOutlined";
 import AssessmentIcon from "@mui/icons-material/AssessmentOutlined";
 import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
+import GavelIcon from "@mui/icons-material/GavelOutlined";
+import MicIcon from "@mui/icons-material/MicOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import LanguageIcon from "@mui/icons-material/LanguageOutlined";
 import { Avatar, Box, Button, IconButton, Toolbar, Typography } from "@mui/material";
@@ -18,6 +21,15 @@ import { getAvatarUrl } from "../../api/profile.api";
 
 export function DashboardLayout() {
   const user = useAuthStore((s) => s.user);
+  const { data: myPermissions } = useQuery({
+    queryKey: ["my-tenant-permissions"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: string[] }>("/tenant/my-permissions");
+      return data.data;
+    },
+    enabled: user?.accountType !== "LAW_FIRM_ADMIN", // admin always has access -- skip the extra call
+  });
+  const hasAccountingPermission = user?.accountType === "LAW_FIRM_ADMIN" || (myPermissions?.includes("accounting.manage") ?? false);
   const logout = useLogout();
   const { t, language, setLanguage } = useTranslation();
 
@@ -25,7 +37,9 @@ export function DashboardLayout() {
   // set — default to case_management so nothing disappears for them.
   const enabledModules = user?.modulesEnabled ?? ["case_management"];
   const isEducation = user?.tenantType === "EDUCATION";
-  const tenantLabel = isEducation ? "Institution Dashboard" : "Law Firm Dashboard";
+  const tenantLabel = user?.tenantName
+    ? `${user.tenantName} — ${isEducation ? "Institution" : "Law Firm"} Portal`
+    : isEducation ? "Institution Dashboard" : "Law Firm Dashboard";
 
   useEffect(() => {
     document.title = `NyayaOne — ${tenantLabel}`;
@@ -38,12 +52,17 @@ export function DashboardLayout() {
     { to: "/hearings", label: t("hearings"), icon: <EventIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/accounting", label: "Accounting", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: "EDUCATION" },
     { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/precedents", label: "नजिर खोज (Precedents)", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/roles", label: "Roles & Permissions", icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null },
     { to: "/students", label: "Students", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
+    { to: "/pending-approvals", label: "Pending Approvals", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
     { to: "/live-classes", label: "Live Classes", icon: <BadgeIcon fontSize="small" />, module: "live_classes", tenantSpecific: "EDUCATION" },
     { to: "/resources", label: "Resources", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
     { to: "/mock-tests", label: "Mock Tests", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
+    { to: "/speaking-admin", label: "Speaking Prompts", icon: <MicIcon fontSize="small" />, module: "speaking_prompts", tenantSpecific: "EDUCATION" },
+    { to: "/usage-limits", label: "Usage Limits", icon: <AssessmentIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
     ...(user?.accountType === "LAW_FIRM_ADMIN"
       ? [{ to: "/users", label: isEducation ? "Staff" : t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null }]
       : []),
@@ -53,7 +72,8 @@ export function DashboardLayout() {
     // Tenant-type gate — Law Firm items never show for an Education tenant
     // and vice versa, even if the underlying module was accidentally left
     // enabled — an institution should only ever see an institution's view.
-    .filter((item) => item.tenantSpecific === null || item.tenantSpecific === user?.tenantType);
+    .filter((item) => item.tenantSpecific === null || item.tenantSpecific === user?.tenantType)
+    .filter((item) => item.to !== "/accounting" || hasAccountingPermission);
 
   return (
     <div>

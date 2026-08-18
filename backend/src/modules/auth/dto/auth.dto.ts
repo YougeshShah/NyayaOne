@@ -19,6 +19,14 @@ export const registerStudentSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   interestedCourseId: z.string().uuid().optional(), // "what are you preparing for?" — used only to personalize the dashboard on first login
   preferredExamType: z.string().optional(), // e.g. KHARIDAR — which level within a multi-level course (Loksewa) this student is preparing for
+  // Self-registration under a specific institution, detected from the
+  // subdomain the student registered on (e.g. "raju-law" from
+  // raju-law.technocraftx.com) -- the student never picks this manually.
+  // If set, the account is created PENDING_VERIFICATION and that
+  // institution must approve it before login works. Omitted = a
+  // direct/Company student (unchanged behavior, account is immediately
+  // ACTIVE) -- e.g. registering on the bare technocraftx.com domain.
+  institutionSlug: z.string().optional(),
 });
 export type RegisterStudentInput = z.infer<typeof registerStudentSchema>;
 

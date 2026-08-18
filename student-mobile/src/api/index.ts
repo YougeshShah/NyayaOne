@@ -7,7 +7,7 @@ interface ApiSuccess<T> {
 }
 
 export const authApi = {
-  async register(payload: { fullName: string; email: string; phone?: string; password: string; interestedCourseId?: string }) {
+  async register(payload: { fullName: string; email: string; phone?: string; password: string; interestedCourseId?: string; institutionSlug?: string }) {
     const { data } = await apiClient.post<ApiSuccess<any>>("/auth/register/student", payload);
     return data.data;
   },
@@ -142,6 +142,14 @@ export const profileApi = {
     const { data } = await apiClient.patch<ApiSuccess<{ message: string }>>("/auth/change-password", { currentPassword, newPassword });
     return data.data;
   },
+  async uploadAvatar(localUri: string): Promise<{ id: string; avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append("avatar", { uri: localUri, name: "avatar.jpg", type: "image/jpeg" } as any);
+    const { data } = await apiClient.post<ApiSuccess<{ id: string; avatarUrl: string }>>("/auth/me/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data;
+  },
 };
 
 export const notificationApi = {
@@ -165,5 +173,62 @@ export const flashcardApi = {
   async submitFamiliarity(id: string, familiarity: "AGAIN" | "GOOD" | "EASY") {
     const { data } = await apiClient.post<ApiSuccess<any>>(`/flashcards/${id}/familiarity`, { familiarity });
     return data.data;
+  },
+};
+
+
+export const precedentApi = {
+  async search(params: { search?: string; category?: string; page?: number; limit?: number }) {
+    const { data } = await apiClient.get<
+      ApiSuccess<{ items: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>
+    >("/precedents", { params });
+    return data.data;
+  },
+  async getById(id: string) {
+    const { data } = await apiClient.get<ApiSuccess<any>>(`/precedents/${id}`);
+    return data.data;
+  },
+  async listCategories() {
+    const { data } = await apiClient.get<ApiSuccess<string[]>>("/precedents/categories");
+    return data.data;
+  },
+};
+
+export const speakingApi = {
+  async listPrompts(courseId: string, part?: number) {
+    const { data } = await apiClient.get<ApiSuccess<any[]>>("/speaking/prompts", { params: { courseId, part } });
+    return data.data;
+  },
+
+  async submitRecording(promptId: string, fileUri: string, durationSeconds: number) {
+    const formData = new FormData();
+    formData.append("recording", { uri: fileUri, name: "recording.mp4", type: "video/mp4" } as any);
+    formData.append("promptId", promptId);
+    formData.append("recordingType", "video");
+    formData.append("durationSeconds", String(durationSeconds));
+    const { data } = await apiClient.post<ApiSuccess<any>>("/speaking/submissions", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data;
+  },
+
+  async listMySubmissions(promptId?: string) {
+    const { data } = await apiClient.get<ApiSuccess<any[]>>("/speaking/submissions/my", { params: { promptId } });
+    return data.data;
+  },
+};
+
+export const emailVerificationApi = {
+  async sendCode(email: string, purpose: "REGISTRATION" | "PASSWORD_RESET") {
+    const { data } = await apiClient.post<ApiSuccess<void>>("/email-verification/send-code", { email, purpose });
+    return data;
+  },
+  async verifyEmail(email: string, code: string) {
+    const { data } = await apiClient.post<ApiSuccess<void>>("/email-verification/verify-email", { email, code });
+    return data;
+  },
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const { data } = await apiClient.post<ApiSuccess<void>>("/email-verification/reset-password", { email, code, newPassword });
+    return data;
   },
 };

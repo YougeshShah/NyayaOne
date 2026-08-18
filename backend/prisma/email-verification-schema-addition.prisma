@@ -1,0 +1,24 @@
+// ------------------------------------------------------------
+// EMAIL VERIFICATION CODE — automated 6-digit code sent via email
+// (Gmail SMTP), used for both registration email verification and
+// password reset. Separate from PasswordResetRequest (the older manual
+// admin-ticket flow) -- that stays as a fallback for someone who's
+// entirely lost access to their email; this is the normal automated path.
+// ------------------------------------------------------------
+
+enum VerificationPurpose {
+  REGISTRATION
+  PASSWORD_RESET
+}
+
+model EmailVerificationCode {
+  id        String              @id @default(uuid())
+  email     String
+  code      String // 6-digit code
+  purpose   VerificationPurpose
+  expiresAt DateTime // codes are short-lived (e.g. 10 minutes)
+  usedAt    DateTime? // null = not yet used; set once consumed, so a code can't be replayed
+  createdAt DateTime            @default(now())
+
+  @@index([email, purpose])
+}

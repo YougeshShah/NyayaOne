@@ -32,7 +32,7 @@ async function main() {
   let superAdminRole = await prisma.role.findFirst({ where: { name: "Super Admin", lawFirmId: null } });
   if (!superAdminRole) {
     superAdminRole = await prisma.role.create({
-      data: { name: "Super Admin", description: "Full platform access — TrailBlaze Tech", isSystem: true },
+      data: { name: "Super Admin", description: "Full platform access — Technocraftx", isSystem: true },
     });
   }
 
@@ -99,7 +99,7 @@ async function main() {
   console.log("Additional roles seeded: Staff, Library Manager, Content Manager, Customer Support, Finance, Operations.");
 
   // --- First Super Admin user ---
-  const adminEmail = "admin@trailblazetech.com";
+  const adminEmail = "admin@technocraftx.com";
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
   if (!existingAdmin) {
@@ -107,7 +107,7 @@ async function main() {
     await prisma.user.create({
       data: {
         accountType: AccountType.COMPANY,
-        fullName: "TrailBlaze Super Admin",
+        fullName: "Technocraftx Super Admin",
         email: adminEmail,
         passwordHash,
         status: "ACTIVE",

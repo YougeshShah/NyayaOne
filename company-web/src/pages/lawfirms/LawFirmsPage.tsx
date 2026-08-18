@@ -275,6 +275,8 @@ export function LawFirmsPage() {
                       { key: "student_platform", label: "Student Management — add/manage this institute's own students, view their progress" },
                       { key: "live_classes", label: "Live Classes — schedule and host classes for this institute's students" },
                       { key: "document_templates", label: "Document Templates — generate legal documents" },
+                      { key: "precedent_search", label: "Precedent Search — नजिर, Supreme Court judgment full-text search" },
+                      { key: "speaking_prompts", label: "Speaking Prompts — IELTS Speaking test recording & questions" },
                     ].map((mod) => (
                       <FormControlLabel
                         key={mod.key}
@@ -377,6 +379,7 @@ const MODULE_OPTIONS = [
   { key: "student_platform", label: "Student Management — add/manage this institute's own students, view their progress" },
   { key: "live_classes", label: "Live Classes — schedule and host classes for this institute's students" },
   { key: "document_templates", label: "Document Templates — generate legal documents" },
+  { key: "precedent_search", label: "Precedent Search — नजिर, Supreme Court judgment full-text search" },
 ];
 
 function EditModulesDialog({

@@ -11,6 +11,7 @@ export const createUserSchema = z.object({
   // Lawyer-specific (ignored for STAFF accounts)
   barRegistrationNo: z.string().optional(),
   specialization: z.string().optional(),
+  roleId: z.string().uuid().optional(),
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
@@ -19,6 +20,7 @@ export const updateUserSchema = z.object({
   phone: z.string().min(7).optional(),
   barRegistrationNo: z.string().optional(),
   specialization: z.string().optional(),
+  roleId: z.string().uuid().nullable().optional(),
 });
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 

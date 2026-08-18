@@ -23,6 +23,8 @@ export const availableModules = [
   "student_platform",
   "live_classes",
   "document_templates",
+  "precedent_search",
+  "speaking_prompts",
 ] as const;
 
 export const updateModulesSchema = z.object({
