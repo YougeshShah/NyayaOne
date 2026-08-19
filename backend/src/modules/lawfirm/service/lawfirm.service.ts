@@ -1,3 +1,5 @@
+import { prisma } from "../../../database/prisma";
+import { emailVerificationService } from "../../email-verification/service/email-verification.service";
 import { AppError } from "../../../common/errors/AppError";
 import { hashPassword } from "../../../common/utils/password";
 import { lawFirmRepository } from "../repository/lawfirm.repository";
@@ -113,6 +115,18 @@ export const lawFirmService = {
     }
 
     const updated = await lawFirmRepository.updateStatus(id, "ACTIVE", approvedByUserId);
+
+    // The firm itself is now ACTIVE, but its admin account was created
+    // PENDING_VERIFICATION -- activate it too, then send a verification
+    // code to their email. Login stays blocked (via emailVerified check)
+    // until they enter that code, even though the firm is approved.
+    const adminUser = (firm as any).users?.[0];
+    if (adminUser) {
+      await prisma.user.update({ where: { id: adminUser.id }, data: { status: "ACTIVE" } });
+      await emailVerificationService.sendCode(adminUser.email, "REGISTRATION").catch((err: unknown) => {
+        console.error("Failed to send law firm admin verification email:", err);
+      });
+    }
 
     await lawFirmRepository.createAuditLog({
       userId: approvedByUserId,

@@ -29,6 +29,7 @@ export const authService = {
       adminEmail: input.adminEmail,
       adminPhone: input.adminPhone,
       passwordHash,
+      tenantType: input.tenantType,
     });
 
     return {
@@ -135,7 +136,7 @@ export const authService = {
     // Email must be verified via the code sent at registration -- separate
     // from institution approval above; a student could be approved by
     // their institution but still not have confirmed their own email yet.
-    if (user.accountType === "STUDENT" && !user.emailVerified) {
+    if ((user.accountType === "STUDENT" || user.accountType === "LAW_FIRM_ADMIN") && !user.emailVerified) {
       throw AppError.forbidden("Please verify your email before logging in. Check your inbox for the verification code.");
     }
 

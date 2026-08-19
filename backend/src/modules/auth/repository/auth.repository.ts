@@ -23,6 +23,7 @@ export const authRepository = {
     adminEmail: string;
     adminPhone?: string;
     passwordHash: string;
+    tenantType?: "LAW_FIRM" | "EDUCATION";
   }) {
     return prisma.$transaction(async (tx) => {
       const lawFirm = await tx.lawFirm.create({
@@ -30,6 +31,7 @@ export const authRepository = {
           name: params.lawFirmName,
           email: params.lawFirmEmail,
           status: "PENDING", // Requires Company approval before becoming ACTIVE
+          tenantType: params.tenantType ?? "LAW_FIRM",
         },
       });
 
@@ -40,7 +42,7 @@ export const authRepository = {
           email: params.adminEmail,
           phone: params.adminPhone,
           passwordHash: params.passwordHash,
-          status: "PENDING_VERIFICATION",
+          status: "PENDING_VERIFICATION", // pending Company's approval of the firm itself
           lawFirmId: lawFirm.id,
         },
       });

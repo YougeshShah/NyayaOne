@@ -82,11 +82,15 @@ export function LawFirmsPage() {
 
   const { data: createSubjectsPreview } = useQuery({ queryKey: ["all-subjects-preview"], queryFn: () => subjectApi.list() });
 
+  const [generatedTempPassword, setGeneratedTempPassword] = useState<{ email: string; password: string } | null>(null);
   const onCreate = (values: CreateLawFirmPayload) => {
     create.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (result: any) => {
         reset();
         setDialogOpen(false);
+        if (result?.temporaryPassword) {
+          setGeneratedTempPassword({ email: values.adminEmail, password: result.temporaryPassword });
+        }
       },
     });
   };
@@ -251,14 +255,9 @@ export function LawFirmsPage() {
             <TextField label="Admin Full Name" required fullWidth {...register("adminFullName", { required: true })} error={!!formState.errors.adminFullName} />
             <TextField label="Admin Email" type="email" required fullWidth {...register("adminEmail", { required: true })} error={!!formState.errors.adminEmail} />
             <TextField label="Admin Phone" fullWidth {...register("adminPhone")} />
-            <PasswordField
-              label="Temporary Password"
-              required
-              fullWidth
-              helperText="Minimum 8 characters — share this with the firm admin"
-              {...register("password", { required: true, minLength: 8 })}
-              error={!!formState.errors.password}
-            />
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+              A temporary password will be generated automatically and shown after creation.
+            </Typography>
 
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
@@ -355,6 +354,19 @@ export function LawFirmsPage() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+      <Dialog open={!!generatedTempPassword} onClose={() => setGeneratedTempPassword(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Organization Created</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Share these credentials with the organization's admin. They'll be required to set their own password on first login.
+          </Typography>
+          <Typography variant="body2"><strong>Email:</strong> {generatedTempPassword?.email}</Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}><strong>Temporary Password:</strong> {generatedTempPassword?.password}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button variant="contained" onClick={() => setGeneratedTempPassword(null)}>Done</Button>
+        </DialogActions>
       </Dialog>
 
       {editModulesFirm && (

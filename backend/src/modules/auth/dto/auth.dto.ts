@@ -7,6 +7,7 @@ export const registerLawFirmSchema = z.object({
   adminEmail: z.string().email(),
   adminPhone: z.string().min(7).optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  tenantType: z.enum(["LAW_FIRM", "EDUCATION"]).default("LAW_FIRM"),
 });
 export type RegisterLawFirmInput = z.infer<typeof registerLawFirmSchema>;
 
