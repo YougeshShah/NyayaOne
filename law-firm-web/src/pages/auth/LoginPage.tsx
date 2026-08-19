@@ -56,6 +56,12 @@ export function LoginPage() {
             Forgot password?
           </MuiLink>
         </Typography>
+        <Typography variant="body2" textAlign="center" sx={{ mt: 1 }}>
+          New organization?{" "}
+          <MuiLink component={Link} to="/register">
+            Create Account
+          </MuiLink>
+        </Typography>
       </Paper>
     </div>
   );
