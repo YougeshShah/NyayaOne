@@ -3,6 +3,18 @@ import { hashPassword } from "../../../common/utils/password";
 import { lawFirmRepository } from "../repository/lawfirm.repository";
 import { ListLawFirmsQuery, CreateLawFirmInput } from "../dto/lawfirm.dto";
 
+// Generates a readable-but-random temporary password -- excludes
+// visually-confusable characters (0/O, 1/l/I) since a Company staff member
+// reads this off a screen and has to relay it to the institution.
+function generateTemporaryPassword(): string {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let pw = "";
+  for (let i = 0; i < 10; i++) {
+    pw += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return pw;
+}
+
 export const lawFirmService = {
   async listPublicInstitutions() {
     return lawFirmRepository.findPublicInstitutions();
@@ -13,7 +25,11 @@ export const lawFirmService = {
       throw AppError.conflict("An account with this admin email already exists");
     }
 
-    const passwordHash = await hashPassword(input.password);
+    // Company no longer sets the institution admin's password directly --
+    // a random temporary one is generated instead, and the admin is
+    // required to change it on first login (mustChangePassword).
+    const temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await hashPassword(temporaryPassword);
     const { lawFirm, admin } = await lawFirmRepository.createWithAdmin({
       lawFirmName: input.lawFirmName,
       lawFirmEmail: input.lawFirmEmail,
@@ -21,6 +37,7 @@ export const lawFirmService = {
       adminEmail: input.adminEmail,
       adminPhone: input.adminPhone,
       passwordHash,
+      mustChangePassword: true,
       tenantType: input.tenantType as any,
       modulesEnabled: input.modulesEnabled,
       allowedCourseIds: input.allowedCourseIds,
@@ -34,7 +51,7 @@ export const lawFirmService = {
       metadata: { lawFirmName: lawFirm.name, adminEmail: admin.email },
     });
 
-    return { lawFirm, admin: { id: admin.id, fullName: admin.fullName, email: admin.email } };
+    return { lawFirm, admin: { id: admin.id, fullName: admin.fullName, email: admin.email }, temporaryPassword };
   },
 
   async list(query: ListLawFirmsQuery) {

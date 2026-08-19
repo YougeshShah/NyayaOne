@@ -303,6 +303,7 @@ model User {
   studentDiscounts StudentDiscount[] @relation("StudentDiscounts")
   staffSalaryRecords StaffSalary[] @relation("StaffSalaryRecord")
   emailVerified Boolean @default(false)
+  mustChangePassword Boolean @default(false) // true when this account was created by Company/Institution with a temporary password -- forces a password change on first login before anything else is usable
 
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt

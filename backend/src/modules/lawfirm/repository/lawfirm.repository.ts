@@ -102,6 +102,7 @@ export const lawFirmRepository = {
     adminEmail: string;
     adminPhone?: string;
     passwordHash: string;
+    mustChangePassword?: boolean;
     tenantType: TenantType;
     modulesEnabled: string[];
     allowedCourseIds: string[];
@@ -127,6 +128,7 @@ export const lawFirmRepository = {
           email: params.adminEmail.toLowerCase().trim(),
           phone: params.adminPhone,
           passwordHash: params.passwordHash,
+          mustChangePassword: params.mustChangePassword ?? false,
           status: "ACTIVE",
           lawFirmId: lawFirm.id,
         },

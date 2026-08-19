@@ -40,7 +40,7 @@ export const createLawFirmSchema = z.object({
   adminFullName: z.string().min(2, "Admin name is required"),
   adminEmail: z.string().email(),
   adminPhone: z.string().optional(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters").optional(), // no longer needed -- a temporary password is auto-generated server-side
   tenantType: z.enum(tenantTypes).default("LAW_FIRM"),
   modulesEnabled: z.array(z.enum(availableModules)).default(["case_management"]),
   allowedCourseIds: z.array(z.string().uuid()).default([]),
