@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Button, MenuItem, Paper, TextField, Typography, Alert } from "@mui/material";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiClient } from "../../api/client";
 
 interface RegisterOrgForm {
@@ -15,7 +15,7 @@ interface RegisterOrgForm {
 }
 
 export function RegisterOrganizationPage() {
-  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { register, handleSubmit, formState } = useForm<RegisterOrgForm>({ defaultValues: { tenantType: "LAW_FIRM" } });
@@ -25,7 +25,7 @@ export function RegisterOrganizationPage() {
     setError(null);
     try {
       await apiClient.post("/auth/register/law-firm", values);
-      setSuccess(true);
+      navigate("/verify-email", { state: { email: values.adminEmail } });
     } catch (e: any) {
       setError(e?.response?.data?.message || "Registration failed. Please try again.");
     } finally {
@@ -43,36 +43,30 @@ export function RegisterOrganizationPage() {
           Law firm or educational institution — your account will be reviewed and approved by our team
         </Typography>
 
-        {success ? (
-          <Alert severity="success">
-            Registration submitted! Once approved, you'll receive an email with a verification code to activate your account.
-          </Alert>
-        ) : (
-          <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {error && <Alert severity="error">{error}</Alert>}
-            <TextField select label="Organization Type" required fullWidth defaultValue="LAW_FIRM" {...register("tenantType", { required: true })}>
-              <MenuItem value="LAW_FIRM">Law Firm</MenuItem>
-              <MenuItem value="EDUCATION">Educational Institution</MenuItem>
-            </TextField>
-            <TextField label="Organization Name" required fullWidth {...register("lawFirmName", { required: true })} error={!!formState.errors.lawFirmName} />
-            <TextField label="Organization Email" type="email" required fullWidth {...register("lawFirmEmail", { required: true })} error={!!formState.errors.lawFirmEmail} />
-            <TextField label="Admin Full Name" required fullWidth {...register("adminFullName", { required: true })} error={!!formState.errors.adminFullName} />
-            <TextField label="Admin Email" type="email" required fullWidth {...register("adminEmail", { required: true })} error={!!formState.errors.adminEmail} />
-            <TextField label="Admin Phone (optional)" fullWidth {...register("adminPhone")} />
-            <TextField
-              label="Password"
-              type="password"
-              required
-              fullWidth
-              helperText="Minimum 8 characters"
-              {...register("password", { required: true, minLength: 8 })}
-              error={!!formState.errors.password}
-            />
-            <Button type="submit" variant="contained" size="large" disabled={submitting}>
-              {submitting ? "Submitting..." : "Register Organization"}
-            </Button>
-          </Box>
-        )}
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField select label="Organization Type" required fullWidth defaultValue="LAW_FIRM" {...register("tenantType", { required: true })}>
+            <MenuItem value="LAW_FIRM">Law Firm</MenuItem>
+            <MenuItem value="EDUCATION">Educational Institution</MenuItem>
+          </TextField>
+          <TextField label="Organization Name" required fullWidth {...register("lawFirmName", { required: true })} error={!!formState.errors.lawFirmName} />
+          <TextField label="Organization Email" type="email" required fullWidth {...register("lawFirmEmail", { required: true })} error={!!formState.errors.lawFirmEmail} />
+          <TextField label="Admin Full Name" required fullWidth {...register("adminFullName", { required: true })} error={!!formState.errors.adminFullName} />
+          <TextField label="Admin Email" type="email" required fullWidth {...register("adminEmail", { required: true })} error={!!formState.errors.adminEmail} />
+          <TextField label="Admin Phone (optional)" fullWidth {...register("adminPhone")} />
+          <TextField
+            label="Password"
+            type="password"
+            required
+            fullWidth
+            helperText="Minimum 8 characters"
+            {...register("password", { required: true, minLength: 8 })}
+            error={!!formState.errors.password}
+          />
+          <Button type="submit" variant="contained" size="large" disabled={submitting}>
+            {submitting ? "Submitting..." : "Register Organization"}
+          </Button>
+        </Box>
 
         <Typography variant="body2" textAlign="center" sx={{ mt: 3 }}>
           Already have an account?{" "}
