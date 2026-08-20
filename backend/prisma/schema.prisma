@@ -303,6 +303,8 @@ model User {
   studentDiscounts StudentDiscount[] @relation("StudentDiscounts")
   staffSalaryRecords StaffSalary[] @relation("StaffSalaryRecord")
   emailVerified Boolean @default(false)
+  bio           String? // short "About" text shown on the profile page
+  lastLoginAt   DateTime? // set on each successful login -- shown on profile for security awareness
   mustChangePassword Boolean @default(false) // true when this account was created by Company/Institution with a temporary password -- forces a password change on first login before anything else is usable
 
   createdAt     DateTime     @default(now())

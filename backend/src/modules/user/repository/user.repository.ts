@@ -94,7 +94,8 @@ export const userRepository = {
         phone: data.phone,
         passwordHash: data.passwordHash,
         accountType: data.accountType,
-        status: "ACTIVE", // created directly by firm admin, no separate email verification step yet
+        status: "ACTIVE",
+        emailVerified: true, // created directly by firm admin -- trusted, no self-registration verification needed
         barRegistrationNo: data.accountType === "LAWYER" ? data.barRegistrationNo : undefined,
         specialization: data.accountType === "LAWYER" ? data.specialization : undefined,
         roleId: data.roleId,

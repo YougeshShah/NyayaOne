@@ -75,6 +75,11 @@ export const authService = {
       preferredCourseId: input.interestedCourseId,
       preferredExamType: input.preferredExamType,
       status: needsApproval ? "PENDING_VERIFICATION" : "ACTIVE",
+      // An institution adding a student directly is vouching for them --
+      // skip self-registration's email verification requirement. A
+      // self-registering student (no addedByLawFirmId) still needs to
+      // verify their own email either way.
+      emailVerified: !!addedByLawFirmId,
     });
 
     // An institution adding their own student is enrolling them in a

@@ -62,6 +62,7 @@ export const authRepository = {
     preferredCourseId?: string;
     preferredExamType?: string;
     status?: "ACTIVE" | "PENDING_VERIFICATION";
+    emailVerified?: boolean;
   }) {
     return prisma.user.create({
       data: {
@@ -71,6 +72,7 @@ export const authRepository = {
         phone: params.phone,
         passwordHash: params.passwordHash,
         status: params.status ?? "ACTIVE",
+        emailVerified: params.emailVerified ?? false,
         lawFirmId: params.addedByLawFirmId ?? null,
         preferredCourseId: params.preferredCourseId,
         preferredExamType: params.preferredExamType,

@@ -129,6 +129,7 @@ export const lawFirmRepository = {
           phone: params.adminPhone,
           passwordHash: params.passwordHash,
           mustChangePassword: params.mustChangePassword ?? false,
+          emailVerified: true, // created directly by Company -- trusted, no self-registration verification needed
           status: "ACTIVE",
           lawFirmId: lawFirm.id,
         },
