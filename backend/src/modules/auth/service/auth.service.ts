@@ -166,6 +166,7 @@ export const authService = {
     const refreshToken = signRefreshToken(user.id);
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
     await authRepository.storeRefreshToken(user.id, refreshToken, expiresAt);
+    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
     return {
       accessToken,
