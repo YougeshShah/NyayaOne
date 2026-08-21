@@ -26,6 +26,6 @@ jobs:
           cd /var/www/projects/NyayaOne
           git pull origin main
           sudo docker compose --env-file .env.prod down
-          sudo docker compose --env-file .env.prod up -d --build
+          sudo docker compose --env-file .env.prod up -d --build --no-deps
           sudo docker image prune -f
         EOF
