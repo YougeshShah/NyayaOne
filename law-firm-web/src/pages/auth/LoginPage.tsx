@@ -3,6 +3,7 @@ import { Alert, Box, Button, Paper, TextField, Typography, Link as MuiLink } fro
 import { Link } from "react-router-dom";
 import styles from "./LoginPage.module.css";
 import { useLogin } from "../../hooks/useAuth";
+import { detectInstitutionSlug } from "../../utils/detectInstitutionSlug";
 import { LoginPayload } from "../../types/auth.types";
 import { PasswordField } from "../../components/common/PasswordField";
 
@@ -10,7 +11,7 @@ export function LoginPage() {
   const { register, handleSubmit, formState } = useForm<LoginPayload>();
   const loginMutation = useLogin();
 
-  const onSubmit = (data: LoginPayload) => loginMutation.mutate(data);
+  const onSubmit = (data: LoginPayload) => loginMutation.mutate({ ...data, institutionSlug: detectInstitutionSlug() });
 
   return (
     <div className={styles.loginContainer}>

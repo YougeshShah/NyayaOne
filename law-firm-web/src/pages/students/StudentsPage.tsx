@@ -109,6 +109,7 @@ export function StudentsPage() {
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Phone</TableCell>
+              <TableCell>Course</TableCell>
               <TableCell>Added</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -126,6 +127,10 @@ export function StudentsPage() {
                 <TableCell>{s.fullName}</TableCell>
                 <TableCell>{s.email}</TableCell>
                 <TableCell>{s.phone ?? "—"}</TableCell>
+                <TableCell>
+                  {courses?.find((c) => c.id === s.preferredCourseId)?.name ?? "—"}
+                  {s.preferredExamType ? ` (${s.preferredExamType})` : ""}
+                </TableCell>
                 <TableCell>{new Date(s.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell align="right">
                   <Button size="small" variant="outlined" onClick={() => openEdit(s)} sx={{ mr: 1 }}>

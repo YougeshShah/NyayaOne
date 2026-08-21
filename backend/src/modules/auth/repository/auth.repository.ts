@@ -83,7 +83,16 @@ export const authRepository = {
   findStudentsByLawFirmId(lawFirmId: string, status?: "ACTIVE" | "PENDING_VERIFICATION") {
     return prisma.user.findMany({
       where: { accountType: AccountType.STUDENT, lawFirmId, ...(status ? { status } : {}) },
-      select: { id: true, fullName: true, email: true, phone: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        status: true,
+        createdAt: true,
+        preferredCourseId: true,
+        preferredExamType: true,
+      },
       orderBy: { createdAt: "desc" },
     });
   },

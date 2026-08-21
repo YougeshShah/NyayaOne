@@ -48,24 +48,29 @@ export function DashboardLayout() {
 
   const navItems = [
     { to: "/dashboard", label: t("dashboard"), icon: <DashboardIcon fontSize="small" />, module: null, tenantSpecific: null },
+    // Setup first — team + access control, before day-to-day operations.
+    ...(user?.accountType === "LAW_FIRM_ADMIN"
+      ? [{ to: "/users", label: isEducation ? "Staff" : t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null }]
+      : []),
+    { to: "/roles", label: "Roles & Permissions", icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null },
+    // Law Firm day-to-day operations, in the order a case actually moves.
+    { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/cases", label: t("cases"), icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/hearings", label: t("hearings"), icon: <EventIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
-    { to: "/clients", label: t("clients"), icon: <PeopleIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
-    { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
-    { to: "/accounting", label: "Accounting", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: "EDUCATION" },
-    { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
-    { to: "/precedents", label: "नजिर खोज (Precedents)", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
-    { to: "/roles", label: "Roles & Permissions", icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null },
-    { to: "/students", label: "Students", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
+    // Education day-to-day operations — approve enrollments before managing them.
     { to: "/pending-approvals", label: "Pending Approvals", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
+    { to: "/students", label: "Students", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
     { to: "/live-classes", label: "Live Classes", icon: <BadgeIcon fontSize="small" />, module: "live_classes", tenantSpecific: "EDUCATION" },
     { to: "/resources", label: "Resources", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
     { to: "/mock-tests", label: "Mock Tests", icon: <BadgeIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
     { to: "/speaking-admin", label: "Speaking Prompts", icon: <MicIcon fontSize="small" />, module: "speaking_prompts", tenantSpecific: "EDUCATION" },
     { to: "/usage-limits", label: "Usage Limits", icon: <AssessmentIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
-    ...(user?.accountType === "LAW_FIRM_ADMIN"
-      ? [{ to: "/users", label: isEducation ? "Staff" : t("lawyersAndStaff"), icon: <BadgeIcon fontSize="small" />, module: null, tenantSpecific: null }]
-      : []),
+    // Reference material.
+    { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/precedents", label: "नजिर खोज (Precedents)", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    // Reporting + finances last.
+    { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/accounting", label: "Accounting", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: "EDUCATION" },
   ]
     // Module gate — the organization must have this feature enabled at all.
     .filter((item) => item.module === null || enabledModules.includes(item.module))

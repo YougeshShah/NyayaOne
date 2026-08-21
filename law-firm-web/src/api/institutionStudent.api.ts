@@ -8,6 +8,8 @@ export interface InstitutionStudent {
   phone: string | null;
   status: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED";
   createdAt: string;
+  preferredCourseId: string | null;
+  preferredExamType: string | null;
 }
 
 export interface AddStudentPayload {
