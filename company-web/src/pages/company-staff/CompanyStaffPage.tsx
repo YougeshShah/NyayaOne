@@ -33,7 +33,8 @@ export function CompanyStaffPage() {
   const [permissionUserId, setPermissionUserId] = useState<string | null>(null);
   const [editingStaff, setEditingStaff] = useState<CompanyStaff | null>(null);
   const [resetResult, setResetResult] = useState<{ name: string; password: string } | null>(null);
-  const { data, isLoading } = useCompanyStaff({ page: 1 });
+  const [search, setSearch] = useState("");
+  const { data, isLoading } = useCompanyStaff({ page: 1, search: search || undefined });
   const { data: roles } = useRoles();
   const { create, updateStatus, update, resetPassword, updateRole } = useCompanyStaffActions();
 
@@ -80,6 +81,14 @@ export function CompanyStaffPage() {
           Add Staff
         </Button>
       </Box>
+      <TextField
+        label="Search by name or email"
+        size="small"
+        fullWidth
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{ mb: 2, maxWidth: 400 }}
+      />
 
       <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
         <Table size="small">

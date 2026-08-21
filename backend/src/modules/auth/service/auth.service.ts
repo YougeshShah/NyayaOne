@@ -15,10 +15,9 @@ export const authService = {
    * before the admin/lawyers can fully operate — see LawFirm.status.
    */
   async registerLawFirm(input: RegisterLawFirmInput) {
-    const existing = await authRepository.findUserByEmail(input.adminEmail);
-    if (existing) {
-      throw AppError.conflict("An account with this email already exists");
-    }
+    // No duplicate-email check here -- this always creates a brand new
+    // organization with its own lawFirmId, so the same email existing
+    // under a different (or no) organization is expected and fine.
 
     const passwordHash = await hashPassword(input.password);
 
@@ -44,11 +43,6 @@ export const authService = {
    * approval step (unlike lawyers). Active immediately after registration.
    */
   async registerStudent(input: RegisterStudentInput, addedByLawFirmId?: string) {
-    const existing = await authRepository.findUserByEmail(input.email);
-    if (existing) {
-      throw AppError.conflict("An account with this email already exists");
-    }
-
     // Self-registration on a specific institution's subdomain
     // (input.institutionSlug, silently detected from the URL the student
     // registered on -- never picked manually) needs that institution's
@@ -64,6 +58,11 @@ export const authService = {
     }
     const effectiveLawFirmId = addedByLawFirmId || institutionIdFromSlug;
     const needsApproval = !addedByLawFirmId && !!institutionIdFromSlug;
+
+    const existing = await prisma.user.findFirst({ where: { email: input.email, lawFirmId: effectiveLawFirmId ?? null } });
+    if (existing) {
+      throw AppError.conflict("An account with this email already exists" + (effectiveLawFirmId ? " at this institution" : ""));
+    }
 
     const passwordHash = await hashPassword(input.password);
     const student = await authRepository.createStudent({
@@ -116,7 +115,37 @@ export const authService = {
   },
 
   async login(input: LoginInput) {
-    const user = await authRepository.findUserByEmail(input.email);
+    // The same email can exist under multiple organizations (a student
+    // enrolled at two institutions, each with their own account) --
+    // resolve which one using the org hint, falling back to the
+    // no-organization account, and finally to any single match for
+    // backward compatibility with accounts that predate this.
+    let user;
+    if (input.institutionSlug) {
+      const firm = await prisma.lawFirm.findFirst({ where: { slug: input.institutionSlug } });
+      if (!firm) {
+        throw AppError.unauthorized("Invalid email or password");
+      }
+      user = await prisma.user.findFirst({
+        where: { email: input.email, lawFirmId: firm.id },
+        include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
+      });
+    } else {
+      user = await prisma.user.findFirst({
+        where: { email: input.email, lawFirmId: null },
+        include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
+      });
+      if (!user) {
+        const matches = await prisma.user.findMany({
+          where: { email: input.email },
+          include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
+        });
+        if (matches.length > 1) {
+          throw AppError.badRequest("This email is registered with more than one organization. Please log in from that organization's page.");
+        }
+        user = matches[0];
+      }
+    }
     if (!user) {
       throw AppError.unauthorized("Invalid email or password");
     }
@@ -261,16 +290,53 @@ export const authService = {
    */
   async updateMyProfile(
     userId: string,
-    input: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string }
+    input: {
+      fullName?: string;
+      phone?: string;
+      email?: string;
+      bio?: string;
+      currentPassword?: string;
+      barRegistrationNo?: string;
+      specialization?: string;
+    }
   ) {
     const user = await authRepository.findUserById(userId);
     if (!user) {
       throw AppError.unauthorized("User no longer exists");
     }
 
-    const data: { fullName?: string; phone?: string; barRegistrationNo?: string; specialization?: string } = {
+    // Changing email or phone is sensitive -- require the current
+    // password as a step-up check, same idea as changing the password
+    // itself. Name/bio-only edits don't need it.
+    const changingSensitiveField = (input.email && input.email !== user.email) || (input.phone && input.phone !== user.phone);
+    if (changingSensitiveField) {
+      if (!input.currentPassword) {
+        throw AppError.badRequest("Enter your current password to change your email or phone number.");
+      }
+      const matches = await comparePassword(input.currentPassword, user.passwordHash);
+      if (!matches) {
+        throw AppError.badRequest("Current password is incorrect.");
+      }
+      if (input.email && input.email !== user.email) {
+        const existing = await prisma.user.findFirst({ where: { email: input.email, lawFirmId: user.lawFirmId } });
+        if (existing && existing.id !== userId) {
+          throw AppError.conflict("An account with this email already exists.");
+        }
+      }
+    }
+
+    const data: {
+      fullName?: string;
+      phone?: string;
+      email?: string;
+      bio?: string;
+      barRegistrationNo?: string;
+      specialization?: string;
+    } = {
       fullName: input.fullName,
       phone: input.phone,
+      email: input.email,
+      bio: input.bio,
     };
     if (user.accountType === "LAWYER") {
       data.barRegistrationNo = input.barRegistrationNo;
@@ -282,6 +348,14 @@ export const authService = {
 
   async updateAvatar(userId: string, avatarUrl: string) {
     return authRepository.updateAvatar(userId, avatarUrl);
+  },
+  async getMe(userId: string) {
+    const user = await authRepository.findUserById(userId);
+    if (!user) {
+      throw AppError.unauthorized("User no longer exists");
+    }
+    const { passwordHash, ...safeUser } = user as any;
+    return safeUser;
   },
 
   async requestPasswordReset(email: string, note?: string) {

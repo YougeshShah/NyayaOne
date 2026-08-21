@@ -1,6 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { profileApi, UpdateProfilePayload } from "../api/profile.api";
 import { useAuthStore } from "../store/authStore";
+
+export function useMyProfile() {
+  return useQuery({ queryKey: ["my-profile"], queryFn: () => profileApi.getMe() });
+}
 
 export function useUpdateProfile() {
   const updateUser = useAuthStore((s) => s.updateUser);

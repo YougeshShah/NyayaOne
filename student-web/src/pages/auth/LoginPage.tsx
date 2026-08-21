@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useLogin } from "../../hooks/useAuth";
+import { detectInstitutionSlug } from "../../utils/detectInstitutionSlug";
 import { LoginPayload } from "../../types/auth.types";
 
 export function LoginPage() {
@@ -14,7 +15,8 @@ export function LoginPage() {
   const { register, handleSubmit, formState } = useForm<LoginPayload>();
 
   const onSubmit = (values: LoginPayload) => {
-    login.mutate(values, { onSuccess: () => navigate("/") });
+    const institutionSlug = detectInstitutionSlug();
+    login.mutate({ ...values, institutionSlug }, { onSuccess: () => navigate("/") });
   };
 
   return (

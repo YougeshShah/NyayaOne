@@ -32,6 +32,10 @@ import { PasswordField } from "../../components/common/PasswordField";
 
 export function StudentsPage() {
   const { data: students, isLoading } = useInstitutionStudents();
+  const [search, setSearch] = useState("");
+  const filteredStudents = students?.filter(
+    (s) => s.fullName.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase())
+  );
   const addStudent = useAddInstitutionStudent();
   const { resetPassword } = useFirmUserActions();
   const updateStudent = useUpdateInstitutionStudent();
@@ -86,6 +90,14 @@ export function StudentsPage() {
           Add Student
         </Button>
       </Box>
+      <TextField
+        label="Search by name or email"
+        size="small"
+        fullWidth
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{ mb: 2, maxWidth: 400 }}
+      />
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Students added here can log in to the Student app directly with the credentials you set below.
       </Typography>
@@ -109,7 +121,7 @@ export function StudentsPage() {
                 </TableCell>
               </TableRow>
             )}
-            {students?.map((s) => (
+            {filteredStudents?.map((s) => (
               <TableRow key={s.id} hover>
                 <TableCell>{s.fullName}</TableCell>
                 <TableCell>{s.email}</TableCell>

@@ -4,6 +4,7 @@ import { ApiSuccessResponse } from "../types/api.types";
 export interface UpdateProfilePayload {
   fullName?: string;
   phone?: string;
+  bio?: string;
 }
 
 export interface ProfileResult {
@@ -11,16 +12,22 @@ export interface ProfileResult {
   fullName: string;
   email: string;
   phone: string | null;
+  bio: string | null;
   accountType: string;
   avatarUrl: string | null;
+  lastLoginAt: string | null;
+  createdAt: string;
 }
 
 export const profileApi = {
+  async getMe(): Promise<ProfileResult> {
+    const { data } = await apiClient.get<ApiSuccessResponse<ProfileResult>>("/auth/me");
+    return data.data;
+  },
   async updateProfile(payload: UpdateProfilePayload): Promise<ProfileResult> {
     const { data } = await apiClient.patch<ApiSuccessResponse<ProfileResult>>("/auth/me", payload);
     return data.data;
   },
-
   async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
     const { data } = await apiClient.patch<ApiSuccessResponse<{ message: string }>>("/auth/change-password", {
       currentPassword,
@@ -28,7 +35,6 @@ export const profileApi = {
     });
     return data.data;
   },
-
   async uploadAvatar(file: File): Promise<{ id: string; avatarUrl: string }> {
     const formData = new FormData();
     formData.append("avatar", file);

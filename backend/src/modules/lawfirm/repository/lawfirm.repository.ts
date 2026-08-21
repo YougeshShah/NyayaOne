@@ -87,7 +87,7 @@ export const lawFirmRepository = {
   },
 
   findUserByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email } });
+    return prisma.user.findFirst({ where: { email } });
   },
 
   /**

@@ -34,6 +34,11 @@ export type RegisterStudentInput = z.infer<typeof registerStudentSchema>;
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1, "Password is required"),
+  // Which organization's account to log into, when the same email is
+  // registered under more than one (e.g. a student enrolled at two
+  // different institutions). Detected the same way as at registration --
+  // subdomain in production, ?org= query param for now.
+  institutionSlug: z.string().optional(),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
@@ -51,6 +56,13 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export const updateMyProfileSchema = z.object({
   fullName: z.string().min(2).optional(),
   phone: z.string().min(7).optional(),
+  email: z.string().email().optional(),
+  bio: z.string().max(500).optional(),
+  // Required whenever email or phone is being changed -- a step-up
+  // confirmation so a hijacked session (or someone walking up to an
+  // unlocked screen) can't silently redirect the account's contact
+  // info. Not required for name/bio-only edits.
+  currentPassword: z.string().optional(),
   // Lawyer-only fields — ignored for other account types by the service layer
   barRegistrationNo: z.string().optional(),
   specialization: z.string().optional(),

@@ -38,7 +38,8 @@ export function UsersPage() {
   const staffLabel = isEducation ? "Staff" : "Lawyer / Staff";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [permissionUserId, setPermissionUserId] = useState<string | null>(null);
-  const { data, isLoading } = useFirmUsers({});
+  const [search, setSearch] = useState("");
+  const { data, isLoading } = useFirmUsers({ search: search || undefined });
   const { create, updateStatus, resetPassword, update } = useFirmUserActions();
   const [editingUser, setEditingUser] = useState<FirmUser | null>(null);
   const editForm = useForm<{ fullName: string; phone?: string; barRegistrationNo?: string; specialization?: string }>();
@@ -107,6 +108,14 @@ export function UsersPage() {
           Add {staffLabel}
         </Button>
       </Box>
+      <TextField
+        label="Search by name or email"
+        size="small"
+        fullWidth
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{ mb: 2, maxWidth: 400 }}
+      />
 
       {pendingRequests && pendingRequests.length > 0 && (
         <Paper elevation={0} sx={{ border: "1px solid #FDE68A", bgcolor: "#FFFBEB", borderRadius: 2, p: 2, mb: 3 }}>

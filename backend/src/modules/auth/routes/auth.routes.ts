@@ -16,6 +16,7 @@ router.post("/logout", authController.logout);
 
 // Authenticated
 router.patch("/change-password", authenticate, authController.changePassword);
+router.get("/me", authenticate, authController.getMe);
 router.patch("/me", authenticate, authController.updateMyProfile);
 
 // Institution (Education tenant) admin adds their own students directly.

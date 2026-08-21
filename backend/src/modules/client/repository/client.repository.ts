@@ -61,7 +61,7 @@ export const clientRepository = {
   },
 
   findUserByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email } });
+    return prisma.user.findFirst({ where: { email } });
   },
 
   linkUserToClient(clientId: string, userId: string) {

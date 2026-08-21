@@ -3,7 +3,7 @@ import { AccountType, Prisma, UserStatus } from "@prisma/client";
 
 export const userRepository = {
   findByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email } });
+    return prisma.user.findFirst({ where: { email } });
   },
 
   /**
@@ -50,6 +50,8 @@ export const userRepository = {
           barRegistrationNo: true,
           specialization: true,
           createdAt: true,
+          roleId: true,
+          role: { select: { id: true, name: true } },
         },
       }),
       prisma.user.count({ where }),
@@ -160,7 +162,7 @@ export const userRepository = {
   },
 
   findUserByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email }, select: { id: true } });
+    return prisma.user.findFirst({ where: { email }, select: { id: true } });
   },
 
   // Company-only — search across ALL organizations, not scoped to one

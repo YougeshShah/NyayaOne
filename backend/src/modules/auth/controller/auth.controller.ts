@@ -89,6 +89,11 @@ export const authController = {
     res.status(200).json({ success: true, data: result });
   },
 
+  async getMe(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const result = await authService.getMe(req.auth.userId);
+    res.status(200).json({ success: true, data: result });
+  },
   async updateMyProfile(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const input = updateMyProfileSchema.parse(req.body);

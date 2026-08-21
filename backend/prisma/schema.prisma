@@ -245,7 +245,7 @@ model User {
   id            String       @id @default(uuid())
   accountType   AccountType
   fullName      String
-  email         String       @unique
+  email         String // unique per-organization only, see @@unique below
   phone         String?      @unique
   avatarUrl     String?
   passwordHash  String
@@ -310,6 +310,7 @@ model User {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  @@unique([email, lawFirmId])
   @@index([lawFirmId])
   @@index([accountType])
   @@index([roleId])

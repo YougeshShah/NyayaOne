@@ -13,7 +13,7 @@ const STAFF_SELECT = {
 
 export const companyStaffRepository = {
   findByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email } });
+    return prisma.user.findFirst({ where: { email } });
   },
 
   async findMany(params: { search?: string; skip: number; take: number }) {
