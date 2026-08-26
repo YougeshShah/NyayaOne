@@ -42,5 +42,7 @@ const avatarMiddleware = (req: Request, res: Response, next: NextFunction) => {
   });
 };
 router.post("/me/avatar", authenticate, avatarMiddleware, authController.uploadAvatar);
+router.delete("/me", authenticate, authController.deleteMyAccount);
+router.patch("/me/notifications", authenticate, authController.toggleNotifications);
 
 export default router;

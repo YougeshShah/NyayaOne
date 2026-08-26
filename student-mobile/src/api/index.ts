@@ -134,7 +134,11 @@ export const chatbotApi = {
 };
 
 export const profileApi = {
-  async update(payload: { fullName?: string; phone?: string }): Promise<AuthUser> {
+  async getMe(): Promise<AuthUser & { bio?: string | null; lastLoginAt?: string | null; createdAt?: string }> {
+    const { data } = await apiClient.get<ApiSuccess<any>>("/auth/me");
+    return data.data;
+  },
+  async update(payload: { fullName?: string; phone?: string; bio?: string; email?: string; currentPassword?: string }): Promise<AuthUser> {
     const { data } = await apiClient.patch<ApiSuccess<AuthUser>>("/auth/me", payload);
     return data.data;
   },
@@ -148,6 +152,14 @@ export const profileApi = {
     const { data } = await apiClient.post<ApiSuccess<{ id: string; avatarUrl: string }>>("/auth/me/avatar", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+    return data.data;
+  },
+  async toggleNotifications(enabled: boolean) {
+    const { data } = await apiClient.patch<ApiSuccess<{ notificationsEnabled: boolean }>>("/auth/me/notifications", { enabled });
+    return data.data;
+  },
+  async deleteAccount(password: string) {
+    const { data } = await apiClient.delete<ApiSuccess<{ message: string }>>("/auth/me", { data: { password } });
     return data.data;
   },
 };

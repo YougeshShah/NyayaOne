@@ -47,6 +47,7 @@ enum UserStatus {
   INACTIVE
   SUSPENDED
   PENDING_VERIFICATION
+  DELETED
 }
 
 enum CaseStatus {
@@ -306,6 +307,7 @@ model User {
   bio           String? // short "About" text shown on the profile page
   lastLoginAt   DateTime? // set on each successful login -- shown on profile for security awareness
   mustChangePassword Boolean @default(false) // true when this account was created by Company/Institution with a temporary password -- forces a password change on first login before anything else is usable
+  notificationsEnabled Boolean @default(true) // push notification preference, toggled from mobile app settings
 
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt

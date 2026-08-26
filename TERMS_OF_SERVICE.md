@@ -1,10 +1,10 @@
 # Terms of Service — NyayaOne
 
-**Last Updated: [DATE]**
+**Last Updated: August 26, 2026**
 
 ## 1. Who We Are
-NyayaOne is operated by [YOUR COMPANY LEGAL NAME], based in [CITY, NEPAL].
-Contact: [YOUR SUPPORT EMAIL].
+NyayaOne is operated by Technocraftx Pvt. Ltd., based in Kathmandu, Nepal.
+Contact: support@technocraftx.com.
 
 ## 2. Accounts
 - You must provide accurate information when registering.
@@ -17,15 +17,13 @@ Contact: [YOUR SUPPORT EMAIL].
   other exams.
 - Law firms and educational institutions managing their own staff/students
   through the platform.
-- You must be at least [13 / 16 / 18 — CHOOSE YOUR MINIMUM AGE] years old
+- You must be at least 13 years old
   to create an account.
 
 ## 4. Subscriptions and Payment
 - Course access requires an active subscription unless marked "Free Demo."
-- Payments are processed via [eSewa / Khalti / bank transfer].
-- [DESCRIBE YOUR REFUND POLICY HERE — e.g. "Subscriptions are
-  non-refundable once activated" or "Refunds available within 7 days if
-  unused."]
+- Payments are processed via eSewa, Khalti.
+- Subscriptions are non-refundable once activated, except where required by law.
 - Prices may change; we will notify active subscribers in advance.
 
 ## 5. Acceptable Use
@@ -78,4 +76,4 @@ means you accept the updated terms.
 These terms are governed by the laws of Nepal.
 
 ## 13. Contact
-Questions about these terms: [YOUR SUPPORT EMAIL]
+Questions about these terms: support@technocraftx.com

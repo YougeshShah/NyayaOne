@@ -107,10 +107,14 @@ export function useSendChatMessage() {
   });
 }
 
+export function useMyProfile() {
+  return useQuery({ queryKey: ["my-profile"], queryFn: () => profileApi.getMe() });
+}
+
 export function useUpdateProfile() {
   const updateUser = useAuthStore((s) => s.updateUser);
   return useMutation({
-    mutationFn: (payload: { fullName?: string; phone?: string }) => profileApi.update(payload),
+    mutationFn: (payload: { fullName?: string; phone?: string; bio?: string; email?: string; currentPassword?: string }) => profileApi.update(payload),
     onSuccess: (data) => updateUser(data),
   });
 }

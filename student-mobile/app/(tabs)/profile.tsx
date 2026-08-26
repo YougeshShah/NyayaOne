@@ -8,12 +8,13 @@ import { SERVER_ORIGIN } from "../../src/api/client";
 import { useMySubscriptions } from "../../src/hooks";
 import { router } from "expo-router";
 import { useAuthStore } from "../../src/store/authStore";
-import { useUpdateProfile, useChangePassword } from "../../src/hooks";
+import { useUpdateProfile, useChangePassword, useMyProfile } from "../../src/hooks";
 
 export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
+  const { data: profile } = useMyProfile();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
 
@@ -78,6 +79,22 @@ export default function ProfileScreen() {
     }
   };
 
+  const formatDate = (iso?: string | null) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  };
+  const formatRelativeTime = (iso?: string | null) => {
+    if (!iso) return "Never";
+    const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    return formatDate(iso);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatar}>
@@ -98,7 +115,16 @@ export default function ProfileScreen() {
         </View>
       </TouchableOpacity>
       <Text style={styles.email}>{user?.email}</Text>
+      {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+      <View style={styles.metaRow}>
+        <Text style={styles.metaText}>Member since {formatDate(profile?.createdAt)}</Text>
+        <Text style={styles.metaText}>Last login: {formatRelativeTime(profile?.lastLoginAt)}</Text>
+      </View>
 
+      <TouchableOpacity style={styles.navButton} onPress={() => router.push("/settings")}>
+        <Text style={styles.sectionTitle}>Settings</Text>
+        <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+      </TouchableOpacity>
       <TouchableOpacity style={styles.navButton} onPress={() => router.push("/edit-profile")}>
         <Text style={styles.sectionTitle}>Edit Profile</Text>
         <Ionicons name="chevron-forward" size={18} color="#6B7280" />
@@ -134,7 +160,10 @@ const styles = StyleSheet.create({
   avatarText: { color: "#fff", fontSize: 28, fontWeight: "700" },
   avatarImage: { width: 72, height: 72, borderRadius: 36 },
   avatarCameraBadge: { position: "absolute", bottom: -2, right: -2, backgroundColor: "#2563EB", borderRadius: 10, width: 20, height: 20, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#fff" },
-  email: { fontSize: 14, color: "#6B7280", marginBottom: 24 },
+  email: { fontSize: 14, color: "#6B7280", marginBottom: 4 },
+  bio: { fontSize: 13, color: "#4B5563", textAlign: "center", marginBottom: 8, paddingHorizontal: 16 },
+  metaRow: { alignItems: "center", marginBottom: 20 },
+  metaText: { fontSize: 11, color: "#9CA3AF" },
   sectionTitle: { fontSize: 14, fontWeight: "700", alignSelf: "flex-start", marginBottom: 8, marginTop: 8, color: "#374151" },
   navButton: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fff", borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10, padding: 14, marginBottom: 10 },
   input: { backgroundColor: "#fff", borderRadius: 10, padding: 12, marginBottom: 10, width: "100%", borderWidth: 1, borderColor: "#E5E7EB" },

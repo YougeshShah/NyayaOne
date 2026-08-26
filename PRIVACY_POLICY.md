@@ -1,11 +1,11 @@
 # Privacy Policy — NyayaOne
 
-**Last Updated: [DATE]**
+**Last Updated: August 26, 2026**
 
 ## 1. Who We Are
-NyayaOne is operated by [YOUR COMPANY LEGAL NAME]. This policy explains
+NyayaOne is operated by Technocraftx Pvt. Ltd.. This policy explains
 what personal data we collect, why, and how we protect it.
-Contact: [YOUR SUPPORT EMAIL].
+Contact: support@technocraftx.com.
 
 ## 2. What We Collect
 
@@ -21,7 +21,7 @@ Contact: [YOUR SUPPORT EMAIL].
 ### Payment Data
 - Payment amount, course purchased, transaction status.
 - We do NOT store your card/eSewa/Khalti login credentials — payments are
-  processed directly by [eSewa/Khalti], and we only receive confirmation
+  processed directly by eSewa/Khalti, and we only receive confirmation
   that payment succeeded.
 
 ### Technical Data
@@ -59,14 +59,14 @@ unrelated to their institution.
 ## 6. Data Retention
 - We retain your account data as long as your account is active.
 - If you delete your account, we remove your personal data within
-  [30 / 60 / 90] days, except where we're legally required to keep records
+  90 days, except where we're legally required to keep records
   (e.g. payment records for tax purposes).
 
 ## 7. Your Rights
 You can:
 - Request a copy of your data.
 - Correct inaccurate information (via your Profile page).
-- Request account/data deletion by contacting [YOUR SUPPORT EMAIL].
+- Request account/data deletion by contacting support@technocraftx.com.
 
 ## 8. Data Security
 - Passwords are hashed (never stored as plain text).
@@ -76,7 +76,7 @@ You can:
   users as required by law.
 
 ## 9. Children's Privacy
-This platform is intended for users [13/16/18]+ years old (match your
+This platform is intended for users 13+ years old (match your
 Terms of Service). We do not knowingly collect data from children below
 this age without appropriate consent.
 
@@ -85,4 +85,4 @@ We may update this policy from time to time. Significant changes will be
 communicated via email or an in-app notice.
 
 ## 11. Contact Us
-Questions about this policy or your data: [YOUR SUPPORT EMAIL]
+Questions about this policy or your data: support@technocraftx.com

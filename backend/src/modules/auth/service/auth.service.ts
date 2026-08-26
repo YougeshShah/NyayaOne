@@ -158,6 +158,9 @@ export const authService = {
     if (user.status === "SUSPENDED") {
       throw AppError.forbidden("Your account has been suspended. Contact support.");
     }
+    if (user.status === "DELETED") {
+      throw AppError.unauthorized("Invalid email or password");
+    }
 
     // A student who self-registered under a specific institution needs
     // that institution to approve them first -- mirrors how a Law Firm
@@ -348,6 +351,35 @@ export const authService = {
 
   async updateAvatar(userId: string, avatarUrl: string) {
     return authRepository.updateAvatar(userId, avatarUrl);
+  },
+  async deleteMyAccount(userId: string, password: string) {
+    const user = await authRepository.findUserById(userId);
+    if (!user) {
+      throw AppError.unauthorized("User no longer exists");
+    }
+    const matches = await comparePassword(password, user.passwordHash);
+    if (!matches) {
+      throw AppError.badRequest("Password is incorrect.");
+    }
+    // Anonymize personal info rather than a hard delete -- avoids
+    // breaking foreign-key references from records this account created
+    // (cases, documents, test attempts, etc.), while still removing the
+    // personal data itself as the Privacy Policy promises.
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: "DELETED",
+        email: `deleted-${userId}@deleted.nyayaone.local`,
+        fullName: "Deleted User",
+        phone: null,
+        bio: null,
+        avatarUrl: null,
+        passwordHash: await hashPassword(`deleted-${Date.now()}-${Math.random()}`),
+      },
+    });
+  },
+  async toggleNotifications(userId: string, enabled: boolean) {
+    return prisma.user.update({ where: { id: userId }, data: { notificationsEnabled: enabled } });
   },
   async getMe(userId: string) {
     const user = await authRepository.findUserById(userId);

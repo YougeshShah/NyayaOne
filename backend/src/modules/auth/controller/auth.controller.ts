@@ -108,6 +108,19 @@ export const authController = {
     const result = await authService.updateAvatar(req.auth.userId, avatarUrl);
     res.status(200).json({ success: true, message: "Profile photo updated", data: result });
   },
+  async deleteMyAccount(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const { password } = req.body;
+    if (!password) throw AppError.badRequest("Password is required to delete your account.");
+    await authService.deleteMyAccount(req.auth.userId, password);
+    res.status(200).json({ success: true, message: "Account deleted." });
+  },
+  async toggleNotifications(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const { enabled } = req.body;
+    const result = await authService.toggleNotifications(req.auth.userId, !!enabled);
+    res.status(200).json({ success: true, data: { notificationsEnabled: result.notificationsEnabled } });
+  },
 
   async requestPasswordReset(req: Request, res: Response) {
     const { email, note } = z.object({ email: z.string().email(), note: z.string().optional() }).parse(req.body);
