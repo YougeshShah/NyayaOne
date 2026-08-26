@@ -3,6 +3,7 @@ import { apiClient } from "./client";
 export interface UpdateProfilePayload {
   fullName?: string;
   phone?: string;
+  bio?: string;
   barRegistrationNo?: string;
   specialization?: string;
 }
@@ -12,13 +13,21 @@ export interface UpdatedProfile {
   fullName: string;
   email: string;
   phone: string | null;
+  bio?: string | null;
   accountType: string;
   barRegistrationNo: string | null;
   specialization: string | null;
   avatarUrl?: string | null;
+  lastLoginAt?: string | null;
+  createdAt?: string;
 }
 
 export const authExtraApi = {
+  async getMe(): Promise<UpdatedProfile> {
+    const { data } = await apiClient.get("/auth/me");
+    return data.data;
+  },
+
   async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
     const { data } = await apiClient.patch("/auth/change-password", { currentPassword, newPassword });
     return data.data;
@@ -26,6 +35,16 @@ export const authExtraApi = {
 
   async updateProfile(payload: UpdateProfilePayload): Promise<UpdatedProfile> {
     const { data } = await apiClient.patch("/auth/me", payload);
+    return data.data;
+  },
+
+  async toggleNotifications(enabled: boolean) {
+    const { data } = await apiClient.patch("/auth/me/notifications", { enabled });
+    return data.data;
+  },
+
+  async deleteAccount(password: string) {
+    const { data } = await apiClient.delete("/auth/me", { data: { password } });
     return data.data;
   },
 

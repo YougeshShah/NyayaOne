@@ -89,6 +89,10 @@ export function useChangePassword() {
   });
 }
 
+export function useMyProfile() {
+  return useQuery({ queryKey: ["my-profile"], queryFn: () => authExtraApi.getMe() });
+}
+
 export function useUpdateProfile() {
   const updateUser = useAuthStore((s) => s.updateUser);
   return useMutation({

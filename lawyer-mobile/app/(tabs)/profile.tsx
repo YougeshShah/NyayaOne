@@ -90,6 +90,11 @@ export default function ProfileScreen() {
         <Text style={styles.actionButtonText}>Edit Profile</Text>
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
       </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/settings")}>
+        <Ionicons name="settings-outline" size={20} color={colors.primary} />
+        <Text style={styles.actionButtonText}>Settings</Text>
+        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/precedents")}>
         <Ionicons name="library-outline" size={20} color={colors.primary} />
