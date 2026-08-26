@@ -5,6 +5,8 @@ export interface UpdateProfilePayload {
   fullName?: string;
   phone?: string;
   bio?: string;
+  email?: string;
+  currentPassword?: string;
 }
 
 export interface ProfileResult {

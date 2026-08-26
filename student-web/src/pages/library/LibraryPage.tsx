@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -83,6 +83,7 @@ function countMatches(text: string, term: string) {
 export function LibraryPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [viewingResource, setViewingResource] = useState<LibraryResource | null>(null);
   const [viewerSearchTerm, setViewerSearchTerm] = useState("");
@@ -92,6 +93,15 @@ export function LibraryPage() {
   }, [viewerSearchTerm, viewingResource]);
 
   const { data, isLoading } = useLibraryResources({ courseId: courseId as string, search: search || undefined });
+  // Deep-link support: coming from a bookmark ("?resourceId=xyz") should
+  // open that specific resource directly, not just land on the general list.
+  useEffect(() => {
+    const resourceId = searchParams.get("resourceId");
+    if (resourceId && data) {
+      const match = data.items?.find((r: LibraryResource) => r.id === resourceId);
+      if (match) setViewingResource(match);
+    }
+  }, [searchParams, data]);
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto" }}>

@@ -11,7 +11,9 @@ import { getAvatarUrl } from "../../api/profile.api";
 interface ProfileFormValues {
   fullName: string;
   phone: string;
+  email: string;
   bio: string;
+  currentPassword: string;
 }
 interface PasswordFormValues {
   currentPassword: string;
@@ -47,17 +49,34 @@ export function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  const profileForm = useForm<ProfileFormValues>({ defaultValues: { fullName: "", phone: "", bio: "" } });
+  const profileForm = useForm<ProfileFormValues>({
+    defaultValues: { fullName: "", phone: "", email: "", bio: "", currentPassword: "" },
+  });
   const passwordForm = useForm<PasswordFormValues>();
 
   useEffect(() => {
     if (profile) {
-      profileForm.reset({ fullName: profile.fullName, phone: profile.phone ?? "", bio: profile.bio ?? "" });
+      profileForm.reset({ fullName: profile.fullName, phone: profile.phone ?? "", email: profile.email, bio: profile.bio ?? "", currentPassword: "" });
     }
   }, [profile]);
 
+  const watchedEmail = profileForm.watch("email");
+  const watchedPhone = profileForm.watch("phone");
+  const emailOrPhoneChanged = !!profile && (watchedEmail !== profile.email || (watchedPhone || "") !== (profile.phone ?? ""));
+
   const onSaveProfile = (values: ProfileFormValues) => {
-    updateProfile.mutate({ fullName: values.fullName, phone: values.phone || undefined, bio: values.bio || undefined });
+    updateProfile.mutate(
+      {
+        fullName: values.fullName,
+        phone: values.phone || undefined,
+        email: values.email !== profile?.email ? values.email : undefined,
+        bio: values.bio || undefined,
+        currentPassword: values.currentPassword || undefined,
+      },
+      {
+        onSuccess: () => profileForm.setValue("currentPassword", ""),
+      }
+    );
   };
 
   const onChangePassword = (values: PasswordFormValues) => {
@@ -134,12 +153,16 @@ export function ProfilePage() {
           </Typography>
         </Box>
         {isLoading ? (
-          <Skeleton variant="rectangular" height={180} />
+          <Skeleton variant="rectangular" height={220} />
         ) : (
           <Box component="form" onSubmit={profileForm.handleSubmit(onSaveProfile)} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {updateProfile.isSuccess && <Alert severity="success">Profile updated successfully.</Alert>}
+            {updateProfile.isError && (
+              <Alert severity="error">{(updateProfile.error as any)?.response?.data?.message || "Failed to update profile"}</Alert>
+            )}
             <TextField label="Full Name" fullWidth {...profileForm.register("fullName", { required: true })} />
             <TextField label="Phone" fullWidth {...profileForm.register("phone")} />
+            <TextField label="Email" type="email" fullWidth {...profileForm.register("email", { required: true })} />
             <TextField
               label="Bio"
               fullWidth
@@ -149,6 +172,16 @@ export function ProfilePage() {
               helperText="Shown on your profile — optional"
               {...profileForm.register("bio")}
             />
+            {emailOrPhoneChanged && (
+              <TextField
+                label="Current Password"
+                type="password"
+                required
+                fullWidth
+                helperText="Required to confirm your email or phone change"
+                {...profileForm.register("currentPassword", { required: emailOrPhoneChanged })}
+              />
+            )}
             <Box>
               <Button type="submit" variant="contained" disabled={updateProfile.isPending}>
                 {updateProfile.isPending ? "Saving..." : "Save Changes"}
@@ -166,7 +199,6 @@ export function ProfilePage() {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <TextField label="Email" fullWidth value={displayUser?.email || ""} disabled helperText="Email cannot be changed" />
           {profile?.lastLoginAt !== undefined && (
             <Typography variant="body2" color="text.secondary">
               Last login: {formatRelativeTime(profile.lastLoginAt)}

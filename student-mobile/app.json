@@ -36,7 +36,7 @@
       "expo-status-bar"
     ],
     "extra": {
-      "apiBaseUrl": "http://192.168.1.102:5000/api/v1",
+      "apiBaseUrl": "http://36.253.137.131:5000/api/v1",
       "router": {},
       "eas": {
         "projectId": "ddf3454a-3757-4dd5-9618-9a0b0df8f469"
