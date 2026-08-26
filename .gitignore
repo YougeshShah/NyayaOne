@@ -1,5 +1,6 @@
 # Service account / credential keys — never commit
 *firebase-adminsdk*.json
+drive-service-account.json
 *.pem
 *.key
 
