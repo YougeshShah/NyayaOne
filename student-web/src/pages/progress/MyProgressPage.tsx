@@ -1,6 +1,7 @@
 import { Box, Typography, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, CircularProgress } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import QuizIcon from "@mui/icons-material/QuizOutlined";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import { useStudyAnalytics, useMyTestAttempts } from "../../hooks/useProgress";
 
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
@@ -32,6 +33,12 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
   );
 }
 
+function scoreColor(percent: number): string {
+  if (percent >= 75) return "#059669";
+  if (percent >= 50) return "#D97706";
+  return "#DC2626";
+}
+
 export function MyProgressPage() {
   const { data: analytics, isLoading: loadingAnalytics } = useStudyAnalytics();
   const { data: attempts, isLoading: loadingAttempts } = useMyTestAttempts();
@@ -60,7 +67,6 @@ export function MyProgressPage() {
           </Grid>
         </Grid>
       )}
-
       <Typography variant="h6" fontWeight={700} sx={{ mb: 1.5 }}>
         Test History
       </Typography>
@@ -85,32 +91,44 @@ export function MyProgressPage() {
             {!loadingAttempts && (attempts ?? []).length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} align="center">
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                    No mock tests taken yet — go practice one!
-                  </Typography>
+                  <Box sx={{ py: 4 }}>
+                    <AssignmentTurnedInIcon sx={{ fontSize: 36, color: "text.disabled", mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      No mock tests taken yet — go practice one!
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             )}
-            {attempts?.map((attempt) => (
-              <TableRow key={attempt.id} hover>
-                <TableCell>{attempt.mockTest.title}</TableCell>
-                <TableCell align="center">
-                  {attempt.submittedAt ? `${attempt.score}/${attempt.totalQuestions}` : "—"}
-                </TableCell>
-                <TableCell align="center">
-                  {attempt.submittedAt ? (
-                    <Chip label="Completed" size="small" color="success" />
-                  ) : (
-                    <Chip label="In Progress" size="small" />
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="body2" color="text.secondary">
-                    {new Date(attempt.startedAt).toLocaleDateString()}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ))}
+            {attempts?.map((attempt) => {
+              const percent = attempt.submittedAt && attempt.totalQuestions && attempt.score != null ? Math.round((attempt.score / attempt.totalQuestions) * 100) : null;
+              return (
+                <TableRow key={attempt.id} hover>
+                  <TableCell>{attempt.mockTest.title}</TableCell>
+                  <TableCell align="center">
+                    {attempt.submittedAt ? (
+                      <Typography variant="body2" fontWeight={700} sx={{ color: percent !== null ? scoreColor(percent) : undefined }}>
+                        {attempt.score}/{attempt.totalQuestions}
+                      </Typography>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell align="center">
+                    {attempt.submittedAt ? (
+                      <Chip label="Completed" size="small" color="success" />
+                    ) : (
+                      <Chip label="In Progress" size="small" />
+                    )}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" color="text.secondary">
+                      {new Date(attempt.startedAt).toLocaleDateString()}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>

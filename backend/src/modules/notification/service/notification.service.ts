@@ -68,4 +68,8 @@ export const notificationService = {
     if (result.count === 0) throw AppError.notFound("Notification not found");
     return { message: "Marked as read" };
   },
+  async markAllRead(userId: string) {
+    const result = await notificationRepository.markAllReadScoped(userId);
+    return { message: "Marked all as read", count: result.count };
+  },
 };

@@ -83,6 +83,12 @@ export const notificationRepository = {
       data: { isRead: true, readAt: new Date() },
     });
   },
+  markAllReadScoped(userId: string) {
+    return prisma.userNotification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true, readAt: new Date() },
+    });
+  },
 
   countUnread(userId: string) {
     return prisma.userNotification.count({ where: { userId, isRead: false } });

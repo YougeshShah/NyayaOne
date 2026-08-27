@@ -38,4 +38,9 @@ export const notificationController = {
     const result = await notificationService.markRead(id, req.auth.userId);
     res.status(200).json({ success: true, data: result });
   },
+  async markAllRead(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const result = await notificationService.markAllRead(req.auth.userId);
+    res.status(200).json({ success: true, data: result });
+  },
 };

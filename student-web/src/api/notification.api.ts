@@ -22,9 +22,12 @@ export const notificationApi = {
     });
     return data.data;
   },
-
   async markRead(id: string) {
     const { data } = await apiClient.patch<ApiSuccessResponse<{ message: string }>>(`/notifications/my/${id}/read`);
+    return data.data;
+  },
+  async markAllRead() {
+    const { data } = await apiClient.patch<ApiSuccessResponse<{ message: string; count: number }>>(`/notifications/my/mark-all-read`);
     return data.data;
   },
 };
