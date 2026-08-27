@@ -15,6 +15,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
 import { useTranslation } from "../../i18n/LanguageContext";
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 interface StatCardProps {
   label: string;
   value: number | string;
@@ -24,12 +31,24 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, color }: StatCardProps) {
   return (
-    <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb", display: "flex", alignItems: "center", gap: 2 }}>
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        border: "1px solid #e5e7eb",
+        borderRadius: 3,
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        transition: "box-shadow 0.2s ease",
+        "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.06)" },
+      }}
+    >
       <Box
         sx={{
           width: 52,
           height: 52,
-          borderRadius: 2,
+          borderRadius: "50%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -59,6 +78,7 @@ export function DashboardPage() {
 }
 
 function EducationDashboard() {
+  const user = useAuthStore((s) => s.user);
   const { data: students } = useInstitutionStudents();
   const { data: liveClasses } = useQuery({ queryKey: ["institution-dashboard-classes"], queryFn: () => liveClassInstitutionApi.list() });
   const { data: subscription } = useMyFirmSubscription();
@@ -68,7 +88,7 @@ function EducationDashboard() {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-        Overview
+        {getGreeting()}{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""} 👋
       </Typography>
 
       {subscription && (
@@ -143,6 +163,7 @@ function EducationDashboard() {
 
 function LawFirmDashboard() {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
   const { data: allCases } = useCases({ page: 1 });
   const { data: openCases } = useCases({ status: "OPEN", page: 1 });
   const { data: clients } = useClients({ page: 1 });
@@ -157,7 +178,7 @@ function LawFirmDashboard() {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-        {t("overview")}
+        {getGreeting()}{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""} 👋
       </Typography>
 
       {subscription && (
