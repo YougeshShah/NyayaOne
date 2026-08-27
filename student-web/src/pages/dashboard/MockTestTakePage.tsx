@@ -164,7 +164,7 @@ export function MockTestTakePage() {
         />
       </Box>
 
-      <LinearProgress variant="determinate" value={(answeredCount / questions.length) * 100} sx={{ height: 6, borderRadius: 3, mb: 3 }} />
+      <LinearProgress variant="determinate" value={(answeredCount / questions.length) * 100} sx={{ height: 6, borderRadius: 3, mb: 3, bgcolor: "#F1F5F9", "& .MuiLinearProgress-bar": { borderRadius: 3 } }} />
 
       {/* Question navigator */}
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>

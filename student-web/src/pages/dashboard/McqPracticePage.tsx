@@ -189,15 +189,21 @@ export function McqPracticePage() {
     <Box sx={{ maxWidth: passage ? 1000 : 640, mx: "auto" }}>
       {/* Progress header */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-        <IconButton size="small" onClick={() => navigate(`/courses/${courseId}`)}>
+        <IconButton size="small" onClick={() => navigate(`/courses/${courseId}`)} sx={{ bgcolor: "#F3F4F6", "&:hover": { bgcolor: "#E5E7EB" } }}>
           <CloseIcon fontSize="small" />
         </IconButton>
         <Box sx={{ flexGrow: 1 }}>
-          <LinearProgress variant="determinate" value={(index / questions.length) * 100} sx={{ height: 8, borderRadius: 4 }} />
+          <LinearProgress
+            variant="determinate"
+            value={(index / questions.length) * 100}
+            sx={{ height: 8, borderRadius: 4, bgcolor: "#F1F5F9", "& .MuiLinearProgress-bar": { borderRadius: 4 } }}
+          />
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60, textAlign: "right" }}>
-          {index + 1} / {questions.length}
-        </Typography>
+        <Box sx={{ bgcolor: "#EFF6FF", borderRadius: 2, px: 1.5, py: 0.5, minWidth: 60, textAlign: "center" }}>
+          <Typography variant="body2" fontWeight={700} color="primary.main">
+            {index + 1} / {questions.length}
+          </Typography>
+        </Box>
       </Box>
 
       {/* Question card — when a reading passage is attached, it gets its
