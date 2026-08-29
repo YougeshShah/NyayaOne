@@ -17,7 +17,7 @@ export const emailVerificationController = {
 
   async resetPasswordWithCode(req: Request, res: Response) {
     const input = resetPasswordWithCodeSchema.parse(req.body);
-    await emailVerificationService.resetPasswordWithCode(input.email, input.code, input.newPassword);
+    await emailVerificationService.resetPasswordWithCode(input.email, input.code, input.newPassword, input.institutionSlug);
     res.status(200).json({ success: true, message: "Password reset successfully. You can now log in." });
   },
 };
