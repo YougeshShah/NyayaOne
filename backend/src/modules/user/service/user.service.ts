@@ -42,9 +42,11 @@ export const userService = {
    * never from the request body — this is what enforces multi-tenant isolation.
    */
   async create(lawFirmId: string, input: CreateUserInput) {
-    const existing = await userRepository.findByEmail(input.email);
+    // Same email can exist under a different organization -- only a
+    // duplicate WITHIN this same firm is actually a conflict.
+    const existing = await prisma.user.findFirst({ where: { email: input.email, lawFirmId } });
     if (existing) {
-      throw AppError.conflict("An account with this email already exists");
+      throw AppError.conflict("An account with this email already exists at this organization");
     }
 
     const passwordHash = await hashPassword(input.password);

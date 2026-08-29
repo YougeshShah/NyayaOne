@@ -247,7 +247,7 @@ model User {
   accountType   AccountType
   fullName      String
   email         String // unique per-organization only, see @@unique below
-  phone         String?      @unique
+  phone         String? // unique per-organization only, see @@unique below
   avatarUrl     String?
   passwordHash  String
   status        UserStatus   @default(PENDING_VERIFICATION)
@@ -313,6 +313,7 @@ model User {
   updatedAt     DateTime     @updatedAt
 
   @@unique([email, lawFirmId])
+  @@unique([phone, lawFirmId])
   @@index([lawFirmId])
   @@index([accountType])
   @@index([roleId])

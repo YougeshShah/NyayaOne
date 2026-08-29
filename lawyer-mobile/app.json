@@ -21,6 +21,7 @@
         "backgroundColor": "#0F4C3A"
       },
       "package": "com.trailblazetech.nyayaone.lawyer",
+      "usesCleartextTraffic": true,
       "permissions": [
         "NOTIFICATIONS"
       ]

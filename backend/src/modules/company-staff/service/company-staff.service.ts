@@ -2,6 +2,7 @@ import { AppError } from "../../../common/errors/AppError";
 import { hashPassword } from "../../../common/utils/password";
 import { companyStaffRepository } from "../repository/company-staff.repository";
 import { CreateCompanyStaffInput, ListCompanyStaffQuery } from "../dto/company-staff.dto";
+import { prisma } from "../../../database/prisma";
 
 export const companyStaffService = {
   async list(query: ListCompanyStaffQuery) {
@@ -23,7 +24,10 @@ export const companyStaffService = {
    * problem (the first Super Admin comes from the seed script).
    */
   async create(input: CreateCompanyStaffInput) {
-    const existing = await companyStaffRepository.findByEmail(input.email);
+    // Company accounts always have lawFirmId: null -- scope the check there
+    // so this email being used by a student/lawyer at some organization
+    // doesn't block it from also being a Company account.
+    const existing = await prisma.user.findFirst({ where: { email: input.email, lawFirmId: null } });
     if (existing) {
       throw AppError.conflict("An account with this email already exists");
     }
