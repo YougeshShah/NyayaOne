@@ -20,8 +20,8 @@ export const emailVerificationApi = {
     const { data } = await apiClient.post<{ success: boolean; message?: string }>("/email-verification/send-code", { email, purpose });
     return data;
   },
-  async resetPassword(email: string, code: string, newPassword: string) {
-    const { data } = await apiClient.post<{ success: boolean; message?: string }>("/email-verification/reset-password", { email, code, newPassword });
+  async resetPassword(email: string, code: string, newPassword: string, institutionSlug?: string) {
+    const { data } = await apiClient.post<{ success: boolean; message?: string }>("/email-verification/reset-password", { email, code, newPassword, institutionSlug });
     return data;
   },
 };

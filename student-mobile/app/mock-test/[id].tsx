@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert, Linking } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useMockTestDetail, useStartAttempt, useSubmitAttempt, useSubmitWriting } from "../../src/hooks";
 import { resolveMediaUrl } from "../../src/api/client";
 
@@ -281,12 +282,19 @@ export default function MockTestScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity disabled={index === 0} onPress={() => setIndex((i) => i - 1)} style={{ opacity: index === 0 ? 0.4 : 1 }}>
+        <TouchableOpacity
+          disabled={index === 0}
+          onPress={() => setIndex((i) => i - 1)}
+          style={[styles.navButton, { opacity: index === 0 ? 0.4 : 1 }]}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={18} color="#2563EB" />
           <Text style={styles.navText}>Previous</Text>
         </TouchableOpacity>
         {index + 1 < steps.length ? (
-          <TouchableOpacity style={styles.primaryButtonSmall} onPress={() => setIndex((i) => i + 1)}>
+          <TouchableOpacity style={styles.primaryButtonSmall} onPress={() => setIndex((i) => i + 1)} activeOpacity={0.8}>
             <Text style={styles.primaryButtonText}>Next</Text>
+            <Ionicons name="chevron-forward" size={18} color="#fff" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -326,9 +334,10 @@ const styles = StyleSheet.create({
   audioBar: { backgroundColor: "#EFF6FF", borderRadius: 10, padding: 12, marginBottom: 12 },
   audioBarText: { color: "#2563EB", fontWeight: "700" },
   footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, borderTopWidth: 1, borderTopColor: "#E5E7EB", backgroundColor: "#fff" },
-  navText: { color: "#2563EB", fontWeight: "700" },
+  navButton: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#F3F4F6" },
+  navText: { color: "#2563EB", fontWeight: "700", marginLeft: 2 },
   primaryButton: { backgroundColor: "#2563EB", borderRadius: 10, paddingVertical: 14, paddingHorizontal: 28, marginTop: 20 },
-  primaryButtonSmall: { backgroundColor: "#2563EB", borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20 },
+  primaryButtonSmall: { flexDirection: "row", alignItems: "center", backgroundColor: "#2563EB", borderRadius: 10, paddingVertical: 12, paddingHorizontal: 20, gap: 6 },
   primaryButtonText: { color: "#fff", fontWeight: "700" },
   resultTitle: { fontSize: 20, fontWeight: "700", marginTop: 8 },
   resultScore: { fontSize: 40, fontWeight: "800", color: "#2563EB", marginTop: 8 },

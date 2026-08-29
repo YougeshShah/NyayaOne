@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Paper, TextField, Typography, Link as MuiLink } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { emailVerificationApi } from "../../api/emailVerification.api";
+import { detectInstitutionSlug } from "../../utils/detectInstitutionSlug";
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export function ForgotPasswordPage() {
   });
 
   const resetPassword = useMutation({
-    mutationFn: () => emailVerificationApi.resetPassword(email, code, newPassword),
+    mutationFn: () => emailVerificationApi.resetPassword(email, code, newPassword, detectInstitutionSlug()),
     onSuccess: () => {
       setSuccess(true);
       setTimeout(() => navigate("/login"), 1500);

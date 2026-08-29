@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "../../src/store/authStore";
@@ -16,7 +16,6 @@ export default function ProfileScreen() {
   const logout = useLogout();
   const changePassword = useChangePassword();
   const { t, language, setLanguage } = useTranslation();
-
   const [modalOpen, setModalOpen] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
 
@@ -36,9 +35,13 @@ export default function ProfileScreen() {
       setSendingTest(false);
     }
   };
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const resetForm = () => {
     setCurrentPassword("");
@@ -71,103 +74,107 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.avatarWrap}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user?.fullName?.charAt(0) ?? "U"}</Text>
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{user?.fullName?.charAt(0) ?? "U"}</Text>
+          </View>
+          <Text style={styles.name}>{user?.fullName}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
         </View>
-        <Text style={styles.name}>{user?.fullName}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-      </View>
-
-      <Card style={{ marginBottom: spacing.md }}>
-        <InfoRow label={t("role")} value="Lawyer" />
-        <InfoRow label={t("accountStatus")} value={user?.lawFirmStatus || "—"} />
-      </Card>
-
-      <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/edit-profile")}>
-        <Ionicons name="person-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>Edit Profile</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/settings")}>
-        <Ionicons name="settings-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>Settings</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/precedents")}>
-        <Ionicons name="library-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>नजिर खोज (Precedent Search)</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-      </TouchableOpacity>
-
-      {user?.tenantType === "EDUCATION" && (
-        <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/live-classes")}>
-          <Ionicons name="videocam-outline" size={20} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Live Classes</Text>
+        <Card style={{ marginBottom: spacing.md }}>
+          <InfoRow label={t("role")} value="Lawyer" />
+          <InfoRow label={t("accountStatus")} value={user?.lawFirmStatus || "—"} />
+        </Card>
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/edit-profile")}>
+          <Ionicons name="person-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>Edit Profile</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
-      )}
-
-      <TouchableOpacity style={styles.actionButton} onPress={() => setLanguage(language === "en" ? "ne" : "en")}>
-        <Ionicons name="language-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>{t("language")}</Text>
-        <Text style={styles.langValue}>{language === "en" ? "English" : "नेपाली"}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.actionButton} onPress={() => setModalOpen(true)}>
-        <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>{t("changePassword")}</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.actionButton} onPress={handleTestPush} disabled={sendingTest}>
-        <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-        <Text style={styles.actionButtonText}>{sendingTest ? "Sending..." : t("sendTestNotification")}</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Ionicons name="log-out-outline" size={20} color="#fff" />
-        <Text style={styles.logoutText}>{t("logout")}</Text>
-      </TouchableOpacity>
-
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/precedents")}>
+          <Ionicons name="library-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>नजिर खोज (Precedent Search)</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+        {user?.tenantType === "EDUCATION" && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/live-classes")}>
+            <Ionicons name="videocam-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Live Classes</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.actionButton} onPress={() => setLanguage(language === "en" ? "ne" : "en")}>
+          <Ionicons name="language-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>{t("language")}</Text>
+          <Text style={styles.langValue}>{language === "en" ? "English" : "नेपाली"}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={() => setModalOpen(true)}>
+          <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>{t("changePassword")}</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={handleTestPush} disabled={sendingTest}>
+          <Ionicons name="notifications-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>{sendingTest ? "Sending..." : t("sendTestNotification")}</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/settings")}>
+          <Ionicons name="settings-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>Settings</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+          <Ionicons name="log-out-outline" size={20} color="#fff" />
+          <Text style={styles.logoutText}>{t("logout")}</Text>
+        </TouchableOpacity>
+      </ScrollView>
       <Modal visible={modalOpen} transparent animationType="slide" onRequestClose={() => setModalOpen(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Change Password</Text>
-
             <Text style={styles.modalLabel}>Current Password</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-              placeholder="••••••••"
-              placeholderTextColor="#9CA3AF"
-            />
-
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={styles.passwordInput}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                secureTextEntry={!showCurrent}
+                placeholder="••••••••"
+                placeholderTextColor="#9CA3AF"
+              />
+              <TouchableOpacity onPress={() => setShowCurrent((v) => !v)} style={styles.eyeButton}>
+                <Ionicons name={showCurrent ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.modalLabel}>New Password</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-              placeholder="Minimum 8 characters"
-              placeholderTextColor="#9CA3AF"
-            />
-
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={styles.passwordInput}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry={!showNew}
+                placeholder="Minimum 8 characters"
+                placeholderTextColor="#9CA3AF"
+              />
+              <TouchableOpacity onPress={() => setShowNew((v) => !v)} style={styles.eyeButton}>
+                <Ionicons name={showNew ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.modalLabel}>Confirm New Password</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              placeholder="Re-enter new password"
-              placeholderTextColor="#9CA3AF"
-            />
-
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={styles.passwordInput}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirm}
+                placeholder="Re-enter new password"
+                placeholderTextColor="#9CA3AF"
+              />
+              <TouchableOpacity onPress={() => setShowConfirm((v) => !v)} style={styles.eyeButton}>
+                <Ionicons name={showConfirm ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity style={styles.saveButton} onPress={submitChangePassword} disabled={changePassword.isPending}>
               <Text style={styles.saveButtonText}>{changePassword.isPending ? "Saving..." : "Save Password"}</Text>
             </TouchableOpacity>
@@ -183,7 +190,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </>
   );
 }
 
@@ -249,6 +256,9 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     fontSize: 14,
   },
+  passwordRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm },
+  passwordInput: { flex: 1, padding: spacing.sm, fontSize: 14 },
+  eyeButton: { paddingHorizontal: 10, paddingVertical: 10 },
   saveButton: { backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 14, alignItems: "center", marginTop: spacing.lg },
   saveButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   cancelButton: { alignItems: "center", paddingVertical: 12 },

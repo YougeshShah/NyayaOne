@@ -19,8 +19,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"
       },
-      "package": "com.trailblazetech.nyayaone.student",
-      "usesCleartextTraffic": true
+      "package": "com.trailblazetech.nyayaone.student"
     },
     "plugins": [
       "expo-router",
@@ -34,7 +33,15 @@
         }
       ],
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "extra": {
       "apiBaseUrl": "http://36.253.137.131/api/v1",

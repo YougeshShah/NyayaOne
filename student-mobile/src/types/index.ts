@@ -5,6 +5,7 @@ export interface AuthUser {
   phone?: string | null;
   avatarUrl?: string | null;
   accountType: "STUDENT";
+  tenantName?: string | null;
 }
 
 export interface Course {

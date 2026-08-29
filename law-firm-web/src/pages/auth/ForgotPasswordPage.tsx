@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert, Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "../../api/client";
+import { detectInstitutionSlug } from "../../utils/detectInstitutionSlug";
 
 export function ForgotPasswordPage() {
   const [step, setStep] = useState<"request" | "reset">("request");
@@ -16,7 +17,7 @@ export function ForgotPasswordPage() {
   });
 
   const resetPassword = useMutation({
-    mutationFn: () => apiClient.post("/email-verification/reset-password", { email, code, newPassword }),
+    mutationFn: () => apiClient.post("/email-verification/reset-password", { email, code, newPassword, institutionSlug: detectInstitutionSlug() }),
     onSuccess: () => setSuccess(true),
   });
 

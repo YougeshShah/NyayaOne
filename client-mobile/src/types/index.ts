@@ -27,6 +27,7 @@ export interface AuthUser {
   lawFirmStatus: string | null;
   phone?: string;
   avatarUrl?: string | null;
+  tenantName?: string | null;
 }
 
 export interface LoginPayload {

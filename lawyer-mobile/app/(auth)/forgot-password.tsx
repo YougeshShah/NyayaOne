@@ -9,6 +9,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [institutionCode, setInstitutionCode] = useState("");
 
   const requestCode = useMutation({
     mutationFn: () => emailVerificationApi.sendCode(email, "PASSWORD_RESET"),
@@ -16,7 +17,7 @@ export default function ForgotPasswordScreen() {
   });
 
   const resetPassword = useMutation({
-    mutationFn: () => emailVerificationApi.resetPassword(email, code, newPassword),
+    mutationFn: () => emailVerificationApi.resetPassword(email, code, newPassword, institutionCode.trim() || undefined),
     onSuccess: () => router.replace("/(auth)/login"),
   });
 
@@ -51,6 +52,13 @@ export default function ForgotPasswordScreen() {
             onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, 6))}
           />
           <TextInput style={styles.input} placeholder="New Password (min 8 characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
+          <TextInput
+            style={styles.input}
+            placeholder="Firm Code (only if you belong to more than one)"
+            autoCapitalize="none"
+            value={institutionCode}
+            onChangeText={setInstitutionCode}
+          />
           <TouchableOpacity
             style={[styles.button, (resetPassword.isPending || code.length !== 6 || newPassword.length < 8) && { opacity: 0.5 }]}
             disabled={resetPassword.isPending || code.length !== 6 || newPassword.length < 8}

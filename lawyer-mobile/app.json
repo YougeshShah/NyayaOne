@@ -21,7 +21,6 @@
         "backgroundColor": "#0F4C3A"
       },
       "package": "com.trailblazetech.nyayaone.lawyer",
-      "usesCleartextTraffic": true,
       "permissions": [
         "NOTIFICATIONS"
       ]
@@ -46,7 +45,16 @@
       ],
       "expo-font",
       "expo-status-bar",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-sharing"
     ],
     "extra": {
       "apiBaseUrl": "http://36.253.137.131/api/v1",

@@ -44,6 +44,12 @@ export default function CoursesScreen() {
           <Text style={styles.subtitle}>
             {subscribedIds.size > 0 ? "Pick up where you left off, or explore something new." : "Practice free demo questions, or subscribe to unlock everything."}
           </Text>
+          {user?.tenantName && (
+            <View style={styles.institutionBadge}>
+              <Ionicons name="school-outline" size={12} color="#2563EB" />
+              <Text style={styles.institutionText}>{user.tenantName}</Text>
+            </View>
+          )}
         </View>
       }
       renderItem={({ item }) => {
@@ -82,6 +88,8 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   greeting: { fontSize: 20, fontWeight: "800", color: "#111827", marginBottom: 4 },
   subtitle: { fontSize: 13, color: "#6B7280" },
+  institutionBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "#EFF6FF", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, marginTop: 10, alignSelf: "flex-start" },
+  institutionText: { fontSize: 12, fontWeight: "600", color: "#2563EB", marginLeft: 5 },
   card: {
     flexDirection: "row",
     alignItems: "center",

@@ -9,3 +9,4 @@ npm-debug.*
 *.p12
 *.key
 .env
+.expo/

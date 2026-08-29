@@ -21,7 +21,6 @@
         "backgroundColor": "#1565C0"
       },
       "package": "com.trailblazetech.nyayaone.client",
-      "usesCleartextTraffic": true,
       "permissions": [
         "NOTIFICATIONS"
       ]
@@ -45,7 +44,16 @@
         }
       ],
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-sharing"
     ],
     "extra": {
       "apiBaseUrl": "http://36.253.137.131/api/v1",

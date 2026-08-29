@@ -29,6 +29,11 @@ export default function DashboardScreen() {
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <Text style={styles.greeting}>Welcome,</Text>
       <Text style={styles.name}>{user?.fullName}</Text>
+      {user?.tenantName && (
+        <View style={styles.firmBadge}>
+          <Text style={styles.firmBadgeText}>{user.tenantName}</Text>
+        </View>
+      )}
 
       <View style={styles.statsRow}>
         <Card style={styles.statCard}>
@@ -95,7 +100,9 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
   greeting: { fontSize: 14, color: colors.textSecondary },
-  name: { fontSize: 22, fontWeight: "800", color: colors.textPrimary, marginBottom: spacing.md },
+  name: { fontSize: 22, fontWeight: "800", color: colors.textPrimary },
+  firmBadge: { alignSelf: "flex-start", backgroundColor: colors.surface, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginTop: 6, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.border },
+  firmBadgeText: { fontSize: 12, fontWeight: "600", color: colors.primary },
   statsRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.lg },
   statCard: { flex: 1, alignItems: "center", paddingVertical: spacing.md },
   statValue: { fontSize: 22, fontWeight: "800", color: colors.primary },

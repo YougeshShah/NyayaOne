@@ -1,57 +1,52 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { profileApi } from "../../src/api";
 import { SERVER_ORIGIN } from "../../src/api/client";
 import { useMySubscriptions } from "../../src/hooks";
 import { router } from "expo-router";
 import { useAuthStore } from "../../src/store/authStore";
-import { useUpdateProfile, useChangePassword, useMyProfile } from "../../src/hooks";
+import { useMyProfile } from "../../src/hooks";
+
+function formatDate(iso?: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+}
+function formatRelativeTime(iso?: string | null) {
+  if (!iso) return "Never";
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(iso);
+}
+
+function MenuRow({ icon, label, onPress, danger }: { icon: any; label: string; onPress: () => void; danger?: boolean }) {
+  return (
+    <TouchableOpacity style={styles.menuRow} onPress={onPress}>
+      <View style={[styles.menuIconBox, danger && { backgroundColor: "#FEF2F2" }]}>
+        <Ionicons name={icon} size={18} color={danger ? "#DC2626" : "#2563EB"} />
+      </View>
+      <Text style={[styles.menuLabel, danger && { color: "#DC2626" }]}>{label}</Text>
+      {!danger && <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />}
+    </TouchableOpacity>
+  );
+}
 
 export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
   const { data: profile } = useMyProfile();
-  const updateProfile = useUpdateProfile();
-  const changePassword = useChangePassword();
-
-  const [fullName, setFullName] = useState(user?.fullName ?? "");
-  const [phone, setPhone] = useState(user?.phone ?? "");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false);
-
-  const handleSaveProfile = () => {
-    updateProfile.mutate(
-      { fullName, phone },
-      { onSuccess: () => Alert.alert("Saved", "Profile updated.") }
-    );
-  };
-
-  const handleChangePassword = () => {
-    if (!currentPassword || !newPassword) return;
-    changePassword.mutate(
-      { currentPassword, newPassword },
-      {
-        onSuccess: () => {
-          Alert.alert("Success", "Password changed.");
-          setCurrentPassword("");
-          setNewPassword("");
-        },
-        onError: () => Alert.alert("Error", "Failed to change password."),
-      }
-    );
-  };
-
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const { data: subscriptions } = useMySubscriptions();
   const hasLawSubscription = subscriptions?.some(
     (s: any) => s.course?.category === "LAW" && (s.status === "ACTIVE" || s.status === "TRIAL")
   );
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const handlePickAvatar = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -66,12 +61,10 @@ export default function ProfileScreen() {
       quality: 0.7,
     });
     if (result.canceled || !result.assets?.[0]) return;
-
     setUploadingAvatar(true);
     try {
       const uploaded = await profileApi.uploadAvatar(result.assets[0].uri);
       updateUser({ avatarUrl: uploaded.avatarUrl } as any);
-      Alert.alert("Success", "Profile picture updated.");
     } catch {
       Alert.alert("Error", "Failed to upload profile picture.");
     } finally {
@@ -79,96 +72,98 @@ export default function ProfileScreen() {
     }
   };
 
-  const formatDate = (iso?: string | null) => {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-  };
-  const formatRelativeTime = (iso?: string | null) => {
-    if (!iso) return "Never";
-    const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}d ago`;
-    return formatDate(iso);
-  };
+  const avatarUrl = (user as any)?.avatarUrl;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatar}>
-        {(user as any)?.avatarUrl ? (
-          <Image
-            source={{
-              uri: (user as any).avatarUrl.startsWith("http")
-                ? (user as any).avatarUrl
-                : `${SERVER_ORIGIN}/uploads/${(user as any).avatarUrl}`,
-            }}
-            style={styles.avatarImage}
-          />
-        ) : (
-          <Text style={styles.avatarText}>{user?.fullName?.charAt(0) ?? "S"}</Text>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      {/* Header card */}
+      <View style={styles.headerCard}>
+        <TouchableOpacity onPress={handlePickAvatar} disabled={uploadingAvatar} style={styles.avatarWrap}>
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl.startsWith("http") ? avatarUrl : `${SERVER_ORIGIN}/uploads/${avatarUrl}` }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarInitial}>{user?.fullName?.charAt(0) ?? "S"}</Text>
+            </View>
+          )}
+          <View style={styles.cameraBadge}>
+            <Ionicons name="camera" size={12} color="#fff" />
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.name}>{user?.fullName}</Text>
+        <Text style={styles.email}>{user?.email}</Text>
+        {user?.tenantName && (
+          <View style={styles.institutionBadge}>
+            <Ionicons name="school-outline" size={12} color="#2563EB" />
+            <Text style={styles.institutionText}>{user.tenantName}</Text>
+          </View>
         )}
-        <View style={styles.avatarCameraBadge}>
-          <Ionicons name="camera" size={14} color="#fff" />
+        {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+        <View style={styles.metaRow}>
+          <Text style={styles.metaText}>Member since {formatDate(profile?.createdAt)}</Text>
+          <Text style={styles.metaDot}>·</Text>
+          <Text style={styles.metaText}>Active {formatRelativeTime(profile?.lastLoginAt)}</Text>
         </View>
-      </TouchableOpacity>
-      <Text style={styles.email}>{user?.email}</Text>
-      {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-      <View style={styles.metaRow}>
-        <Text style={styles.metaText}>Member since {formatDate(profile?.createdAt)}</Text>
-        <Text style={styles.metaText}>Last login: {formatRelativeTime(profile?.lastLoginAt)}</Text>
       </View>
 
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push("/settings")}>
-        <Text style={styles.sectionTitle}>Settings</Text>
-        <Ionicons name="chevron-forward" size={18} color="#6B7280" />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push("/edit-profile")}>
-        <Text style={styles.sectionTitle}>Edit Profile</Text>
-        <Ionicons name="chevron-forward" size={18} color="#6B7280" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.navButton} onPress={() => router.push("/change-password")}>
-        <Text style={styles.sectionTitle}>Change Password</Text>
-        <Ionicons name="chevron-forward" size={18} color="#6B7280" />
-      </TouchableOpacity>
+      {/* Account section */}
+      <Text style={styles.sectionHeader}>Account</Text>
+      <View style={styles.menuCard}>
+        <MenuRow icon="person-outline" label="Edit Profile" onPress={() => router.push("/edit-profile")} />
+        <View style={styles.divider} />
+        <MenuRow icon="lock-closed-outline" label="Change Password" onPress={() => router.push("/change-password")} />
+      </View>
 
       {hasLawSubscription && (
-        <TouchableOpacity style={styles.saveButton} onPress={() => router.push("/precedents")}>
-          <Text style={styles.saveButtonText}>नजिर खोज (Precedent Search)</Text>
-        </TouchableOpacity>
+        <>
+          <Text style={styles.sectionHeader}>Study Tools</Text>
+          <View style={styles.menuCard}>
+            <MenuRow icon="search-outline" label="नजिर खोज (Precedent Search)" onPress={() => router.push("/precedents")} />
+          </View>
+        </>
       )}
 
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={() => {
-          logout();
-          router.replace("/(auth)/login");
-        }}
-      >
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
+      {/* Settings pushed lower, its own group */}
+      <Text style={styles.sectionHeader}>Preferences</Text>
+      <View style={styles.menuCard}>
+        <MenuRow icon="settings-outline" label="Settings" onPress={() => router.push("/settings")} />
+      </View>
+
+      <View style={styles.menuCard}>
+        <MenuRow
+          icon="log-out-outline"
+          label="Log Out"
+          danger
+          onPress={() => {
+            logout();
+            router.replace("/(auth)/login");
+          }}
+        />
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: "center", padding: 24, backgroundColor: "#F8FAFC" },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: "#2563EB", justifyContent: "center", alignItems: "center", marginBottom: 8 },
-  avatarText: { color: "#fff", fontSize: 28, fontWeight: "700" },
-  avatarImage: { width: 72, height: 72, borderRadius: 36 },
-  avatarCameraBadge: { position: "absolute", bottom: -2, right: -2, backgroundColor: "#2563EB", borderRadius: 10, width: 20, height: 20, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#fff" },
-  email: { fontSize: 14, color: "#6B7280", marginBottom: 4 },
-  bio: { fontSize: 13, color: "#4B5563", textAlign: "center", marginBottom: 8, paddingHorizontal: 16 },
-  metaRow: { alignItems: "center", marginBottom: 20 },
+  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  headerCard: { backgroundColor: "#fff", borderRadius: 16, padding: 24, alignItems: "center", borderWidth: 1, borderColor: "#E5E7EB", marginBottom: 20 },
+  avatarWrap: { marginBottom: 12 },
+  avatarImage: { width: 76, height: 76, borderRadius: 38 },
+  avatarPlaceholder: { width: 76, height: 76, borderRadius: 38, backgroundColor: "#2563EB", justifyContent: "center", alignItems: "center" },
+  avatarInitial: { color: "#fff", fontSize: 28, fontWeight: "700" },
+  cameraBadge: { position: "absolute", bottom: 0, right: 0, backgroundColor: "#2563EB", borderRadius: 10, width: 22, height: 22, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#fff" },
+  name: { fontSize: 18, fontWeight: "800", color: "#111827" },
+  email: { fontSize: 13, color: "#6B7280", marginTop: 2 },
+  institutionBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "#EFF6FF", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, marginTop: 8 },
+  institutionText: { fontSize: 12, fontWeight: "600", color: "#2563EB", marginLeft: 5 },
+  bio: { fontSize: 13, color: "#4B5563", textAlign: "center", marginTop: 8, paddingHorizontal: 8 },
+  metaRow: { flexDirection: "row", alignItems: "center", marginTop: 10 },
   metaText: { fontSize: 11, color: "#9CA3AF" },
-  sectionTitle: { fontSize: 14, fontWeight: "700", alignSelf: "flex-start", marginBottom: 8, marginTop: 8, color: "#374151" },
-  navButton: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fff", borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10, padding: 14, marginBottom: 10 },
-  input: { backgroundColor: "#fff", borderRadius: 10, padding: 12, marginBottom: 10, width: "100%", borderWidth: 1, borderColor: "#E5E7EB" },
-  saveButton: { backgroundColor: "#2563EB", borderRadius: 10, paddingVertical: 12, width: "100%", alignItems: "center", marginBottom: 20 },
-  saveButtonText: { color: "#fff", fontWeight: "700" },
-  logoutButton: { backgroundColor: "#FEE2E2", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10, marginTop: 12 },
-  logoutText: { color: "#DC2626", fontWeight: "700" },
+  metaDot: { fontSize: 11, color: "#D1D5DB", marginHorizontal: 6 },
+  sectionHeader: { fontSize: 12, fontWeight: "700", color: "#9CA3AF", textTransform: "uppercase", marginBottom: 8, marginTop: 4, marginLeft: 4 },
+  menuCard: { backgroundColor: "#fff", borderRadius: 14, borderWidth: 1, borderColor: "#E5E7EB", marginBottom: 20, overflow: "hidden" },
+  menuRow: { flexDirection: "row", alignItems: "center", paddingVertical: 14, paddingHorizontal: 16 },
+  menuIconBox: { width: 32, height: 32, borderRadius: 8, backgroundColor: "#EFF6FF", justifyContent: "center", alignItems: "center", marginRight: 12 },
+  menuLabel: { flex: 1, fontSize: 15, color: "#111827", fontWeight: "500" },
+  divider: { height: 1, backgroundColor: "#F3F4F6", marginLeft: 60 },
 });
