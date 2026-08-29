@@ -2,6 +2,7 @@ import { AppError } from "../../../common/errors/AppError";
 import { hashPassword } from "../../../common/utils/password";
 import { userRepository } from "../repository/user.repository";
 import { CreateUserInput, UpdateUserInput, ListUsersQuery } from "../dto/user.dto";
+import { prisma } from "../../../database/prisma";
 
 export const userService = {
   async list(lawFirmId: string, query: ListUsersQuery) {
@@ -117,9 +118,12 @@ export const userService = {
   // verify that automatically.
   async updateContactAsCompany(id: string, input: { fullName?: string; email?: string; phone?: string }) {
     if (input.email) {
-      const existing = await userRepository.findUserByEmail(input.email);
+      // Scope the duplicate check to the target user's own organization --
+      // the same email existing under a different org is fine.
+      const target = await userRepository.findUserById(id);
+      const existing = await prisma.user.findFirst({ where: { email: input.email, lawFirmId: target?.lawFirmId ?? null } });
       if (existing && existing.id !== id) {
-        throw AppError.badRequest("That email is already used by another account.");
+        throw AppError.badRequest("That email is already used by another account at this organization.");
       }
     }
     const result = await userRepository.updateContactUnscoped(id, input);

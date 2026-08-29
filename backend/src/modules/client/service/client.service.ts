@@ -1,4 +1,5 @@
 import { AppError } from "../../../common/errors/AppError";
+import { prisma } from "../../../database/prisma";
 import { hashPassword } from "../../../common/utils/password";
 import { clientRepository } from "../repository/client.repository";
 import { CreateClientInput, UpdateClientInput, ListClientsQuery, InviteClientInput } from "../dto/client.dto";
@@ -61,9 +62,11 @@ export const clientService = {
       throw AppError.badRequest("Client must have an email address before granting portal access");
     }
 
-    const existingUser = await clientRepository.findUserByEmail(client.email);
+    // Same email can exist under a different organization -- only a
+    // duplicate WITHIN this same law firm is actually a conflict.
+    const existingUser = await prisma.user.findFirst({ where: { email: client.email, lawFirmId } });
     if (existingUser) {
-      throw AppError.conflict("An account with this email already exists");
+      throw AppError.conflict("An account with this email already exists at this organization");
     }
 
     const passwordHash = await hashPassword(input.password);

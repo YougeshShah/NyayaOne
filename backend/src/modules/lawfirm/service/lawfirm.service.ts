@@ -22,10 +22,9 @@ export const lawFirmService = {
     return lawFirmRepository.findPublicInstitutions();
   },
   async create(input: CreateLawFirmInput, createdByUserId: string) {
-    const existing = await lawFirmRepository.findUserByEmail(input.adminEmail);
-    if (existing) {
-      throw AppError.conflict("An account with this admin email already exists");
-    }
+    // No duplicate-email check here -- this always creates a brand new
+    // organization with its own lawFirmId, so the same admin email existing
+    // under a different (or no) organization is expected and fine.
 
     // Company no longer sets the institution admin's password directly --
     // a random temporary one is generated instead, and the admin is
