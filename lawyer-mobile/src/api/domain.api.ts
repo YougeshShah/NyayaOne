@@ -12,7 +12,21 @@ export interface FirmUser {
   id: string;
   fullName: string;
   email: string;
-  accountType: string;
+  phone: string | null;
+  accountType: "LAWYER" | "STAFF";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION";
+  barRegistrationNo: string | null;
+  specialization: string | null;
+  createdAt: string;
+}
+export interface CreateFirmUserPayload {
+  fullName: string;
+  email: string;
+  phone?: string;
+  password: string;
+  accountType: "LAWYER" | "STAFF";
+  barRegistrationNo?: string;
+  specialization?: string;
 }
 
 export interface CreateCasePayload {
@@ -117,5 +131,21 @@ export const userApi = {
       params: { accountType: "LAWYER", limit: 100 },
     });
     return data.data.items;
+  },
+  async listAll(params: { accountType?: "LAWYER" | "STAFF"; status?: string; search?: string } = {}): Promise<PaginatedResult<FirmUser>> {
+    const { data } = await apiClient.get<ApiSuccessResponse<PaginatedResult<FirmUser>>>("/users", { params });
+    return data.data;
+  },
+  async createFirmUser(payload: CreateFirmUserPayload): Promise<FirmUser> {
+    const { data } = await apiClient.post<ApiSuccessResponse<FirmUser>>("/users", payload);
+    return data.data;
+  },
+  async updateFirmUserStatus(id: string, status: string): Promise<FirmUser> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<FirmUser>>(`/users/${id}/status`, { status });
+    return data.data;
+  },
+  async resetFirmUserPassword(id: string): Promise<{ newPassword: string }> {
+    const { data } = await apiClient.patch<ApiSuccessResponse<{ newPassword: string }>>(`/users/${id}/reset-password`);
+    return data.data;
   },
 };

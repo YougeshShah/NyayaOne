@@ -61,6 +61,27 @@ export function useLawyers() {
   return useQuery({ queryKey: ["lawyers"], queryFn: () => userApi.listLawyers() });
 }
 
+export function useFirmUsers(params: { accountType?: "LAWYER" | "STAFF"; status?: string; search?: string } = {}) {
+  return useQuery({ queryKey: ["firm-users", params], queryFn: () => userApi.listAll(params) });
+}
+
+export function useFirmUserActions() {
+  const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["firm-users"] });
+  const create = useMutation({
+    mutationFn: (payload: import("../api/domain.api").CreateFirmUserPayload) => userApi.createFirmUser(payload),
+    onSuccess: invalidate,
+  });
+  const updateStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => userApi.updateFirmUserStatus(id, status),
+    onSuccess: invalidate,
+  });
+  const resetPassword = useMutation({
+    mutationFn: (id: string) => userApi.resetFirmUserPassword(id),
+  });
+  return { create, updateStatus, resetPassword };
+}
+
 export function useCreateCase() {
   const queryClient = useQueryClient();
   return useMutation({
