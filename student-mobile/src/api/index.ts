@@ -164,6 +164,32 @@ export const profileApi = {
   },
 };
 
+export interface StudyAnalytics {
+  testsTaken: number;
+  averageScorePercent: number;
+  overallCompletionPercent: number;
+  subjectsInProgress: number;
+  practiceQuestionsAnswered: number;
+  practiceAccuracyPercent: number;
+}
+export interface TestAttemptSummary {
+  id: string;
+  score: number | null;
+  totalQuestions: number;
+  startedAt: string;
+  submittedAt: string | null;
+  mockTest: { title: string };
+}
+export const progressApi = {
+  async getAnalytics(): Promise<StudyAnalytics> {
+    const { data } = await apiClient.get<ApiSuccess<StudyAnalytics>>("/study-progress/analytics");
+    return data.data;
+  },
+  async myAttempts(): Promise<TestAttemptSummary[]> {
+    const { data } = await apiClient.get<ApiSuccess<TestAttemptSummary[]>>("/mock-tests/my-attempts");
+    return data.data;
+  },
+};
 export const notificationApi = {
   async myNotifications(page = 1, limit = 30) {
     const { data } = await apiClient.get<

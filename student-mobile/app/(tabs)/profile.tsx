@@ -114,6 +114,11 @@ export default function ProfileScreen() {
         <MenuRow icon="lock-closed-outline" label="Change Password" onPress={() => router.push("/change-password")} />
       </View>
 
+      <Text style={styles.sectionHeader}>Learning</Text>
+      <View style={styles.menuCard}>
+        <MenuRow icon="bar-chart-outline" label="My Progress" onPress={() => router.push("/progress")} />
+      </View>
+
       {hasLawSubscription && (
         <>
           <Text style={styles.sectionHeader}>Study Tools</Text>
