@@ -131,20 +131,18 @@ export const authService = {
         include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
       });
     } else {
-      user = await prisma.user.findFirst({
-        where: { email: input.email, lawFirmId: null },
+      // Check ALL accounts with this email first -- not just the no-org
+      // one -- so a Company account sharing an email with an organization
+      // account never gets silently picked over the one the person
+      // actually meant to log into.
+      const matches = await prisma.user.findMany({
+        where: { email: input.email },
         include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
       });
-      if (!user) {
-        const matches = await prisma.user.findMany({
-          where: { email: input.email },
-          include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
-        });
-        if (matches.length > 1) {
-          throw AppError.badRequest("This email is registered with more than one organization. Please log in from that organization's page.");
-        }
-        user = matches[0];
+      if (matches.length > 1) {
+        throw AppError.badRequest("This email is registered with more than one organization. Please log in from that organization's page.");
       }
+      user = matches[0];
     }
     if (!user) {
       throw AppError.unauthorized("Invalid email or password");

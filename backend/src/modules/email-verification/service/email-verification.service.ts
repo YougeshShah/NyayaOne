@@ -57,16 +57,15 @@ export const emailVerificationService = {
       if (!firm) throw AppError.notFound("No account found with this email.");
       result = await prisma.user.updateMany({ where: { email: normalizedEmail, lawFirmId: firm.id }, data: { passwordHash } });
     } else {
-      result = await prisma.user.updateMany({ where: { email: normalizedEmail, lawFirmId: null }, data: { passwordHash } });
-      if (result.count === 0) {
-        // Fall back for accounts that predate multi-org scoping, or when
-        // the email only exists under one organization -- same pattern as login.
-        const matches = await prisma.user.findMany({ where: { email: normalizedEmail } });
-        if (matches.length > 1) {
-          throw AppError.badRequest("This email is registered with more than one organization. Please reset your password from that organization's page.");
-        }
-        result = await prisma.user.updateMany({ where: { email: normalizedEmail }, data: { passwordHash } });
+      // Check ALL accounts with this email first -- not just the no-org
+      // (e.g. Company) one -- so a Company account sharing an email with an
+      // organization account never gets silently picked over the account
+      // the person actually meant to reset.
+      const matches = await prisma.user.findMany({ where: { email: normalizedEmail } });
+      if (matches.length > 1) {
+        throw AppError.badRequest("This email is registered with more than one organization. Please reset your password from that organization's page.");
       }
+      result = await prisma.user.updateMany({ where: { email: normalizedEmail }, data: { passwordHash } });
     }
     if (result.count === 0) throw AppError.notFound("No account found with this email.");
   },
