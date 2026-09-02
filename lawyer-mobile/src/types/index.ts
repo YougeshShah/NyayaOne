@@ -89,5 +89,6 @@ export interface Client {
   email: string | null;
   address: string | null;
   createdAt: string;
+  userId: string | null;
   _count?: { cases: number };
 }

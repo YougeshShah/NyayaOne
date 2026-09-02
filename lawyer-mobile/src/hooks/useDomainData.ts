@@ -57,6 +57,14 @@ export function useCourts(search?: string) {
   return useQuery({ queryKey: ["courts", search], queryFn: () => courtApi.list({ search }) });
 }
 
+export function useInviteClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) => clientApi.invite(id, password),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+}
+
 export function useLawyers() {
   return useQuery({ queryKey: ["lawyers"], queryFn: () => userApi.listLawyers() });
 }

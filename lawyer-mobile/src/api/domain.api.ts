@@ -114,6 +114,10 @@ export const clientApi = {
     const { data } = await apiClient.post<ApiSuccessResponse<Client>>("/clients", payload);
     return data.data;
   },
+  async invite(id: string, password: string): Promise<{ message: string }> {
+    const { data } = await apiClient.post<ApiSuccessResponse<{ message: string }>>(`/clients/${id}/invite`, { password });
+    return data.data;
+  },
 };
 
 export const courtApi = {
