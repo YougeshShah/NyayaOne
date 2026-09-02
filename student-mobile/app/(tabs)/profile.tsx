@@ -117,6 +117,8 @@ export default function ProfileScreen() {
       <Text style={styles.sectionHeader}>Learning</Text>
       <View style={styles.menuCard}>
         <MenuRow icon="bar-chart-outline" label="My Progress" onPress={() => router.push("/progress")} />
+        <View style={styles.divider} />
+        <MenuRow icon="videocam-outline" label="Live Classes" onPress={() => router.push("/live-classes")} />
       </View>
 
       {hasLawSubscription && (
