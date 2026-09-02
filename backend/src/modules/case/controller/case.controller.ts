@@ -36,7 +36,7 @@ export const caseController = {
     const lawFirmId = requireFirmContext(req);
     const { id } = caseIdParamSchema.parse(req.params);
     const input = updateCaseSchema.parse(req.body);
-    const result = await caseService.update(id, lawFirmId, input);
+    const result = await caseService.update(id, lawFirmId, input, req.auth!.userId);
     res.status(200).json({ success: true, message: "Case updated successfully", data: result });
   },
 

@@ -101,11 +101,13 @@ export default function ProfileScreen() {
           <Text style={styles.actionButtonText}>{t("changePassword")}</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={handleTestPush} disabled={sendingTest}>
-          <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-          <Text style={styles.actionButtonText}>{sendingTest ? "..." : t("sendTestNotification")}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
+        {__DEV__ && (
+          <TouchableOpacity style={styles.actionButton} onPress={handleTestPush} disabled={sendingTest}>
+            <Ionicons name="notifications-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>{sendingTest ? "..." : t("sendTestNotification")}</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/settings")}>
           <Ionicons name="settings-outline" size={20} color={colors.primary} />
           <Text style={styles.actionButtonText}>Settings</Text>

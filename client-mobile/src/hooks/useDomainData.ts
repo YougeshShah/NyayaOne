@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clientPortalApi } from "../api/clientPortal.api";
 import { authExtraApi, UpdateProfilePayload } from "../api/authExtra.api";
 import { useAuthStore } from "../store/authStore";
@@ -21,6 +21,14 @@ export function useMyHearings(upcomingOnly = false) {
 
 export function useMyDocuments() {
   return useQuery({ queryKey: ["my-documents"], queryFn: () => clientPortalApi.myDocuments() });
+}
+export function useUploadDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ caseId, category, fileUri, fileName, mimeType }: { caseId: string; category: string; fileUri: string; fileName: string; mimeType: string }) =>
+      clientPortalApi.uploadDocument(caseId, category, fileUri, fileName, mimeType),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-documents"] }),
+  });
 }
 
 export function useChangePassword() {

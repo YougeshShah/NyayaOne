@@ -55,7 +55,7 @@ export const hearingController = {
     const { lawFirmId } = requireFirmContext(req);
     const { id } = hearingIdParamSchema.parse(req.params);
     const input = updateHearingSchema.parse(req.body);
-    const result = await hearingService.update(id, lawFirmId, input);
+    const result = await hearingService.update(id, lawFirmId, input, req.auth!.userId);
     res.status(200).json({ success: true, message: "Hearing updated successfully", data: result });
   },
 };

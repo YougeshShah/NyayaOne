@@ -1,6 +1,8 @@
 import { AppError } from "../../../common/errors/AppError";
 import { hearingRepository } from "../repository/hearing.repository";
 import { CreateHearingInput, UpdateHearingInput, ListHearingsQuery } from "../dto/hearing.dto";
+import { prisma } from "../../../database/prisma";
+import { notificationRepository } from "../../notification/repository/notification.repository";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -87,7 +89,7 @@ export const hearingService = {
    * nextHearingDate supplied, a follow-up hearing is automatically created
    * and linked — preserving the full hearing history chain (previous <-> next).
    */
-  async update(id: string, lawFirmId: string, input: UpdateHearingInput) {
+  async update(id: string, lawFirmId: string, input: UpdateHearingInput, updatedByUserId: string) {
     const existing = await this.getById(id, lawFirmId);
 
     const { nextHearingDate, ...rest } = input;
@@ -103,6 +105,29 @@ export const hearingService = {
         reminders,
       });
       await hearingRepository.linkNextHearing(id, nextHearing.id);
+    }
+
+    // Notify any client(s) on this case who have portal access (a linked
+    // User account) that their hearing was updated -- best-effort, never
+    // blocks the actual hearing update if it fails for any reason.
+    try {
+      const caseClients = await prisma.caseClient.findMany({
+        where: { caseId: existing.caseId },
+        select: { client: { select: { userId: true } } },
+      });
+      const clientUserIds = caseClients.map((cc) => cc.client.userId).filter((uid): uid is string => !!uid);
+      for (const clientUserId of clientUserIds) {
+        const notification = await notificationRepository.createNotification({
+          title: "Hearing Updated",
+          body: `A hearing for your case has been updated. Check the app for the latest details.`,
+          audience: "INDIVIDUAL_USER",
+          targetId: clientUserId,
+          createdBy: updatedByUserId,
+        });
+        await notificationRepository.bulkCreateUserNotifications(notification.id, [clientUserId]);
+      }
+    } catch {
+      // Notification failure should never break the actual hearing update.
     }
 
     return this.getById(id, lawFirmId);

@@ -45,4 +45,14 @@ export const clientPortalController = {
       }
     });
   },
+  async uploadDocument(req: Request, res: Response) {
+    const userId = requireUserId(req);
+    if (!req.file) {
+      throw AppError.badRequest("No file was uploaded. Attach a file under field name 'file'.");
+    }
+    const { caseId, category } = req.body;
+    if (!caseId) throw AppError.badRequest("caseId is required.");
+    const result = await clientPortalService.uploadDocument(userId, caseId, category || "OTHER", req.file);
+    res.status(201).json({ success: true, message: "Document uploaded successfully", data: result });
+  },
 };

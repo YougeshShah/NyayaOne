@@ -23,4 +23,14 @@ export const clientPortalApi = {
     const { data } = await apiClient.get<ApiSuccessResponse<CaseDocument[]>>("/client-portal/documents");
     return data.data;
   },
+  async uploadDocument(caseId: string, category: string, fileUri: string, fileName: string, mimeType: string): Promise<CaseDocument> {
+    const formData = new FormData();
+    formData.append("caseId", caseId);
+    formData.append("category", category);
+    formData.append("file", { uri: fileUri, name: fileName, type: mimeType } as any);
+    const { data } = await apiClient.post<ApiSuccessResponse<CaseDocument>>("/client-portal/documents", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data;
+  },
 };

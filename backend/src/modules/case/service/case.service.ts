@@ -2,6 +2,7 @@ import { prisma } from "../../../database/prisma";
 import { AppError } from "../../../common/errors/AppError";
 import { caseRepository } from "../repository/case.repository";
 import { CreateCaseInput, UpdateCaseInput, ListCasesQuery } from "../dto/case.dto";
+import { notificationRepository } from "../../notification/repository/notification.repository";
 
 export const caseService = {
   async list(lawFirmId: string, query: ListCasesQuery) {
@@ -79,10 +80,33 @@ export const caseService = {
     });
   },
 
-  async update(id: string, lawFirmId: string, input: UpdateCaseInput) {
+  async update(id: string, lawFirmId: string, input: UpdateCaseInput, updatedByUserId: string) {
     await this.getById(id, lawFirmId);
     const result = await caseRepository.updateScoped(id, lawFirmId, input);
     if (result.count === 0) throw AppError.notFound("Case not found in your firm");
+
+    // Notify any client(s) on this case who have portal access -- same
+    // best-effort pattern used for hearing updates.
+    try {
+      const caseClients = await prisma.caseClient.findMany({
+        where: { caseId: id },
+        select: { client: { select: { userId: true } } },
+      });
+      const clientUserIds = caseClients.map((cc) => cc.client.userId).filter((uid): uid is string => !!uid);
+      for (const clientUserId of clientUserIds) {
+        const notification = await notificationRepository.createNotification({
+          title: "Case Updated",
+          body: "Your case details have been updated. Check the app for the latest information.",
+          audience: "INDIVIDUAL_USER",
+          targetId: clientUserId,
+          createdBy: updatedByUserId,
+        });
+        await notificationRepository.bulkCreateUserNotifications(notification.id, [clientUserId]);
+      }
+    } catch {
+      // Notification failure should never break the actual case update.
+    }
+
     return this.getById(id, lawFirmId);
   },
 
