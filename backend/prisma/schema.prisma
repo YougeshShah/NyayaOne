@@ -968,6 +968,7 @@ model LiveClass {
   durationMinutes Int      @default(60)
   isFreeDemo      Boolean  @default(false)
   status          LiveClassStatus @default(SCHEDULED)
+  reminderSent    Boolean  @default(false) // "starting in 10 minutes" push -- set true once sent, never resent
   recordingUrl    String? // uploaded after class ends — subscribed students can watch anytime after
   // Null = hosted directly by TrailBlaze (Company) for all subscribers of
   // the course. Set = hosted by a specific institution's own staff — only

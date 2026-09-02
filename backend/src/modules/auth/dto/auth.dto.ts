@@ -39,6 +39,10 @@ export const loginSchema = z.object({
   // different institutions). Detected the same way as at registration --
   // subdomain in production, ?org= query param for now.
   institutionSlug: z.string().optional(),
+  // Set by Company Web specifically -- Company has no slug of its own, so
+  // this is how it declares "log me into the Company account" even when
+  // the same email also exists under an organization.
+  asCompany: z.boolean().optional(),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 

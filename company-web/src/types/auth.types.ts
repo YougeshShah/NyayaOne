@@ -16,6 +16,7 @@ export interface AuthUser {
 export interface LoginPayload {
   email: string;
   password: string;
+  asCompany?: boolean;
 }
 
 export interface LoginResponse {

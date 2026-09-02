@@ -4,6 +4,8 @@ import { liveClassRepository } from "../repository/live-class.repository";
 import { courseService } from "../../course/service/course.service";
 import { CreateLiveClassInput, ListLiveClassesQuery } from "../dto/live-class.dto";
 import { lawFirmRepository } from "../../lawfirm/repository/lawfirm.repository";
+import { prisma } from "../../../database/prisma";
+import { notificationRepository } from "../../notification/repository/notification.repository";
 
 // Free public Jitsi Meet server — no API key, no per-minute cost. Self-hosting
 // is a drop-in swap later (just change this base URL) if usage outgrows what
@@ -78,6 +80,44 @@ export const liveClassService = {
     const allHostIds = [hostId, ...(input.cohostIds ?? []).filter((id) => id !== hostId)];
     await liveClassRepository.setCohosts(liveClass.id, hostId, allHostIds);
 
+    // Notify every student at this institution that a new class was
+    // scheduled -- includes the actual date/time so the notification is
+    // useful on its own, not just a generic "check the app" prompt.
+    // Best-effort, never blocks the actual class creation.
+    if (hostLawFirmId) {
+      try {
+        // Only students subscribed to THIS course at this institution --
+        // not every student at the institution regardless of what they study.
+        const students = await prisma.user.findMany({
+          where: {
+            accountType: "STUDENT",
+            lawFirmId: hostLawFirmId,
+            courseSubscriptions: { some: { courseId: input.courseId } },
+          },
+          select: { id: true },
+        });
+        const scheduledLabel = new Date(input.scheduledAt).toLocaleString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        for (const student of students) {
+          const notification = await notificationRepository.createNotification({
+            title: "New Live Class Scheduled",
+            body: `"${input.title}" is scheduled for ${scheduledLabel} (${input.durationMinutes} min).`,
+            audience: "INDIVIDUAL_USER",
+            targetId: student.id,
+            createdBy: creatorId,
+          });
+          await notificationRepository.bulkCreateUserNotifications(notification.id, [student.id]);
+        }
+      } catch {
+        // Notification failure should never break class creation.
+      }
+    }
+
     return liveClass;
   },
 
@@ -97,6 +137,19 @@ export const liveClassService = {
     const allowed = await courseService.canAccess(studentId, liveClass.courseId, liveClass.isFreeDemo);
     if (!allowed) {
       throw AppError.forbidden("Subscribe to this course to join this live class.");
+    }
+
+    // Students can only join starting 10 minutes before the scheduled time
+    // through the end of the class -- never earlier. The host is exempt
+    // (see joinAsHost below), since they need to be in the room first.
+    const now = new Date();
+    const joinWindowStart = new Date(liveClass.scheduledAt.getTime() - 10 * 60 * 1000);
+    const joinWindowEnd = new Date(liveClass.scheduledAt.getTime() + liveClass.durationMinutes * 60 * 1000);
+    if (now < joinWindowStart) {
+      throw AppError.forbidden("This class hasn't started yet. You can join starting 10 minutes before it begins.");
+    }
+    if (now > joinWindowEnd && liveClass.status !== "LIVE") {
+      throw AppError.forbidden("This class has already ended.");
     }
 
     await liveClassRepository.recordAttendance(liveClassId, studentId);

@@ -164,6 +164,14 @@ export const authService = {
         where: { email: input.email, lawFirmId: firm.id },
         include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
       });
+    } else if (input.asCompany) {
+      // Company Web explicitly declared its context -- go straight to the
+      // Company account (lawFirmId: null), skipping the ambiguity check
+      // entirely, since Company Web itself has no slug to disambiguate with.
+      user = await prisma.user.findFirst({
+        where: { email: input.email, lawFirmId: null },
+        include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
+      });
     } else {
       // Check ALL accounts with this email first -- not just the no-org
       // one -- so a Company account sharing an email with an organization

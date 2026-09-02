@@ -11,7 +11,7 @@ export function LoginPage() {
   const loginMutation = useLogin();
 
   const onSubmit = (data: LoginPayload) => {
-    loginMutation.mutate(data);
+    loginMutation.mutate({ ...data, asCompany: true });
   };
 
   return (
