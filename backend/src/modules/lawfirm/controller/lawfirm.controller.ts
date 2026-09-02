@@ -70,4 +70,9 @@ export const lawFirmController = {
     await lawFirmService.remove(id);
     res.status(200).json({ success: true, message: "Organization permanently deleted" });
   },
+  async monthlyGrowth(req: Request, res: Response) {
+    const months = req.query.months ? parseInt(req.query.months as string, 10) : 6;
+    const result = await lawFirmService.monthlyGrowth(months);
+    res.status(200).json({ success: true, data: result });
+  },
 };

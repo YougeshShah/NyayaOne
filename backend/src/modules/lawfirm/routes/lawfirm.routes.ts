@@ -15,6 +15,7 @@ router.get("/public", lawFirmController.listPublic);
 router.use(authenticate, authorize("COMPANY"));
 
 router.get("/", lawFirmController.list);
+router.get("/analytics/monthly-growth", lawFirmController.monthlyGrowth);
 router.post("/", requirePermission("lawfirm.approve"), lawFirmController.create);
 router.get("/:id", lawFirmController.getById);
 router.patch("/:id/approve", requirePermission("lawfirm.approve"), lawFirmController.approve);

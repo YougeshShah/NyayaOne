@@ -242,4 +242,17 @@ export const lawFirmService = {
     }
     await lawFirmRepository.deleteCascade(id);
   },
+  // Monthly organization registration counts for the last N months --
+  // powers the growth chart on the Company dashboard.
+  async monthlyGrowth(months: number = 6) {
+    const now = new Date();
+    const results: { month: string; count: number }[] = [];
+    for (let i = months - 1; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const count = await lawFirmRepository.countCreatedBetween(start, end);
+      results.push({ month: start.toLocaleDateString(undefined, { month: "short", year: "2-digit" }), count });
+    }
+    return results;
+  },
 };

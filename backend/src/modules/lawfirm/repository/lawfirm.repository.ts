@@ -166,4 +166,7 @@ export const lawFirmRepository = {
       await tx.lawFirm.delete({ where: { id: lawFirmId } });
     });
   },
+  countCreatedBetween(start: Date, end: Date) {
+    return prisma.lawFirm.count({ where: { createdAt: { gte: start, lt: end } } });
+  },
 };

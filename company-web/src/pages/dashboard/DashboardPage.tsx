@@ -6,6 +6,9 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmptyOutlined";
 import { useLawFirms } from "../../hooks/useLawFirms";
+import { useQuery } from "@tanstack/react-query";
+import { lawFirmApi } from "../../api/lawfirm.api";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useCourts } from "../../hooks/useCourts";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { useAuthStore } from "../../store/authStore";
@@ -73,6 +76,7 @@ export function DashboardPage() {
   const { data: pendingFirms } = useLawFirms({ status: "PENDING", page: 1 });
   const { data: activeFirms } = useLawFirms({ status: "ACTIVE", page: 1 });
   const { data: courts } = useCourts({ page: 1 });
+  const { data: growth } = useQuery({ queryKey: ["monthly-growth"], queryFn: () => lawFirmApi.monthlyGrowth(6) });
 
   return (
     <Box>
@@ -104,6 +108,22 @@ export function DashboardPage() {
           <StatCard label={t("registeredCourts")} value={courts?.pagination.total ?? "—"} icon={<GavelIcon />} color="#1E3A5F" />
         </Grid>
       </Grid>
+
+      {/* Growth chart */}
+      <Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 3, p: 3, mb: 4 }}>
+        <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+          Organization Growth (Last 6 Months)
+        </Typography>
+        <ResponsiveContainer width="100%" height={220}>
+          <LineChart data={growth ?? []}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+            <Tooltip />
+            <Line type="monotone" dataKey="count" stroke="#1E3A5F" strokeWidth={2.5} dot={{ r: 4 }} name="New Organizations" />
+          </LineChart>
+        </ResponsiveContainer>
+      </Paper>
 
       {/* Pending approvals preview -- surfaces the most actionable thing on
           this dashboard instead of leaving it buried in a separate page. */}

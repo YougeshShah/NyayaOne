@@ -71,4 +71,10 @@ export const lawFirmApi = {
     });
     return data.data;
   },
+  async monthlyGrowth(months: number = 6): Promise<{ month: string; count: number }[]> {
+    const { data } = await apiClient.get<ApiSuccessResponse<{ month: string; count: number }[]>>("/law-firms/analytics/monthly-growth", {
+      params: { months },
+    });
+    return data.data;
+  },
 };
