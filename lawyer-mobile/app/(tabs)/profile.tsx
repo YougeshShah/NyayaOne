@@ -113,6 +113,13 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
+        {user?.accountType === "LAW_FIRM_ADMIN" && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/roles")}>
+            <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Roles & Permissions</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/precedents")}>
           <Ionicons name="library-outline" size={20} color={colors.primary} />
           <Text style={styles.actionButtonText}>नजिर खोज (Precedent Search)</Text>
