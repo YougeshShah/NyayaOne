@@ -99,6 +99,20 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
+        {user?.accountType === "LAW_FIRM_ADMIN" && user?.tenantType === "EDUCATION" && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/students")}>
+            <Ionicons name="school-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Students</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+        {user?.accountType === "LAW_FIRM_ADMIN" && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/reports")}>
+            <Ionicons name="bar-chart-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Reports</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/precedents")}>
           <Ionicons name="library-outline" size={20} color={colors.primary} />
           <Text style={styles.actionButtonText}>नजिर खोज (Precedent Search)</Text>
