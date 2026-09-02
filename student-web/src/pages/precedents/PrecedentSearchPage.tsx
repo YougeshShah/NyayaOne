@@ -73,6 +73,7 @@ export function PrecedentSearchPage() {
   const { data: detail, isLoading: loadingDetail } = usePrecedentDetail(viewingId ?? undefined);
 
   useEffect(() => setActiveMatchIndex(0), [inDocSearch, viewingId]);
+  useEffect(() => setInDocSearch(""), [viewingId]);
 
   const handleSearchSubmit = () => {
     setSearch(searchInput);
