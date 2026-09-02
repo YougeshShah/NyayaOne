@@ -53,4 +53,8 @@ export const institutionStudentApi = {
   async remove(id: string) {
     await apiClient.delete(`/auth/institution-students/${id}`);
   },
+  async analytics(): Promise<{ enrollmentTrend: { month: string; count: number }[]; totalTestsTaken: number; averageScorePercent: number }> {
+    const { data } = await apiClient.get("/auth/institution-analytics");
+    return data.data;
+  },
 };

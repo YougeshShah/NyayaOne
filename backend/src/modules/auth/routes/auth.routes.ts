@@ -22,6 +22,7 @@ router.patch("/me", authenticate, authController.updateMyProfile);
 // Institution (Education tenant) admin adds their own students directly.
 router.post("/institution-students", authenticate, authorize("LAW_FIRM_ADMIN"), authController.addInstitutionStudent);
 router.get("/institution-students", authenticate, authorize("LAW_FIRM_ADMIN"), authController.listInstitutionStudents);
+router.get("/institution-analytics", authenticate, authorize("LAW_FIRM_ADMIN"), authController.institutionAnalytics);
 router.patch("/institution-students/:id", authenticate, authorize("LAW_FIRM_ADMIN"), authController.updateInstitutionStudent);
 router.delete("/institution-students/:id", authenticate, authorize("LAW_FIRM_ADMIN"), authController.removeInstitutionStudent);
 

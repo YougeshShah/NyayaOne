@@ -98,6 +98,40 @@ export const authService = {
   async listInstitutionStudents(lawFirmId: string, status?: "ACTIVE" | "PENDING_VERIFICATION") {
     return authRepository.findStudentsByLawFirmId(lawFirmId, status);
   },
+  // Institution-wide analytics: enrollment trend (last 6 months), average
+  // test score across all of this institution's students, and total tests
+  // taken -- surfaces the "ongoing trend, not just final results" pattern
+  // real-world education dashboards use.
+  async institutionAnalytics(lawFirmId: string) {
+    const now = new Date();
+    const enrollmentTrend: { month: string; count: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const count = await prisma.user.count({
+        where: { accountType: "STUDENT", lawFirmId, createdAt: { gte: start, lt: end } },
+      });
+      enrollmentTrend.push({ month: start.toLocaleDateString(undefined, { month: "short", year: "2-digit" }), count });
+    }
+
+    const attempts = await prisma.testAttempt.findMany({
+      where: { student: { lawFirmId, accountType: "STUDENT" }, submittedAt: { not: null } },
+      select: { score: true, totalQuestions: true },
+    });
+    const scoredAttempts = attempts.filter((a) => a.score !== null && a.totalQuestions > 0);
+    const averageScorePercent =
+      scoredAttempts.length > 0
+        ? Math.round(
+            (scoredAttempts.reduce((sum, a) => sum + (a.score! / a.totalQuestions) * 100, 0) / scoredAttempts.length)
+          )
+        : 0;
+
+    return {
+      enrollmentTrend,
+      totalTestsTaken: attempts.length,
+      averageScorePercent,
+    };
+  },
 
   async updateInstitutionStudent(
     id: string,

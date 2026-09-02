@@ -34,7 +34,12 @@ export const authController = {
     res.status(201).json({ success: true, data: result });
   },
 
-  async listInstitutionStudents(req: Request, res: Response) {
+  async institutionAnalytics(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    const result = await authService.institutionAnalytics(req.auth.lawFirmId!);
+    res.status(200).json({ success: true, data: result });
+  },
+    async listInstitutionStudents(req: Request, res: Response) {
     if (!req.auth?.lawFirmId) throw AppError.forbidden("No organization associated with this account");
     const status = req.query.status as "ACTIVE" | "PENDING_VERIFICATION" | undefined;
     const result = await authService.listInstitutionStudents(req.auth.lawFirmId, status);

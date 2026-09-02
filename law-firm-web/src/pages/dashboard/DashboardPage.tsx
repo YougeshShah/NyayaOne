@@ -10,6 +10,8 @@ import { useClients } from "../../hooks/useClients";
 import { useTodayHearings, useUpcomingHearings } from "../../hooks/useHearings";
 import { useMyFirmSubscription } from "../../hooks/useSubscription";
 import { useInstitutionStudents } from "../../hooks/useInstitutionStudents";
+import { institutionStudentApi } from "../../api/institutionStudent.api";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { liveClassInstitutionApi } from "../../api/liveClassInstitution.api";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
@@ -82,6 +84,7 @@ function EducationDashboard() {
   const { data: students } = useInstitutionStudents();
   const { data: liveClasses } = useQuery({ queryKey: ["institution-dashboard-classes"], queryFn: () => liveClassInstitutionApi.list() });
   const { data: subscription } = useMyFirmSubscription();
+  const { data: analytics } = useQuery({ queryKey: ["institution-analytics"], queryFn: () => institutionStudentApi.analytics() });
 
   const upcomingClasses = (liveClasses ?? []).filter((c) => c.status === "SCHEDULED").slice(0, 6);
 
@@ -114,6 +117,47 @@ function EducationDashboard() {
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <StatCard label="Live Classes Hosted" value={liveClasses?.length ?? "—"} icon={<ArticleIcon />} color="#1D6E52" />
+        </Grid>
+      </Grid>
+
+      {/* Ongoing performance trend, not just final results -- matches
+          real-world education dashboard patterns. */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={8}>
+          <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb" }}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+              Student Enrollment Trend (Last 6 Months)
+            </Typography>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={analytics?.enrollmentTrend ?? []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Line type="monotone" dataKey="count" stroke="#0F4C3A" strokeWidth={2.5} dot={{ r: 4 }} name="New Students" />
+              </LineChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2.5 }}>
+            <Box>
+              <Typography variant="h4" fontWeight={800} color="#0F4C3A">
+                {analytics?.averageScorePercent ?? 0}%
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Average Test Score
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h4" fontWeight={800} color="#B8860B">
+                {analytics?.totalTestsTaken ?? 0}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Total Tests Taken
+              </Typography>
+            </Box>
+          </Paper>
         </Grid>
       </Grid>
 
