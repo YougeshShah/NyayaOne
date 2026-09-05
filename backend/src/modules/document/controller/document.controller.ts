@@ -61,4 +61,11 @@ export const documentController = {
     await documentService.remove(id, lawFirmId);
     res.status(200).json({ success: true, message: "Document deleted" });
   },
+  async toggleClientVisibility(req: Request, res: Response) {
+    const { lawFirmId } = requireFirmContext(req);
+    const { id } = documentIdParamSchema.parse(req.params);
+    const visibleToClient = !!req.body.visibleToClient;
+    await documentService.toggleClientVisibility(id, lawFirmId, visibleToClient);
+    res.status(200).json({ success: true, message: "Visibility updated" });
+  },
 };

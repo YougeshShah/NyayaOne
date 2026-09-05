@@ -63,4 +63,7 @@ export const documentRepository = {
   findCaseScoped(caseId: string, lawFirmId: string) {
     return prisma.case.findFirst({ where: { id: caseId, lawFirmId } });
   },
+  setClientVisibility(id: string, lawFirmId: string, visibleToClient: boolean) {
+    return prisma.document.updateMany({ where: { id, lawFirmId }, data: { visibleToClient } });
+  },
 };

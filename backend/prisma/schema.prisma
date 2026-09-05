@@ -505,6 +505,12 @@ model Document {
   fileType     String // pdf, image, docx
   fileSizeKb   Int?
   category     DocumentCategory @default(OTHER)
+  // Lawyer-controlled: whether the client on this case can see this
+  // document in their portal. Defaults true for lawyer uploads (most
+  // shared documents are meant for the client); set explicitly false for
+  // internal-only files. Documents the CLIENT themselves uploaded are
+  // always visible to them regardless of this flag.
+  visibleToClient Boolean        @default(true)
 
   uploadedBy   User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
   uploadedById String

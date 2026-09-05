@@ -34,12 +34,12 @@ export const clientPortalService = {
 
   async myDocuments(userId: string) {
     const client = await requireClientRecord(userId);
-    return clientPortalRepository.findMyDocuments(client.id);
+    return clientPortalRepository.findMyDocuments(client.id, userId);
   },
 
   async myDocumentById(userId: string, documentId: string) {
     const client = await requireClientRecord(userId);
-    const doc = await clientPortalRepository.findDocumentByIdForClient(documentId, client.id);
+    const doc = await clientPortalRepository.findDocumentByIdForClient(documentId, client.id, userId);
     if (!doc) throw AppError.notFound("Document not found");
     return doc;
   },

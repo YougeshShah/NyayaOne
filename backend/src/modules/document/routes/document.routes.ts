@@ -23,5 +23,6 @@ router.post("/", requireTenantPermission("document.manage"), (req: Request, res:
 }, documentController.upload);
 
 router.delete("/:id", requireTenantPermission("document.manage"), documentController.remove);
+router.patch("/:id/visibility", requireTenantPermission("document.manage"), documentController.toggleClientVisibility);
 
 export default router;

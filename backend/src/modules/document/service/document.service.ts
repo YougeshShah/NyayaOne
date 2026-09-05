@@ -71,4 +71,8 @@ export const documentService = {
       // best-effort — DB record is the source of truth; a stray file on disk is not critical
     });
   },
+  async toggleClientVisibility(id: string, lawFirmId: string, visibleToClient: boolean) {
+    await this.getById(id, lawFirmId);
+    return documentRepository.setClientVisibility(id, lawFirmId, visibleToClient);
+  },
 };

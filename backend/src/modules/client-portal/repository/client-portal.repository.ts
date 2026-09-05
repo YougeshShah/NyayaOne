@@ -45,17 +45,27 @@ export const clientPortalRepository = {
     });
   },
 
-  findMyDocuments(clientId: string) {
+  findMyDocuments(clientId: string, clientUserId: string) {
     return prisma.document.findMany({
-      where: { case: { clients: { some: { clientId } } } },
+      // A document is visible to the client if the lawyer marked it
+      // visible, OR the client themselves uploaded it (own uploads are
+      // always visible to the person who added them).
+      where: {
+        case: { clients: { some: { clientId } } },
+        OR: [{ visibleToClient: true }, { uploadedById: clientUserId }],
+      },
       orderBy: { createdAt: "desc" },
       include: { case: { select: { id: true, caseNumber: true, caseTitle: true } } },
     });
   },
 
-  findDocumentByIdForClient(documentId: string, clientId: string) {
+  findDocumentByIdForClient(documentId: string, clientId: string, clientUserId: string) {
     return prisma.document.findFirst({
-      where: { id: documentId, case: { clients: { some: { clientId } } } },
+      where: {
+        id: documentId,
+        case: { clients: { some: { clientId } } },
+        OR: [{ visibleToClient: true }, { uploadedById: clientUserId }],
+      },
     });
   },
 };
