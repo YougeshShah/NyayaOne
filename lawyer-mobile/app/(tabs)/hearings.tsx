@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { Platform } from "react-native";
 import { useAllHearings, useUpdateHearing } from "../../src/hooks/useDomainData";
 import { Card } from "../../src/components/Card";
 import { StatusBadge } from "../../src/components/StatusBadge";
@@ -35,6 +37,8 @@ export default function HearingsScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(toDateStr(new Date()));
   const [selected, setSelected] = useState<Hearing | null>(null);
   const [remarks, setRemarks] = useState("");
+  const [nextDate, setNextDate] = useState<Date | null>(null);
+  const [showNextDatePicker, setShowNextDatePicker] = useState(false);
 
   const markedDates = useMemo(() => {
     const set = new Set<string>();
@@ -52,12 +56,34 @@ export default function HearingsScreen() {
   const openUpdate = (h: Hearing) => {
     setSelected(h);
     setRemarks(h.remarks || "");
+    setNextDate(null);
+  };
+  const openNextDatePicker = () => {
+    if (Platform.OS === "android") {
+      DateTimePickerAndroid.open({
+        value: nextDate || new Date(),
+        mode: "date",
+        onChange: (_, selectedDate) => {
+          if (selectedDate) {
+            DateTimePickerAndroid.open({
+              value: selectedDate,
+              mode: "time",
+              onChange: (_, selectedTime) => {
+                if (selectedTime) setNextDate(selectedTime);
+              },
+            });
+          }
+        },
+      });
+    } else {
+      setShowNextDatePicker(true);
+    }
   };
 
   const applyStatus = (status: HearingStatus) => {
     if (!selected) return;
     updateHearing.mutate(
-      { id: selected.id, payload: { status, remarks } },
+      { id: selected.id, payload: { status, remarks, nextHearingDate: nextDate ? nextDate.toISOString() : undefined } },
       {
         onSuccess: () => {
           setSelected(null);
@@ -148,6 +174,22 @@ export default function HearingsScreen() {
               numberOfLines={3}
             />
 
+            <Text style={styles.modalLabel}>Next Hearing Date (optional)</Text>
+            <TouchableOpacity style={styles.nextDateButton} onPress={openNextDatePicker}>
+              <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+              <Text style={styles.nextDateText}>{nextDate ? nextDate.toLocaleString() : "Schedule next hearing for this case"}</Text>
+            </TouchableOpacity>
+            {Platform.OS === "ios" && showNextDatePicker && (
+              <DateTimePicker
+                value={nextDate || new Date()}
+                mode="datetime"
+                display="spinner"
+                onChange={(_, selectedDate) => {
+                  setShowNextDatePicker(false);
+                  if (selectedDate) setNextDate(selectedDate);
+                }}
+              />
+            )}
             <Text style={styles.modalLabel}>{t("setStatus")}</Text>
             <View style={styles.statusGrid}>
               {STATUS_OPTIONS.map((s) => (
@@ -209,6 +251,8 @@ const styles = StyleSheet.create({
   modalSub: { fontSize: 12, color: colors.textSecondary, marginBottom: spacing.md },
   modalLabel: { fontSize: 13, fontWeight: "600", color: colors.textSecondary, marginTop: spacing.sm, marginBottom: 6 },
   modalInput: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, padding: spacing.sm, fontSize: 14, textAlignVertical: "top", minHeight: 70 },
+  nextDateButton: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm },
+  nextDateText: { fontSize: 13, color: colors.textPrimary, flex: 1 },
   statusGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.xs },
   statusChip: { paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: colors.border },
   statusChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },

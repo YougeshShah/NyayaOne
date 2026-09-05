@@ -83,27 +83,48 @@ export const caseService = {
   },
 
   async update(id: string, lawFirmId: string, input: UpdateCaseInput, updatedByUserId: string) {
-    await this.getById(id, lawFirmId);
+    const existing = await this.getById(id, lawFirmId);
     const result = await caseRepository.updateScoped(id, lawFirmId, input);
     if (result.count === 0) throw AppError.notFound("Case not found in your firm");
 
-    // Notify any client(s) on this case who have portal access -- same
-    // best-effort pattern used for hearing updates.
+    // Notify any client(s) and other lawyer(s) on this case who have portal
+    // access -- same best-effort pattern used for hearing updates.
     try {
       const caseClients = await prisma.caseClient.findMany({
         where: { caseId: id },
-        select: { client: { select: { userId: true } } },
+        select: { client: { select: { userId: true, fullName: true } } },
       });
+      const caseLawyers = await prisma.caseLawyer.findMany({
+        where: { caseId: id },
+        select: { lawyerId: true },
+      });
+      const clientNames = caseClients.map((cc) => cc.client.fullName).join(", ");
+      const remarksLine = input.remarks ? ` Remarks: ${input.remarks}` : "";
+      const statusLine = input.status ? ` Status: ${input.status}.` : "";
+      const body = `${(existing as any).caseNumber} — ${(existing as any).caseTitle} (${clientNames}) has been updated.${statusLine}${remarksLine}`;
+
       const clientUserIds = caseClients.map((cc) => cc.client.userId).filter((uid): uid is string => !!uid);
       for (const clientUserId of clientUserIds) {
         const notification = await notificationRepository.createNotification({
           title: "Case Updated",
-          body: "Your case details have been updated. Check the app for the latest information.",
+          body,
           audience: "INDIVIDUAL_USER",
           targetId: clientUserId,
           createdBy: updatedByUserId,
         });
         await notificationRepository.bulkCreateUserNotifications(notification.id, [clientUserId]);
+      }
+
+      const otherLawyerIds = caseLawyers.map((cl) => cl.lawyerId).filter((lid) => lid !== updatedByUserId);
+      for (const lawyerId of otherLawyerIds) {
+        const notification = await notificationRepository.createNotification({
+          title: "Case Updated",
+          body,
+          audience: "INDIVIDUAL_USER",
+          targetId: lawyerId,
+          createdBy: updatedByUserId,
+        });
+        await notificationRepository.bulkCreateUserNotifications(notification.id, [lawyerId]);
       }
     } catch {
       // Notification failure should never break the actual case update.

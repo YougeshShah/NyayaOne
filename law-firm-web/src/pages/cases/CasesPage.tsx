@@ -239,7 +239,6 @@ export function CasesPage() {
               <TextField label="Court Subject" fullWidth {...register("courtSubject")} />
               <TextField label="Category" fullWidth {...register("category")} />
             </Box>
-            <TextField label="Judge" fullWidth {...register("judge")} />
             <TextField label="Remarks" fullWidth multiline rows={2} {...register("remarks")} />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -269,7 +268,6 @@ export function CasesPage() {
               <MenuItem value="HIGH">High</MenuItem>
               <MenuItem value="URGENT">Urgent</MenuItem>
             </TextField>
-            <TextField label="Judge" fullWidth {...editForm.register("judge")} />
             <TextField label="Remarks (adds an update note)" fullWidth multiline rows={3} {...editForm.register("remarks")} />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

@@ -113,18 +113,48 @@ export const hearingService = {
     try {
       const caseClients = await prisma.caseClient.findMany({
         where: { caseId: existing.caseId },
-        select: { client: { select: { userId: true } } },
+        select: { client: { select: { userId: true, fullName: true } } },
       });
+      const caseLawyers = await prisma.caseLawyer.findMany({
+        where: { caseId: existing.caseId },
+        select: { lawyerId: true },
+      });
+      const clientNames = caseClients.map((cc) => cc.client.fullName).join(", ");
+      const hearingDateLabel = new Date(existing.hearingDate).toLocaleString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      const remarksLine = input.remarks ? ` Remarks: ${input.remarks}` : "";
+      const statusLine = input.status ? ` Status: ${input.status}.` : "";
+      const body = `${existing.case.caseNumber} — ${existing.case.caseTitle} (${clientNames}). Hearing on ${hearingDateLabel}.${statusLine}${remarksLine}`;
+
       const clientUserIds = caseClients.map((cc) => cc.client.userId).filter((uid): uid is string => !!uid);
       for (const clientUserId of clientUserIds) {
         const notification = await notificationRepository.createNotification({
           title: "Hearing Updated",
-          body: `A hearing for your case has been updated. Check the app for the latest details.`,
+          body,
           audience: "INDIVIDUAL_USER",
           targetId: clientUserId,
           createdBy: updatedByUserId,
         });
         await notificationRepository.bulkCreateUserNotifications(notification.id, [clientUserId]);
+      }
+
+      // Also notify the OTHER lawyer(s) on this case (not the one who made
+      // this update themselves) so everyone assigned stays in sync.
+      const otherLawyerIds = caseLawyers.map((cl) => cl.lawyerId).filter((id) => id !== updatedByUserId);
+      for (const lawyerId of otherLawyerIds) {
+        const notification = await notificationRepository.createNotification({
+          title: "Hearing Updated",
+          body,
+          audience: "INDIVIDUAL_USER",
+          targetId: lawyerId,
+          createdBy: updatedByUserId,
+        });
+        await notificationRepository.bulkCreateUserNotifications(notification.id, [lawyerId]);
       }
     } catch {
       // Notification failure should never break the actual hearing update.

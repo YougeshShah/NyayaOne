@@ -21,7 +21,6 @@ export default function CreateCaseScreen() {
   const [caseTitle, setCaseTitle] = useState("");
   const [priority, setPriority] = useState<(typeof PRIORITIES)[number]>("MEDIUM");
   const [opposingParty, setOpposingParty] = useState("");
-  const [judge, setJudge] = useState("");
 
   const [courtId, setCourtId] = useState<string | null>(null);
   const [clientIds, setClientIds] = useState<string[]>([]);
@@ -52,7 +51,6 @@ export default function CreateCaseScreen() {
         leadLawyerId: lawyerIds[0],
         priority,
         opposingParty: opposingParty || undefined,
-        judge: judge || undefined,
       },
       {
         onSuccess: () => {
@@ -108,8 +106,6 @@ export default function CreateCaseScreen() {
       <Text style={styles.label}>Opposing Party</Text>
       <TextInput style={styles.input} value={opposingParty} onChangeText={setOpposingParty} placeholderTextColor="#9CA3AF" />
 
-      <Text style={styles.label}>Judge</Text>
-      <TextInput style={styles.input} value={judge} onChangeText={setJudge} placeholderTextColor="#9CA3AF" />
 
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={createCase.isPending}>
         <Text style={styles.submitText}>{createCase.isPending ? t("creating") : t("createCase")}</Text>
