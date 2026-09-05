@@ -12,6 +12,7 @@ export interface CaseDocument {
   category: DocumentCategory;
   uploadedBy: { id: string; fullName: string };
   createdAt: string;
+  visibleToClient: boolean;
 }
 
 export const documentApi = {
@@ -37,5 +38,8 @@ export const documentApi = {
 
   async remove(id: string): Promise<void> {
     await apiClient.delete(`/documents/${id}`);
+  },
+  async toggleVisibility(id: string, visibleToClient: boolean): Promise<void> {
+    await apiClient.patch(`/documents/${id}/visibility`, { visibleToClient });
   },
 };

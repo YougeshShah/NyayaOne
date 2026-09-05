@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useCaseDetail } from "../../src/hooks/useDomainData";
-import { useCaseDocuments, useUploadDocument, useDeleteCaseDocument, useDownloadCaseDocument } from "../../src/hooks/useDocuments";
+import { useCaseDocuments, useUploadDocument, useDeleteCaseDocument, useDownloadCaseDocument, useToggleDocumentVisibility } from "../../src/hooks/useDocuments";
 import { Card } from "../../src/components/Card";
 import { StatusBadge } from "../../src/components/StatusBadge";
 import { colors, spacing } from "../../src/theme/theme";
@@ -19,6 +19,7 @@ export default function CaseDetailScreen() {
   const uploadDoc = useUploadDocument(id);
   const deleteDoc = useDeleteCaseDocument(id);
   const downloadDoc = useDownloadCaseDocument();
+  const toggleVisibility = useToggleDocumentVisibility(id);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   if (isLoading || !caseData) {
@@ -134,10 +135,21 @@ export default function CaseDetailScreen() {
                 <Ionicons name="download-outline" size={20} color={colors.primary} />
               )}
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => toggleVisibility.mutate({ id: doc.id, visibleToClient: !doc.visibleToClient })}
+              style={{ padding: spacing.xs }}
+            >
+              <Ionicons
+                name={doc.visibleToClient ? "eye-outline" : "eye-off-outline"}
+                size={20}
+                color={doc.visibleToClient ? "#059669" : colors.textSecondary}
+              />
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => deleteDoc.mutate(doc.id)} style={{ padding: spacing.xs }}>
               <Ionicons name="trash-outline" size={20} color={colors.error} />
             </TouchableOpacity>
           </View>
+          {!doc.visibleToClient && <Text style={styles.hiddenNote}>Hidden from client</Text>}
         </Card>
       ))}
 
@@ -156,6 +168,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  hiddenNote: { fontSize: 11, color: "#D97706", marginTop: 4, marginLeft: 34 },
   container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },

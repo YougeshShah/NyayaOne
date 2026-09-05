@@ -27,6 +27,14 @@ export function useDeleteCaseDocument(caseId: string | undefined) {
   });
 }
 
+export function useToggleDocumentVisibility(caseId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, visibleToClient }: { id: string; visibleToClient: boolean }) => documentApi.toggleVisibility(id, visibleToClient),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["case-documents", caseId] }),
+  });
+}
+
 export function useDownloadCaseDocument() {
   return useMutation({
     mutationFn: ({ id, fileName }: { id: string; fileName: string }) => downloadAndShareDocument(id, fileName),
