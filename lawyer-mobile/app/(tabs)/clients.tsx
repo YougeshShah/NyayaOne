@@ -60,7 +60,12 @@ export default function ClientsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card style={{ marginBottom: spacing.sm }}>
-            <Text style={styles.name}>{item.fullName}</Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <Text style={styles.name}>{item.fullName}</Text>
+              <TouchableOpacity onPress={() => router.push(`/client/${item.id}/edit`)} style={{ padding: 4 }}>
+                <Ionicons name="create-outline" size={18} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
             {item.phone && <Text style={styles.detail}>📞 {item.phone}</Text>}
             {item.address && <Text style={styles.detail}>📍 {item.address}</Text>}
             <View style={styles.bottomRow}>

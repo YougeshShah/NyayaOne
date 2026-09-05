@@ -45,6 +45,21 @@ export function useClients(search?: string) {
   return useQuery({ queryKey: ["clients", search], queryFn: () => clientApi.list({ search }) });
 }
 
+export function useClient(id: string | undefined) {
+  return useQuery({ queryKey: ["client", id], queryFn: () => clientApi.getById(id as string), enabled: !!id });
+}
+
+export function useUpdateClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateClientPayload> }) => clientApi.update(id, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["client", variables.id] });
+    },
+  });
+}
+
 export function useCreateClient() {
   const queryClient = useQueryClient();
   return useMutation({

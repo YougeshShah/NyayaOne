@@ -21,7 +21,10 @@ export const userRepository = {
   }) {
     const where: Prisma.UserWhereInput = {
       lawFirmId: params.lawFirmId,
-      accountType: { in: [AccountType.LAWYER, AccountType.STAFF] },
+      // Include LAW_FIRM_ADMIN too -- a solo/individual lawyer has no
+      // separate LAWYER-type staff record and must still show up here to be
+      // assignable to their own cases.
+      accountType: { in: [AccountType.LAWYER, AccountType.STAFF, AccountType.LAW_FIRM_ADMIN] },
       ...(params.accountType ? { accountType: params.accountType } : {}),
       ...(params.status ? { status: params.status } : {}),
       ...(params.search

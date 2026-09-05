@@ -50,8 +50,10 @@ export const caseService = {
       throw AppError.badRequest("One or more selected clients do not belong to your firm");
     }
 
+    // A solo LAW_FIRM_ADMIN (individual lawyer, no separate staff) must be
+    // assignable to their own cases -- not just users with accountType LAWYER.
     const lawyersCount = await prisma.user.count({
-      where: { id: { in: input.lawyerIds }, lawFirmId, accountType: "LAWYER" },
+      where: { id: { in: input.lawyerIds }, lawFirmId, accountType: { in: ["LAWYER", "LAW_FIRM_ADMIN"] } },
     });
     if (lawyersCount !== input.lawyerIds.length) {
       throw AppError.badRequest("One or more selected lawyers do not belong to your firm");
