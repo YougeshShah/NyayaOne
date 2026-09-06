@@ -51,6 +51,12 @@ export const userService = {
 
     const passwordHash = await hashPassword(input.password);
 
+    // If the admin didn't explicitly pick a role, fall back to this
+    // firm's default "Lawyer"/"Staff" role by account type -- otherwise
+    // the new person has no role at all and requireTenantPermission fails
+    // closed on every action until someone manually assigns one.
+    const roleId = input.roleId ?? (await this.resolveDefaultRoleId(lawFirmId, input.accountType));
+
     const user = await userRepository.create({
       lawFirmId,
       fullName: input.fullName,
@@ -60,10 +66,15 @@ export const userService = {
       accountType: input.accountType,
       barRegistrationNo: input.barRegistrationNo,
       specialization: input.specialization,
-      roleId: input.roleId,
+      roleId,
     });
 
     return user;
+  },
+  async resolveDefaultRoleId(lawFirmId: string, accountType: string): Promise<string | undefined> {
+    const roleName = accountType === "LAWYER" ? "Lawyer" : "Staff";
+    const role = await prisma.role.findFirst({ where: { lawFirmId, name: roleName } });
+    return role?.id;
   },
 
   async update(id: string, lawFirmId: string, input: UpdateUserInput) {

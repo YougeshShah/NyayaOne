@@ -28,11 +28,40 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// On 401, log the user out (token expired/invalid) — the app will redirect to /login
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = useAuthStore.getState().refreshToken;
+  if (!refreshToken) return null;
+  try {
+    const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+    const newAccessToken = data?.data?.accessToken as string | undefined;
+    if (!newAccessToken) return null;
+    useAuthStore.getState().setAccessToken(newAccessToken);
+    return newAccessToken;
+  } catch {
+    return null;
+  }
+}
+
+// On 401, try refreshing the access token once and retrying the original
+// request -- only log the user out if the refresh token is also invalid.
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      originalRequest._retry = true;
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
+      const newAccessToken = await refreshPromise;
+      if (newAccessToken) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return apiClient(originalRequest);
+      }
       useAuthStore.getState().logout();
     }
     return Promise.reject(error);

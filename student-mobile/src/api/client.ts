@@ -31,10 +31,43 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// The access token is short-lived by design. Without this, every user got
+// silently kicked to the login screen the moment it expired mid-session --
+// this refreshes it once using the (longer-lived) refresh token and
+// retries the original request, only logging out if the refresh itself
+// fails (meaning the refresh token is also invalid/expired/revoked).
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = useAuthStore.getState().refreshToken;
+  if (!refreshToken) return null;
+  try {
+    const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+    const newAccessToken = data?.data?.accessToken as string | undefined;
+    if (!newAccessToken) return null;
+    useAuthStore.getState().setAccessToken(newAccessToken);
+    return newAccessToken;
+  } catch {
+    return null;
+  }
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      originalRequest._retry = true;
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
+      const newAccessToken = await refreshPromise;
+      if (newAccessToken) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return apiClient(originalRequest);
+      }
       useAuthStore.getState().logout();
     }
     return Promise.reject(error);

@@ -52,6 +52,13 @@ export const lawFirmService = {
       metadata: { lawFirmName: lawFirm.name, adminEmail: admin.email },
     });
 
+    // Every new organization needs at least a couple of usable roles from
+    // day one -- without this, the admin's first "Add Staff" hits a wall:
+    // requireTenantPermission fails closed for any user with no role at
+    // all, so a brand new staff member could do literally nothing until
+    // someone manually built a role and its permissions from scratch.
+    await this.seedDefaultRoles(lawFirm.id);
+
     return { lawFirm, admin: { id: admin.id, fullName: admin.fullName, email: admin.email }, temporaryPassword };
   },
 
@@ -254,5 +261,33 @@ export const lawFirmService = {
       results.push({ month: start.toLocaleDateString(undefined, { month: "short", year: "2-digit" }), count });
     }
     return results;
+  },
+  // Creates two starter roles every new organization gets automatically:
+  // "Lawyer" (full day-to-day operational access) and "Staff" (support
+  // access, minus case creation). Both are marked isSystem so they can't
+  // be accidentally deleted, but the admin can still edit their
+  // permissions or add more roles later via Roles & Permissions.
+  async seedDefaultRoles(lawFirmId: string) {
+    const keys = ["case.manage", "client.manage", "hearing.manage", "document.manage"];
+    const permissions = await prisma.permission.findMany({ where: { key: { in: keys } } });
+    const byKey = new Map(permissions.map((p) => [p.key, p.id]));
+
+    const lawyerRole = await prisma.role.create({
+      data: { name: "Lawyer", lawFirmId, isSystem: true, description: "Full day-to-day case, client, hearing, and document access." },
+    });
+    for (const key of ["case.manage", "client.manage", "hearing.manage", "document.manage"]) {
+      const permissionId = byKey.get(key);
+      if (permissionId) await prisma.rolePermission.create({ data: { roleId: lawyerRole.id, permissionId } });
+    }
+
+    const staffRole = await prisma.role.create({
+      data: { name: "Staff", lawFirmId, isSystem: true, description: "Support access to clients, hearings, and documents." },
+    });
+    for (const key of ["client.manage", "hearing.manage", "document.manage"]) {
+      const permissionId = byKey.get(key);
+      if (permissionId) await prisma.rolePermission.create({ data: { roleId: staffRole.id, permissionId } });
+    }
+
+    return { lawyerRole, staffRole };
   },
 };
