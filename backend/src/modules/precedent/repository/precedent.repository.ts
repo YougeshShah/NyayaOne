@@ -1,6 +1,18 @@
 import { prisma } from "../../../database/prisma";
 import { Prisma } from "@prisma/client";
 
+// Precedent content is stored with Devanagari (Nepali) numerals, but users
+// often type search queries with regular English digits on their keyboard
+// (e.g. "9100" instead of "९१००"). Converting English digits to their
+// Devanagari equivalent before searching means both work identically.
+const ENGLISH_TO_DEVANAGARI_DIGITS: Record<string, string> = {
+  "0": "०", "1": "१", "2": "२", "3": "३", "4": "४",
+  "5": "५", "6": "६", "7": "७", "8": "८", "9": "९",
+};
+function convertToDevanagariDigits(text: string): string {
+  return text.replace(/[0-9]/g, (d) => ENGLISH_TO_DEVANAGARI_DIGITS[d]);
+}
+
 export const precedentRepository = {
   // Full-text search is done via raw SQL against the generated tsvector
   // column (Prisma's query builder has no native full-text search support).
@@ -14,6 +26,10 @@ export const precedentRepository = {
     skip: number;
     take: number;
   }) {
+    // Normalize digits so "9100" and "९१००" both match the same content.
+    if (params.search) {
+      params = { ...params, search: convertToDevanagariDigits(params.search) };
+    }
     const visibilityClause = params.lawFirmId
       ? Prisma.sql`AND ("hostLawFirmId" IS NULL OR "hostLawFirmId" = ${params.lawFirmId})`
       : Prisma.sql`AND "hostLawFirmId" IS NULL`;

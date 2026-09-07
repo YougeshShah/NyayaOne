@@ -185,6 +185,27 @@ export default function PrecedentsScreen() {
           </TouchableOpacity>
         )}
       />
+      {results && results.pagination.totalPages > 1 && (
+        <View style={styles.pageBar}>
+          <TouchableOpacity
+            onPress={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            style={[styles.pageButton, page <= 1 && styles.pageButtonDisabled]}
+          >
+            <Ionicons name="chevron-back" size={18} color={page <= 1 ? "#D1D5DB" : colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.pageText}>
+            Page {results.pagination.page} of {results.pagination.totalPages}
+          </Text>
+          <TouchableOpacity
+            onPress={() => setPage((p) => Math.min(results.pagination.totalPages, p + 1))}
+            disabled={page >= results.pagination.totalPages}
+            style={[styles.pageButton, page >= results.pagination.totalPages && styles.pageButtonDisabled]}
+          >
+            <Ionicons name="chevron-forward" size={18} color={page >= results.pagination.totalPages ? "#D1D5DB" : colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal visible={!!viewingId} animationType="slide" onRequestClose={() => setViewingId(null)}>
         <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -224,6 +245,10 @@ export default function PrecedentsScreen() {
 }
 
 const styles = StyleSheet.create({
+  pageBar: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#E5E7EB" },
+  pageButton: { padding: 8, borderRadius: 20, backgroundColor: "#F3F4F6" },
+  pageButtonDisabled: { opacity: 0.5 },
+  pageText: { fontSize: 13, fontWeight: "600", color: colors.textPrimary },
   container: { flex: 1, backgroundColor: colors.background },
   header: { padding: spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
   title: { fontSize: 18, fontWeight: "700", color: colors.textPrimary },
