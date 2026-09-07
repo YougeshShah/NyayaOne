@@ -23,13 +23,18 @@ jobs:
         SSH_USER: ${{ secrets.SSH_USER }}
       run: |
         ssh -o StrictHostKeyChecking=no $SSH_USER@$SERVER_IP << 'EOF'
+          set -e
           cd /var/www/projects/NyayaOne
           git pull origin main
           # Build first (while old containers keep serving traffic), one service
           # at a time -- this small VPS chokes if all 5 services build in
           # parallel. Only THEN swap old containers for new ones, so
           # downtime is just the brief down+up gap, not the whole build.
-          sudo docker compose --env-file .env.prod build --parallel 1
+          # (--parallel is a global docker compose flag, must come right
+          # after "compose" -- placed after "build" it was silently treated
+          # as a bogus service name, and without "set -e" the whole script
+          # kept going and reported success anyway, without rebuilding.)
+          sudo docker compose --parallel 1 --env-file .env.prod build
           sudo docker compose --env-file .env.prod down
           sudo docker compose --env-file .env.prod up -d --no-deps
           sudo docker image prune -f
