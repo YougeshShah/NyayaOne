@@ -38,4 +38,9 @@ jobs:
           sudo docker compose --env-file .env.prod down
           sudo docker compose --env-file .env.prod up -d --no-deps
           sudo docker image prune -f
+          # This small VPS has only 48GB disk -- build cache from every
+          # deploy (unique layers per commit) accumulates fast otherwise,
+          # so clear it automatically instead of relying on remembering to
+          # do it manually.
+          sudo docker builder prune -af
         EOF
