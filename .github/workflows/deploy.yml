@@ -25,6 +25,12 @@ jobs:
         ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 $SSH_USER@$SERVER_IP << 'EOF'
           set -e
           cd /var/www/projects/NyayaOne
+          # Ownership of this directory keeps getting reset to root somehow
+          # (likely a side effect of an earlier "sudo docker ..." command
+          # touching files here) -- fix it unconditionally before every
+          # pull instead of chasing the root cause, since "git pull"
+          # otherwise fails with "Permission denied" on .git internals.
+          sudo chown -R ubuntu:ubuntu /var/www/projects/NyayaOne
           git pull origin main
           # Build first (while old containers keep serving traffic), one service
           # at a time -- this small VPS chokes if all 5 services build in
