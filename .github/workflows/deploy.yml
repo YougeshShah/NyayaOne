@@ -25,17 +25,13 @@ jobs:
         ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 $SSH_USER@$SERVER_IP << 'EOF'
           set -e
           cd /var/www/projects/NyayaOne
-          # NOTE: .git ownership occasionally reverts to root (cause not
-          # fully understood -- possibly a side effect of some earlier
-          # "sudo docker ..." command). Attempted an automatic
-          # "sudo chown" fix here, but it failed specifically under
-          # GitHub Actions' SSH agent ("sudo: a password is required")
-          # despite working fine from an interactive session with
-          # passwordless sudo confirmed -- reverted rather than risk this
-          # blocking every deploy. If "git pull" ever fails with
-          # "Permission denied" here again, SSH in manually and run:
-          #   sudo chown -R ubuntu:ubuntu /var/www/projects/NyayaOne
-          git pull origin main
+          # Run git as root too, matching every other command in this
+          # script (all "sudo docker ..."). .git kept ending up
+          # root-owned between deploys (root cause never fully pinned
+          # down), which made a plain "git pull" as ubuntu fail with
+          # "Permission denied" -- running git under sudo as well sidesteps
+          # the ownership mismatch entirely instead of fighting it.
+          sudo git pull origin main
           # Build first (while old containers keep serving traffic), one service
           # at a time -- this small VPS chokes if all 5 services build in
           # parallel. Only THEN swap old containers for new ones, so
