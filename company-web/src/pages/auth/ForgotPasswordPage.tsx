@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Alert, Box, Button, Paper, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "../../api/client";
 
@@ -8,6 +10,7 @@ export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const requestCode = useMutation({
@@ -16,7 +19,7 @@ export function ForgotPasswordPage() {
   });
 
   const resetPassword = useMutation({
-    mutationFn: () => apiClient.post("/email-verification/reset-password", { email, code, newPassword }),
+    mutationFn: () => apiClient.post("/email-verification/reset-password", { email, code, newPassword, asCompany: true }),
     onSuccess: () => setSuccess(true),
   });
 
@@ -42,7 +45,11 @@ export function ForgotPasswordPage() {
           </Box>
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {resetPassword.isError && <Alert severity="error">Invalid or expired code. Please try again.</Alert>}
+            {resetPassword.isError && (
+              <Alert severity="error">
+                {(resetPassword.error as any)?.response?.data?.message || "Invalid or expired code. Please try again."}
+              </Alert>
+            )}
             <TextField
               label="6-Digit Code"
               required
@@ -53,12 +60,21 @@ export function ForgotPasswordPage() {
             />
             <TextField
               label="New Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               fullWidth
               helperText="Minimum 8 characters"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword((v) => !v)} edge="end">
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <Button
               variant="contained"

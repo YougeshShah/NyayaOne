@@ -45,7 +45,7 @@ export const emailVerificationService = {
     await prisma.user.updateMany({ where: { email: email.toLowerCase().trim() }, data: { emailVerified: true } });
   },
 
-  async resetPasswordWithCode(email: string, code: string, newPassword: string, institutionSlug?: string) {
+  async resetPasswordWithCode(email: string, code: string, newPassword: string, institutionSlug?: string, asCompany?: boolean) {
     const record = await this.findValidCode(email, code, "PASSWORD_RESET");
     const passwordHash = await hashPassword(newPassword);
     await prisma.emailVerificationCode.update({ where: { id: record.id }, data: { usedAt: new Date() } });
@@ -56,6 +56,8 @@ export const emailVerificationService = {
       const firm = await prisma.lawFirm.findFirst({ where: { slug: institutionSlug } });
       if (!firm) throw AppError.notFound("No account found with this email.");
       result = await prisma.user.updateMany({ where: { email: normalizedEmail, lawFirmId: firm.id }, data: { passwordHash } });
+    } else if (asCompany) {
+      result = await prisma.user.updateMany({ where: { email: normalizedEmail, lawFirmId: null }, data: { passwordHash } });
     } else {
       // Check ALL accounts with this email first -- not just the no-org
       // (e.g. Company) one -- so a Company account sharing an email with an

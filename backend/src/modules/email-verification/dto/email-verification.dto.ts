@@ -19,5 +19,9 @@ export const resetPasswordWithCodeSchema = z.object({
   // Same email can exist under more than one organization -- this narrows
   // which specific account gets its password changed, same as at login.
   institutionSlug: z.string().optional(),
+  // Set by Company Web specifically -- same purpose as at login: Company
+  // has no slug of its own, so this is how it declares "reset the Company
+  // account" even when the same email also exists under an organization.
+  asCompany: z.boolean().optional(),
 });
 export type ResetPasswordWithCodeInput = z.infer<typeof resetPasswordWithCodeSchema>;
