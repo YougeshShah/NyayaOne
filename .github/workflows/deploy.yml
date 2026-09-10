@@ -25,25 +25,23 @@ jobs:
         ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 $SSH_USER@$SERVER_IP << 'EOF'
           set -e
           cd /var/www/projects/NyayaOne
-          # Run git as root too, matching every other command in this
-          # script (all "sudo docker ..."). .git kept ending up
-          # root-owned between deploys (root cause never fully pinned
-          # down), which made a plain "git pull" as ubuntu fail with
-          # "Permission denied" -- running git under sudo as well sidesteps
-          # the ownership mismatch entirely instead of fighting it.
-          sudo git pull origin main
+          # Genuine root cause fix: run everything as the plain "ubuntu"
+          # user, never touching root at all -- ubuntu is in the "docker"
+          # group so docker/docker compose need no sudo, and git as
+          # ubuntu just works. Every earlier attempt to reconcile root vs
+          # ubuntu ownership (chown, sudo git pull) failed because "sudo"
+          # itself needs a password under GitHub Actions' non-interactive
+          # SSH session for anything except (mysteriously) docker -- so
+          # the real fix is to need "sudo" for nothing at all.
+          git pull origin main
           # Build first (while old containers keep serving traffic), one service
           # at a time -- this small VPS chokes if all 5 services build in
           # parallel. Only THEN swap old containers for new ones, so
           # downtime is just the brief down+up gap, not the whole build.
-          # (--parallel is a global docker compose flag, must come right
-          # after "compose" -- placed after "build" it was silently treated
-          # as a bogus service name, and without "set -e" the whole script
-          # kept going and reported success anyway, without rebuilding.)
-          sudo docker compose --parallel 1 --env-file .env.prod build
-          sudo docker compose --env-file .env.prod down
-          sudo docker compose --env-file .env.prod up -d --no-deps
-          sudo docker image prune -f
+          docker compose --parallel 1 --env-file .env.prod build
+          docker compose --env-file .env.prod down
+          docker compose --env-file .env.prod up -d --no-deps
+          docker image prune -f
           # NOTE: build cache is intentionally NOT auto-pruned here anymore --
           # doing so after every deploy forced every following deploy to
           # rebuild from scratch (no cache), which took long enough to trip
