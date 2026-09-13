@@ -42,9 +42,11 @@ jobs:
           docker compose --env-file .env.prod down
           docker compose --env-file .env.prod up -d --no-deps
           docker image prune -f
-          # NOTE: build cache is intentionally NOT auto-pruned here anymore --
-          # doing so after every deploy forced every following deploy to
-          # rebuild from scratch (no cache), which took long enough to trip
-          # SSH's connection timeout ("broken pipe"). Prune it manually
-          # every so often instead: ssh in, run "docker builder prune -af".
+          # Only prune build cache OLDER than 24h -- pruning ALL of it after
+          # every deploy (tried before) forced every following deploy to
+          # rebuild from scratch with no cache, slow enough to trip SSH's
+          # connection timeout ("broken pipe"). This keeps cache from THIS
+          # deploy and recent ones (fast next build) while still bounding
+          # how much accumulates over time.
+          docker builder prune -af --filter "until=24h"
         EOF

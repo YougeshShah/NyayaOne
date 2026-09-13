@@ -12,6 +12,7 @@ export interface AuthUser {
   modulesEnabled?: string[] | null;
   tenantType?: "LAW_FIRM" | "EDUCATION" | "OTHER" | null;
   tenantName?: string | null;
+  tenantSlug?: string | null;
 }
 
 export interface LoginPayload {

@@ -158,6 +158,19 @@ export function ProfilePage() {
                 </Typography>
               )}
             </Box>
+            {authUser?.tenantSlug && (
+              <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Institution Code (share this with your students so they can register):
+                </Typography>
+                <Chip
+                  label={authUser.tenantSlug}
+                  size="small"
+                  onClick={() => navigator.clipboard.writeText(authUser.tenantSlug as string)}
+                  sx={{ fontWeight: 700, cursor: "pointer" }}
+                />
+              </Box>
+            )}
             {uploadAvatar.isPending && (
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
                 Uploading...

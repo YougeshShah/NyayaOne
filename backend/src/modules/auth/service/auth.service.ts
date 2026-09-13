@@ -253,6 +253,7 @@ export const authService = {
         modulesEnabled: user.lawFirm?.modulesEnabled ?? null,
         tenantType: user.lawFirm?.tenantType ?? null,
         tenantName: user.lawFirm?.name ?? null,
+        tenantSlug: user.lawFirm?.slug ?? null,
         allowedCourseIds: user.lawFirm?.allowedCourseIds ?? null,
         // "Super Admin" carries every permission implicitly (see requirePermission
         // middleware) — null here means "unrestricted", not "no access".
