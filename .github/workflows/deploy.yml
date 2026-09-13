@@ -24,7 +24,6 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 $SSH_USER@$SERVER_IP << 'EOF'
           set -e
-          echo "DEBUG: Running as user: $(whoami), id: $(id)"
           cd /var/www/projects/NyayaOne
           # Genuine root cause fix: run everything as the plain "ubuntu"
           # user, never touching root at all -- ubuntu is in the "docker"
