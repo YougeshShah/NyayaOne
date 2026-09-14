@@ -95,6 +95,25 @@ export const lawFirmRepository = {
    * (which starts PENDING and needs approval), a firm created directly by
    * Company is trusted immediately and goes straight to ACTIVE.
    */
+  // Converts an organization name into a URL-safe slug used for its
+  // wildcard subdomain (e.g. "sitalawfirm.portal.technocraftx.com"),
+  // appending a number if the base slug is already taken by another firm.
+  async generateUniqueSlug(tx: Prisma.TransactionClient, name: string): Promise<string> {
+    const base = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "org";
+    let candidate = base;
+    let suffix = 1;
+    while (await tx.lawFirm.findFirst({ where: { slug: candidate } })) {
+      suffix += 1;
+      candidate = `${base}-${suffix}`;
+    }
+    return candidate;
+  },
+
   async createWithAdmin(params: {
     lawFirmName: string;
     lawFirmEmail: string;
@@ -109,6 +128,7 @@ export const lawFirmRepository = {
     allowedExamTypes: string[];
   }) {
     return prisma.$transaction(async (tx) => {
+      const slug = await this.generateUniqueSlug(tx, params.lawFirmName);
       const lawFirm = await tx.lawFirm.create({
         data: {
           name: params.lawFirmName,
@@ -118,6 +138,7 @@ export const lawFirmRepository = {
           modulesEnabled: params.modulesEnabled,
           allowedCourseIds: params.allowedCourseIds,
           allowedExamTypes: params.allowedExamTypes,
+          slug,
         },
       });
 
