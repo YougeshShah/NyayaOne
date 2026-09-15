@@ -184,6 +184,19 @@ export const lawFirmRepository = {
       // Tenant-specific roles.
       await tx.role.deleteMany({ where: { lawFirmId } });
 
+      // Everything added in later features that also has a lawFirmId FK --
+      // without these, delete fails with a foreign key constraint error
+      // instead of actually removing the organization.
+      await tx.firmSubscription.deleteMany({ where: { lawFirmId } }).catch(() => {});
+      await tx.courseFee.deleteMany({ where: { lawFirmId } }).catch(() => {});
+      await tx.paymentVoucher.deleteMany({ where: { student: { lawFirmId } } }).catch(() => {});
+      await tx.staffSalary.deleteMany({ where: { lawFirmId } }).catch(() => {});
+      await tx.invoice.deleteMany({ where: { lawFirmId } }).catch(() => {});
+      await tx.usageLimit.deleteMany({ where: { lawFirmId } }).catch(() => {});
+      await tx.courseContent.deleteMany({ where: { lawFirmId } }).catch(() => {});
+      await tx.liveClass.deleteMany({ where: { hostLawFirmId: lawFirmId } }).catch(() => {});
+      await tx.paymentTransaction.deleteMany({ where: { student: { lawFirmId } } }).catch(() => {});
+
       await tx.lawFirm.delete({ where: { id: lawFirmId } });
     });
   },
