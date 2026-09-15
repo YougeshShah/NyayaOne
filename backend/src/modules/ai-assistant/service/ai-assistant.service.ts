@@ -40,7 +40,7 @@ QUESTION: ${question}
 Answer in the same language as the question (Nepali or English). For each point, cite the exact precedent title/case number/date it came from.`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${env.gemini.apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${env.gemini.apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
