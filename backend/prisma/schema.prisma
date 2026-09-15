@@ -295,6 +295,7 @@ model User {
   studyProgress      StudyProgress[]       @relation("StudentProgress")
   courseSubscriptions CourseSubscription[] @relation("StudentCourseSubscriptions")
   paymentVouchers     PaymentVoucher[]       @relation("StudentPaymentVouchers")
+  ownNotes            StudentNote[]          @relation("StudentOwnNotes")
   liveClassAttendance LiveClassAttendance[] @relation("StudentLiveClassAttendance")
   writingSubmissions  WritingSubmission[]  @relation("StudentWritingSubmissions")
   feedbackGiven       Feedback[]           @relation("StudentFeedback")
@@ -928,6 +929,7 @@ model Course {
   liveClasses   LiveClass[]
   subscriptions CourseSubscription[]
   paymentVouchers PaymentVoucher[]
+  studentNotes    StudentNote[]
   mcqQuestions  McqQuestion[]
   mockTests     MockTest[]
   paymentTransactions PaymentTransaction[]
@@ -986,6 +988,25 @@ model PaymentVoucher {
   @@index([studentId])
   @@index([courseId])
   @@index([status])
+}
+
+// ------------------------------------------------------------
+// STUDENT NOTES — personal notes a student writes while studying a
+// course, for their own reference only (not shared, not gradable).
+// ------------------------------------------------------------
+model StudentNote {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation("StudentOwnNotes", fields: [studentId], references: [id])
+  courseId  String?
+  course    Course?  @relation(fields: [courseId], references: [id])
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([courseId])
 }
 
 // ------------------------------------------------------------
