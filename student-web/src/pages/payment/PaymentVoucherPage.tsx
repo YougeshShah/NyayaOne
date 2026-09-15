@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Alert, Box, Button, Chip, MenuItem, Paper, TextField, Typography } from "@mui/material";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { courseApi } from "../../api/course.api";
@@ -11,7 +12,8 @@ const STATUS_COLOR: Record<string, "warning" | "success" | "error"> = {
 };
 
 export function PaymentVoucherPage() {
-  const [courseId, setCourseId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [courseId, setCourseId] = useState(searchParams.get("courseId") || "");
   const [amount, setAmount] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
