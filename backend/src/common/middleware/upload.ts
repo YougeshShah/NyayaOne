@@ -227,3 +227,23 @@ export const voucherUpload = multer({
   fileFilter,
   limits: { fileSize: MAX_FILE_SIZE_BYTES },
 });
+
+// Course content (semester/term-wise study material) -- PDF or image,
+// own folder. Text-type content has no file, stored directly in DB.
+const courseContentStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "course-content");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}-${uuidv4()}${ext}`);
+  },
+});
+
+export const courseContentUpload = multer({
+  storage: courseContentStorage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE_BYTES },
+});

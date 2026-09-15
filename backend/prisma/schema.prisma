@@ -228,6 +228,7 @@ model LawFirm {
   usageLimits     UsageLimit[]
   invoices        Invoice[]
   courseFees      CourseFee[]
+  courseContents  CourseContent[]
   paymentQrCodeUrl String? // uploaded QR code image (bank/wallet) students scan to pay this institution directly
   staffSalaries   StaffSalary[]
 
@@ -733,6 +734,7 @@ model Subject {
   libraryResources LibraryResource[]
   mcqQuestions     McqQuestion[]
   mockTests        MockTest[]
+  courseContents   CourseContent[]
   studyProgress    StudyProgress[]
   liveClasses      LiveClass[]
   flashcards       Flashcard[]
@@ -934,6 +936,7 @@ model Course {
   subscriptions CourseSubscription[]
   paymentVouchers PaymentVoucher[]
   studentNotes    StudentNote[]
+  courseContents  CourseContent[]
   mcqQuestions  McqQuestion[]
   mockTests     MockTest[]
   paymentTransactions PaymentTransaction[]
@@ -992,6 +995,43 @@ model PaymentVoucher {
   @@index([studentId])
   @@index([courseId])
   @@index([status])
+}
+
+// ------------------------------------------------------------
+// COURSE CONTENT — study material (PDF/image/text) organized under a
+// course and subject, tagged with a free-text "term" label (e.g.
+// "Semester 1", "Batch A", whatever the uploader calls their own
+// grouping -- deliberately not a hardcoded enum). Company can upload
+// content visible to everyone; an institution can additionally upload
+// its own content visible only to its own students (lawFirmId set).
+// ------------------------------------------------------------
+enum ContentFileType {
+  PDF
+  IMAGE
+  TEXT
+}
+
+model CourseContent {
+  id         String          @id @default(uuid())
+  courseId   String
+  course     Course          @relation(fields: [courseId], references: [id])
+  subjectId  String?
+  subject    Subject?        @relation(fields: [subjectId], references: [id])
+  lawFirmId  String? // null = Company's own content, visible to all institutions' students on this course
+  lawFirm    LawFirm?        @relation(fields: [lawFirmId], references: [id])
+  term       String // free-text grouping label, e.g. "Semester 1", "Batch A"
+  title      String
+  fileType   ContentFileType
+  fileUrl    String? // for PDF/IMAGE
+  textBody   String? // for TEXT -- stored directly, no file
+  uploadedBy String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([courseId])
+  @@index([subjectId])
+  @@index([lawFirmId])
+  @@index([term])
 }
 
 // ------------------------------------------------------------
