@@ -22,6 +22,7 @@ import { PendingApprovalsPage } from "../pages/students/PendingApprovalsPage";
 import { UsageLimitAdminPage } from "../pages/usage-limit-admin/UsageLimitAdminPage";
 import { PrecedentSearchPage } from "../pages/precedents/PrecedentSearchPage";
 import { ProfilePage } from "../pages/profile/ProfilePage";
+import { PaymentVouchersPage } from "../pages/payment-vouchers/PaymentVouchersPage";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
@@ -37,6 +38,7 @@ export function AppRoutes() {
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/clients" element={<ClientsPage />} />
+          <Route path="/payment-vouchers" element={<PaymentVouchersPage />} />
           <Route path="/cases" element={<CasesPage />} />
           <Route path="/cases/:id" element={<CaseDetailPage />} />
           <Route path="/hearings" element={<HearingsPage />} />

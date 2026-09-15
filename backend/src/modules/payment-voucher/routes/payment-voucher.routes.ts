@@ -20,6 +20,7 @@ router.post(
 );
 
 router.get("/my", authorize("STUDENT"), paymentVoucherController.myVouchers);
+router.get("/:id/file", paymentVoucherController.viewFile);
 router.get("/pending", authorize("LAW_FIRM_ADMIN"), paymentVoucherController.pending);
 router.patch("/:id/review", authorize("LAW_FIRM_ADMIN"), paymentVoucherController.review);
 

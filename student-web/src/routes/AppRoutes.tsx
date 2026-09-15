@@ -15,6 +15,7 @@ import { NotificationsPage } from "../pages/dashboard/NotificationsPage";
 import { FlashcardStudyPage } from "../pages/dashboard/FlashcardStudyPage";
 import { EsewaCallbackPage } from "../pages/payment/EsewaCallbackPage";
 import { KhaltiCallbackPage } from "../pages/payment/KhaltiCallbackPage";
+import { PaymentVoucherPage } from "../pages/payment/PaymentVoucherPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
 import { SpeakingPromptsListPage } from "../pages/speaking/SpeakingPromptsListPage";
 import { SpeakingTestPage } from "../pages/speaking/SpeakingTestPage";
@@ -49,6 +50,7 @@ export function AppRoutes() {
           <Route path="/courses/:courseId/flashcards" element={<FlashcardStudyPage />} />
           <Route path="/payment/esewa/success" element={<EsewaCallbackPage />} />
           <Route path="/payment/khalti/callback" element={<KhaltiCallbackPage />} />
+          <Route path="/payment/voucher" element={<PaymentVoucherPage />} />
         </Route>
       </Route>
 

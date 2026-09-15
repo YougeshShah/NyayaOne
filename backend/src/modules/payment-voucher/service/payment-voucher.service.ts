@@ -13,6 +13,19 @@ export const paymentVoucherService = {
     return paymentVoucherRepository.listForStudent(studentId);
   },
 
+  // Allows viewing the uploaded receipt file to: the student who uploaded
+  // it, or an admin from that same student's institution -- nobody else.
+  async getFileForViewer(id: string, requesterId: string, requesterLawFirmId: string | null, requesterAccountType: string) {
+    const voucher = await paymentVoucherRepository.findById(id);
+    if (!voucher) throw AppError.notFound("Voucher not found");
+    const isOwner = voucher.studentId === requesterId;
+    const isFirmAdmin = requesterAccountType === "LAW_FIRM_ADMIN" && voucher.student.lawFirmId === requesterLawFirmId;
+    if (!isOwner && !isFirmAdmin) {
+      throw AppError.forbidden("You do not have access to this voucher");
+    }
+    return voucher;
+  },
+
   async pendingForFirm(lawFirmId: string) {
     return paymentVoucherRepository.listPendingForFirm(lawFirmId);
   },

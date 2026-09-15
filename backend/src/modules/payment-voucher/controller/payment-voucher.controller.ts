@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
+import path from "path";
 import { paymentVoucherService } from "../service/payment-voucher.service";
 import { uploadVoucherSchema, reviewVoucherSchema } from "../dto/payment-voucher.dto";
 import { AppError } from "../../../common/errors/AppError";
+import { env } from "../../../config/env";
 
 export const paymentVoucherController = {
   async upload(req: Request, res: Response) {
@@ -23,6 +25,22 @@ export const paymentVoucherController = {
     const lawFirmId = req.auth!.lawFirmId!;
     const result = await paymentVoucherService.pendingForFirm(lawFirmId);
     res.status(200).json({ success: true, data: result });
+  },
+
+  async viewFile(req: Request, res: Response) {
+    const { id } = req.params;
+    const voucher = await paymentVoucherService.getFileForViewer(
+      id,
+      req.auth!.userId,
+      req.auth!.lawFirmId,
+      req.auth!.accountType
+    );
+    const fullPath = path.join(process.cwd(), env.storage.localUploadDir, voucher.fileUrl.replace(/^\/uploads\//, ""));
+    res.sendFile(fullPath, (err) => {
+      if (err && !res.headersSent) {
+        res.status(404).json({ success: false, message: "File not found on server" });
+      }
+    });
   },
 
   async review(req: Request, res: Response) {
