@@ -120,6 +120,9 @@ export function CourseDetailPage() {
           <Button size="small" variant="outlined" sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)" }} startIcon={<MenuBookIconOutlined />} onClick={() => navigate(`/courses/${courseId}/library`)}>
             Library
           </Button>
+          <Button size="small" variant="outlined" sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)" }} onClick={() => navigate(`/courses/${courseId}/content`)}>
+            Course Content
+          </Button>
           <Button size="small" variant="outlined" sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.4)" }} startIcon={<StyleIcon />} onClick={() => navigate(`/courses/${courseId}/flashcards`)}>
             Flashcards
           </Button>

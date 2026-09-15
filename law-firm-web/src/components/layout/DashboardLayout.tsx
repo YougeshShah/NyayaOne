@@ -71,6 +71,8 @@ export function DashboardLayout() {
     // Reporting + finances last.
     { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/accounting", label: "Accounting", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: "EDUCATION" },
+    { to: "/payment-vouchers", label: "Payment Vouchers", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: "EDUCATION" },
+    { to: "/course-content", label: "Course Content", icon: <MenuBookIcon fontSize="small" />, module: "student_platform", tenantSpecific: "EDUCATION" },
   ]
     // Module gate — the organization must have this feature enabled at all.
     .filter((item) => item.module === null || enabledModules.includes(item.module))
