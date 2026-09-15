@@ -20,6 +20,7 @@ router.post(
 );
 
 router.get("/course/:courseId/student", authorize("STUDENT"), courseContentController.forStudent);
+router.get("/:id/file", authorize("STUDENT"), courseContentController.viewFile);
 router.get("/course/:courseId/admin", authorize("COMPANY", "LAW_FIRM_ADMIN"), courseContentController.forAdmin);
 router.patch("/:id", authorize("COMPANY", "LAW_FIRM_ADMIN"), courseContentController.update);
 router.delete("/:id", authorize("COMPANY", "LAW_FIRM_ADMIN"), courseContentController.remove);

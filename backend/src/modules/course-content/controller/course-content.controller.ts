@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
+import path from "path";
 import { courseContentService } from "../service/course-content.service";
 import { createContentSchema, updateContentSchema } from "../dto/course-content.dto";
 import { AppError } from "../../../common/errors/AppError";
 import { prisma } from "../../../database/prisma";
+import { env } from "../../../config/env";
 
 export const courseContentController = {
   async create(req: Request, res: Response) {
@@ -48,6 +50,25 @@ export const courseContentController = {
     const lawFirmId = req.auth!.accountType === "COMPANY" ? null : req.auth!.lawFirmId!;
     const result = await courseContentService.forAdmin(courseId, lawFirmId);
     res.status(200).json({ success: true, data: result });
+  },
+
+  async viewFile(req: Request, res: Response) {
+    const { id } = req.params;
+    const studentId = req.auth!.userId;
+    const content = await prisma.courseContent.findUnique({ where: { id } });
+    if (!content || !content.fileUrl) throw AppError.notFound("Content not found");
+
+    const subscription = await prisma.courseSubscription.findFirst({
+      where: { studentId, courseId: content.courseId, status: { in: ["ACTIVE", "TRIAL"] } },
+    });
+    if (!subscription) throw AppError.forbidden("Subscribe to this course to view its content");
+
+    const fullPath = path.join(process.cwd(), env.storage.localUploadDir, content.fileUrl.replace(/^\/uploads\//, ""));
+    res.sendFile(fullPath, (err) => {
+      if (err && !res.headersSent) {
+        res.status(404).json({ success: false, message: "File not found on server" });
+      }
+    });
   },
 
   async update(req: Request, res: Response) {

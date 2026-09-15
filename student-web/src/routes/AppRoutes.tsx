@@ -17,6 +17,7 @@ import { EsewaCallbackPage } from "../pages/payment/EsewaCallbackPage";
 import { KhaltiCallbackPage } from "../pages/payment/KhaltiCallbackPage";
 import { PaymentVoucherPage } from "../pages/payment/PaymentVoucherPage";
 import { MyNotesPage } from "../pages/notes/MyNotesPage";
+import { CourseContentViewerPage } from "../pages/dashboard/CourseContentViewerPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
 import { SpeakingPromptsListPage } from "../pages/speaking/SpeakingPromptsListPage";
 import { SpeakingTestPage } from "../pages/speaking/SpeakingTestPage";
@@ -40,6 +41,7 @@ export function AppRoutes() {
           <Route path="/courses/:courseId/practice" element={<McqPracticePage />} />
           <Route path="/courses/:courseId/mock-test/:mockTestId" element={<SectionedTestTakePage />} />
           <Route path="/courses/:courseId/library" element={<LibraryPage />} />
+          <Route path="/courses/:courseId/content" element={<CourseContentViewerPage />} />
           <Route path="/courses/:courseId/speaking" element={<SpeakingPromptsListPage />} />
           <Route path="/speaking/test" element={<SpeakingTestPage />} />
           <Route path="/precedents" element={<PrecedentSearchPage />} />
