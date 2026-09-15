@@ -74,6 +74,7 @@ export function PhotoEditorPage() {
   const [hasImage, setHasImage] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<"png" | "jpeg" | "webp">("png");
   const [tab, setTab] = useState(0);
+  const dragRef = useRef<{ id: string; kind: "overlay" | "layer"; offsetX: number; offsetY: number } | null>(null);
 
   const cssFilter = () => {
     const base = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
@@ -276,6 +277,72 @@ export function PhotoEditorPage() {
     reader.readAsText(file);
   };
 
+  // Canvas is often displayed smaller than its real pixel size (CSS
+  // max-width/max-height) -- convert a mouse event's screen position into
+  // real canvas coordinates so dragging tracks the cursor accurately.
+  const getCanvasPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  };
+
+  const hitTestOverlay = (x: number, y: number) => {
+    // Search from topmost (last drawn) down, so whatever is visually on
+    // top is what gets picked when things overlap.
+    for (let i = overlays.length - 1; i >= 0; i--) {
+      const o = overlays[i];
+      if (o.kind === "text") {
+        const ctx = canvasRef.current!.getContext("2d")!;
+        ctx.font = `bold ${o.fontSize}px sans-serif`;
+        const width = ctx.measureText(o.text).width;
+        if (x >= o.x && x <= o.x + width && y >= o.y && y <= o.y + o.fontSize) return o.id;
+      } else {
+        if (x >= o.x && x <= o.x + o.width && y >= o.y && y <= o.y + o.height) return o.id;
+      }
+    }
+    return null;
+  };
+
+  const hitTestLayer = (x: number, y: number) => {
+    for (let i = imageLayers.length - 1; i >= 0; i--) {
+      const l = imageLayers[i];
+      if (x >= l.x && x <= l.x + l.width && y >= l.y && y <= l.y + l.height) return l.id;
+    }
+    return null;
+  };
+
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { x, y } = getCanvasPos(e);
+    const overlayId = hitTestOverlay(x, y);
+    if (overlayId) {
+      const o = overlays.find((o) => o.id === overlayId)!;
+      dragRef.current = { id: overlayId, kind: "overlay", offsetX: x - o.x, offsetY: y - o.y };
+      return;
+    }
+    const layerId = hitTestLayer(x, y);
+    if (layerId) {
+      const l = imageLayers.find((l) => l.id === layerId)!;
+      dragRef.current = { id: layerId, kind: "layer", offsetX: x - l.x, offsetY: y - l.y };
+    }
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!dragRef.current) return;
+    const { x, y } = getCanvasPos(e);
+    const { id, kind, offsetX, offsetY } = dragRef.current;
+    if (kind === "overlay") {
+      setOverlays((prev) => prev.map((o) => (o.id === id ? { ...o, x: x - offsetX, y: y - offsetY } : o)));
+    } else {
+      setImageLayers((prev) => prev.map((l) => (l.id === id ? { ...l, x: x - offsetX, y: y - offsetY } : l)));
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    dragRef.current = null;
+  };
+
   return (
     <Box sx={{ maxWidth: 1100 }}>
       <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
@@ -319,7 +386,14 @@ export function PhotoEditorPage() {
               Upload Image
             </Button>
           ) : (
-            <canvas ref={canvasRef} style={{ maxWidth: "100%", maxHeight: 500, borderRadius: 8 }} />
+            <canvas
+              ref={canvasRef}
+              style={{ maxWidth: "100%", maxHeight: 500, borderRadius: 8, cursor: overlays.length || imageLayers.length ? "move" : "default" }}
+              onMouseDown={handleCanvasMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              onMouseLeave={handleCanvasMouseUp}
+            />
           )}
           <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleUpload} />
         </Paper>
@@ -431,8 +505,7 @@ export function PhotoEditorPage() {
                   </Box>
                 )}
                 <Typography variant="caption" color="text.secondary">
-                  Layers are placed in the top-left corner — drag support isn't included yet, but you can add more
-                  layers and delete/re-add to reposition roughly by upload order.
+                  Click and drag any layer, text, or shape directly on the photo to reposition it.
                 </Typography>
               </>
             )}
