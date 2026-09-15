@@ -16,6 +16,7 @@ import { FlashcardStudyPage } from "../pages/dashboard/FlashcardStudyPage";
 import { EsewaCallbackPage } from "../pages/payment/EsewaCallbackPage";
 import { KhaltiCallbackPage } from "../pages/payment/KhaltiCallbackPage";
 import { PaymentVoucherPage } from "../pages/payment/PaymentVoucherPage";
+import { MyNotesPage } from "../pages/notes/MyNotesPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
 import { SpeakingPromptsListPage } from "../pages/speaking/SpeakingPromptsListPage";
 import { SpeakingTestPage } from "../pages/speaking/SpeakingTestPage";
@@ -51,6 +52,7 @@ export function AppRoutes() {
           <Route path="/payment/esewa/success" element={<EsewaCallbackPage />} />
           <Route path="/payment/khalti/callback" element={<KhaltiCallbackPage />} />
           <Route path="/payment/voucher" element={<PaymentVoucherPage />} />
+          <Route path="/my-notes" element={<MyNotesPage />} />
         </Route>
       </Route>
 

@@ -55,6 +55,9 @@ export function DashboardLayout() {
           <Button startIcon={<ReplayIcon />} onClick={() => navigate("/my-mistakes")} sx={{ mr: 1 }}>
             Review Mistakes
           </Button>
+          <Button onClick={() => navigate("/my-notes")} sx={{ mr: 1 }}>
+            My Notes
+          </Button>
           <Button startIcon={<GavelIcon />} onClick={handlePrecedentClick} sx={{ mr: 1 }}>
             नजिर खोज
           </Button>
