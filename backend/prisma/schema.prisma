@@ -294,6 +294,7 @@ model User {
   bookmarks          Bookmark[]            @relation("StudentBookmarks")
   studyProgress      StudyProgress[]       @relation("StudentProgress")
   courseSubscriptions CourseSubscription[] @relation("StudentCourseSubscriptions")
+  paymentVouchers     PaymentVoucher[]       @relation("StudentPaymentVouchers")
   liveClassAttendance LiveClassAttendance[] @relation("StudentLiveClassAttendance")
   writingSubmissions  WritingSubmission[]  @relation("StudentWritingSubmissions")
   feedbackGiven       Feedback[]           @relation("StudentFeedback")
@@ -926,6 +927,7 @@ model Course {
   subjects      Subject[]
   liveClasses   LiveClass[]
   subscriptions CourseSubscription[]
+  paymentVouchers PaymentVoucher[]
   mcqQuestions  McqQuestion[]
   mockTests     MockTest[]
   paymentTransactions PaymentTransaction[]
@@ -954,6 +956,36 @@ model CourseSubscription {
   @@unique([studentId, courseId])
   @@index([studentId])
   @@index([courseId])
+}
+
+// ------------------------------------------------------------
+// PAYMENT VOUCHER — student uploads proof of manual payment (bank
+// transfer/cash receipt), institution admin approves before course
+// access is granted. Separate from the automatic Khalti/eSewa flow.
+// ------------------------------------------------------------
+enum VoucherStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PaymentVoucher {
+  id              String        @id @default(uuid())
+  studentId       String
+  student         User          @relation("StudentPaymentVouchers", fields: [studentId], references: [id])
+  courseId        String
+  course          Course        @relation(fields: [courseId], references: [id])
+  fileUrl         String
+  amount          Float?
+  status          VoucherStatus @default(PENDING)
+  submittedAt     DateTime      @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  rejectionReason String?
+
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
 }
 
 // ------------------------------------------------------------

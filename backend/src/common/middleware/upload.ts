@@ -207,3 +207,23 @@ export const qrCodeUpload = multer({
   fileFilter: qrCodeFileFilter,
   limits: { fileSize: QR_CODE_MAX_SIZE_BYTES },
 });
+
+// Payment vouchers -- student's proof of manual payment (bank
+// transfer/cash receipt screenshot), own folder per student's law firm.
+const voucherStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "vouchers");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.auth?.userId || "student"}-${Date.now()}-${uuidv4()}${ext}`);
+  },
+});
+
+export const voucherUpload = multer({
+  storage: voucherStorage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE_BYTES },
+});
