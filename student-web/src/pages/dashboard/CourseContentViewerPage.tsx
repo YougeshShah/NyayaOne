@@ -35,7 +35,11 @@ export function CourseContentViewerPage() {
     );
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto" }}>
+    <Box
+      sx={{ maxWidth: 800, mx: "auto", userSelect: "none" }}
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+    >
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
         Course Content
       </Typography>
