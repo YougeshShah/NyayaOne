@@ -44,6 +44,15 @@ export const courseService = {
   // grant access manually until a real payment flow exists. Real checkout
   // integration is a separate, later piece of work.
   async grantSubscription(studentId: string, courseId: string, expiresAt?: Date) {
+    // Default expiry to the course's own validityDays if the caller didn't
+    // pass one explicitly -- every payment path (eSewa/Khalti/manual/
+    // voucher) goes through here, so this is the single place that decides
+    // how long access lasts.
+    if (!expiresAt) {
+      const course = await courseRepository.findById(courseId);
+      const days = course?.validityDays ?? 365;
+      expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    }
     await this.getById(courseId);
     return courseRepository.createSubscription(studentId, courseId, expiresAt);
   },

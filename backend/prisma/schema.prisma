@@ -923,6 +923,10 @@ model Course {
   description String?
   iconUrl     String?
   isActive    Boolean        @default(true)
+  // How many days a subscription to this course lasts once granted --
+  // access is cut off a day early by the expiry job, so the student's
+  // actual last usable day is validityDays - 1.
+  validityDays Int           @default(365)
   createdAt   DateTime       @default(now())
 
   subjects      Subject[]

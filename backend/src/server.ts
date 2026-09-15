@@ -3,6 +3,7 @@ import { env } from "./config/env";
 import { logger } from "./common/utils/logger";
 import { prisma } from "./database/prisma";
 import { startReminderScheduler } from "./jobs/reminderScheduler";
+import { startSubscriptionExpiryJob } from "./jobs/subscriptionExpiryJob";
 
 async function bootstrap() {
   try {
@@ -16,6 +17,7 @@ async function bootstrap() {
     });
 
     startReminderScheduler();
+    startSubscriptionExpiryJob();
   } catch (error) {
     logger.error("Failed to start server");
     logger.error(error instanceof Error ? error.stack || error.message : String(error));
