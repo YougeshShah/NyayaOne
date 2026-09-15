@@ -166,10 +166,14 @@ export const authService = {
       });
     } else if (input.asCompany) {
       // Company Web explicitly declared its context -- go straight to the
-      // Company account (lawFirmId: null), skipping the ambiguity check
-      // entirely, since Company Web itself has no slug to disambiguate with.
+      // Company account (lawFirmId: null AND accountType COMPANY),
+      // skipping the ambiguity check entirely. accountType must be
+      // checked too -- a CLIENT or STUDENT account can also have
+      // lawFirmId: null (e.g. an unlinked student), and without this
+      // check findFirst could silently match that account instead of
+      // the intended Company one when both share an email.
       user = await prisma.user.findFirst({
-        where: { email: input.email, lawFirmId: null },
+        where: { email: input.email, lawFirmId: null, accountType: "COMPANY" },
         include: { lawFirm: true, role: { include: { permissions: { include: { permission: true } } } } },
       });
     } else {
