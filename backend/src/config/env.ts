@@ -40,4 +40,8 @@ export const env = {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10),
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "200", 10),
   },
+
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY || "",
+  },
 };
