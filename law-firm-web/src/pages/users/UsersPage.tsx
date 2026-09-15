@@ -178,23 +178,27 @@ export function UsersPage() {
               <TableRow key={u.id} hover>
                 <TableCell>{u.fullName}</TableCell>
                 <TableCell>{u.email}</TableCell>
-                <TableCell>{u.accountType}</TableCell>
+                <TableCell>{(u.accountType as string) === "LAW_FIRM_ADMIN" ? "Admin" : u.accountType}</TableCell>
                 <TableCell>
-                  <TextField
-                    select
-                    size="small"
-                    variant="standard"
-                    value={(u as any).roleId || ""}
-                    onChange={(e) => update.mutate({ id: u.id, payload: { roleId: e.target.value || null } as any })}
-                    sx={{ minWidth: 140 }}
-                  >
-                    <MenuItem value="">— None —</MenuItem>
-                    {tenantRoles?.map((r) => (
-                      <MenuItem key={r.id} value={r.id}>
-                        {r.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  {(u.accountType as string) === "LAW_FIRM_ADMIN" ? (
+                    <span style={{ color: "#64748b", fontSize: 14 }}>Full Access (Admin)</span>
+                  ) : (
+                    <TextField
+                      select
+                      size="small"
+                      variant="standard"
+                      value={(u as any).roleId || ""}
+                      onChange={(e) => update.mutate({ id: u.id, payload: { roleId: e.target.value || null } as any })}
+                      sx={{ minWidth: 140 }}
+                    >
+                      <MenuItem value="">— None —</MenuItem>
+                      {tenantRoles?.map((r) => (
+                        <MenuItem key={r.id} value={r.id}>
+                          {r.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
                 </TableCell>
                 {!isEducation && <TableCell>{u.barRegistrationNo || "—"}</TableCell>}
                 <TableCell>
