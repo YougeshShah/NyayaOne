@@ -13,6 +13,9 @@ router.get("/my", notificationController.myNotifications);
 router.patch("/my/:id/read", notificationController.markRead);
 router.patch("/my/mark-all-read", notificationController.markAllRead);
 
+// Institution admin notifying their own students -- separate from Company's platform-wide broadcast below.
+router.post("/institution", authorize("LAW_FIRM_ADMIN"), notificationController.notifyInstitutionStudents);
+
 // Only Company (Technocraftx) can broadcast notifications and view the sent log.
 router.post("/", authorize("COMPANY"), requirePermission("notification.broadcast"), notificationController.send);
 router.get("/", authorize("COMPANY"), notificationController.listSent);

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, Typography, Avatar, IconButton, Box, Container, Button, Badge } from "@mui/material";
+import { AppBar, Toolbar, Typography, Avatar, IconButton, Box, Container, Button, Badge, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import TrendingUpIcon from "@mui/icons-material/TrendingUpOutlined";
 import BookmarkIcon from "@mui/icons-material/BookmarkBorderOutlined";
@@ -22,6 +23,15 @@ export function DashboardLayout() {
   const hasLawSubscription = subscriptions?.some(
     (s) => s.course.category === "LAW" && (s.status === "ACTIVE" || s.status === "TRIAL")
   );
+  const [precedentGateOpen, setPrecedentGateOpen] = useState(false);
+
+  const handlePrecedentClick = () => {
+    if (hasLawSubscription) {
+      navigate("/precedents");
+    } else {
+      setPrecedentGateOpen(true);
+    }
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -45,11 +55,9 @@ export function DashboardLayout() {
           <Button startIcon={<ReplayIcon />} onClick={() => navigate("/my-mistakes")} sx={{ mr: 1 }}>
             Review Mistakes
           </Button>
-          {hasLawSubscription && (
-            <Button startIcon={<GavelIcon />} onClick={() => navigate("/precedents")} sx={{ mr: 1 }}>
-              नजिर खोज
-            </Button>
-          )}
+          <Button startIcon={<GavelIcon />} onClick={handlePrecedentClick} sx={{ mr: 1 }}>
+            नजिर खोज
+          </Button>
           <IconButton onClick={() => navigate("/notifications")} sx={{ mr: 1 }}>
             <Badge badgeContent={notificationsData?.unreadCount ?? 0} color="error">
               <NotificationsIcon />
@@ -74,6 +82,28 @@ export function DashboardLayout() {
         <Outlet />
       </Container>
       <ChatWidget />
+
+      <Dialog open={precedentGateOpen} onClose={() => setPrecedentGateOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Subscribe to Access नजिर खोज</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Precedent (Supreme Court judgment) search is available to students subscribed to a Law course.
+            Subscribe to unlock this feature.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPrecedentGateOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setPrecedentGateOpen(false);
+              navigate("/");
+            }}
+          >
+            Subscribe
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

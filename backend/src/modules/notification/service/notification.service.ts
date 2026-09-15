@@ -72,4 +72,26 @@ export const notificationService = {
     const result = await notificationRepository.markAllReadScoped(userId);
     return { message: "Marked all as read", count: result.count };
   },
+  // Institution admin broadcasting to their own students only -- scoped
+  // to lawFirmId, separate from Company's platform-wide broadcast.
+  async notifyInstitutionStudents(lawFirmId: string, createdBy: string, title: string, body: string) {
+    const students = await prisma.user.findMany({
+      where: { accountType: "STUDENT", lawFirmId },
+      select: { id: true },
+    });
+    if (students.length === 0) return { notified: 0 };
+
+    const notification = await notificationRepository.createNotification({
+      title,
+      body,
+      audience: "INSTITUTION_STUDENTS",
+      targetId: lawFirmId,
+      createdBy,
+    });
+    await notificationRepository.bulkCreateUserNotifications(
+      notification.id,
+      students.map((s) => s.id)
+    );
+    return { notified: students.length };
+  },
 };

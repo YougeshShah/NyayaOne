@@ -43,4 +43,11 @@ export const notificationController = {
     const result = await notificationService.markAllRead(req.auth.userId);
     res.status(200).json({ success: true, data: result });
   },
+  async notifyInstitutionStudents(req: Request, res: Response) {
+    const { title, body } = req.body;
+    const lawFirmId = req.auth!.lawFirmId!;
+    const createdBy = req.auth!.userId;
+    const result = await notificationService.notifyInstitutionStudents(lawFirmId, createdBy, title, body);
+    res.status(200).json({ success: true, data: result });
+  },
 };
