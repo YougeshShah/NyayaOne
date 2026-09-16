@@ -82,6 +82,8 @@ export function PhotoEditorPage() {
   const [cropMode, setCropMode] = useState(false);
   const [cropRect, setCropRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const cropStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [bgRemoveMode, setBgRemoveMode] = useState(false);
+  const [colorTolerance, setColorTolerance] = useState(30);
 
   const cssFilter = () => {
     const base = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
@@ -335,8 +337,63 @@ export function PhotoEditorPage() {
     return null;
   };
 
+  // Click a pixel: every pixel within `colorTolerance` of that color
+  // anywhere in the image becomes transparent -- works well for solid or
+  // near-solid backgrounds (studio photos, product shots, plain walls).
+  // This is a genuine free, client-side technique (no AI model needed);
+  // it won't cleanly separate a complex/textured background from a subject.
+  const removeBackgroundColor = (clickX: number, clickY: number) => {
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    if (!canvas || !img) return;
+
+    // Redraw the base image (undoing rotation/filters) onto a working
+    // canvas so we sample/modify raw pixel data cleanly.
+    const work = document.createElement("canvas");
+    work.width = img.width;
+    work.height = img.height;
+    const wctx = work.getContext("2d")!;
+    wctx.drawImage(img, 0, 0);
+
+    // Map the click (in the on-screen canvas' rotated/scaled space) back
+    // to the unrotated working canvas' coordinate space.
+    const scaleX = work.width / canvas.width;
+    const scaleY = work.height / canvas.height;
+    const sx = Math.round(clickX * scaleX);
+    const sy = Math.round(clickY * scaleY);
+
+    const imageData = wctx.getImageData(0, 0, work.width, work.height);
+    const data = imageData.data;
+    const idx = (sy * work.width + sx) * 4;
+    const targetR = data[idx];
+    const targetG = data[idx + 1];
+    const targetB = data[idx + 2];
+
+    for (let i = 0; i < data.length; i += 4) {
+      const dr = data[i] - targetR;
+      const dg = data[i + 1] - targetG;
+      const db = data[i + 2] - targetB;
+      const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+      if (distance <= colorTolerance) {
+        data[i + 3] = 0; // fully transparent
+      }
+    }
+    wctx.putImageData(imageData, 0, 0);
+
+    const newImg = new Image();
+    newImg.onload = () => {
+      imageRef.current = newImg;
+      setBgRemoveMode(false);
+    };
+    newImg.src = work.toDataURL("image/png");
+  };
+
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = getCanvasPos(e);
+    if (bgRemoveMode) {
+      removeBackgroundColor(x, y);
+      return;
+    }
     if (cropMode) {
       cropStartRef.current = { x, y };
       setCropRect({ x, y, w: 0, h: 0 });
@@ -445,7 +502,7 @@ export function PhotoEditorPage() {
           ) : (
             <canvas
               ref={canvasRef}
-              style={{ maxWidth: "100%", maxHeight: 500, borderRadius: 8, cursor: cropMode ? "crosshair" : (overlays.length || imageLayers.length ? "move" : "default") }}
+              style={{ maxWidth: "100%", maxHeight: 500, borderRadius: 8, cursor: bgRemoveMode ? "crosshair" : cropMode ? "crosshair" : (overlays.length || imageLayers.length ? "move" : "default") }}
               onMouseDown={handleCanvasMouseDown}
               onMouseMove={handleCanvasMouseMove}
               onMouseUp={handleCanvasMouseUp}
@@ -480,6 +537,24 @@ export function PhotoEditorPage() {
                     <Button onClick={() => { setCropMode(false); setCropRect(null); }}>Cancel</Button>
                   </ButtonGroup>
                 )}
+
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+                  Remove Background Color
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                  Click a solid-color background to make it transparent. Works best on plain/studio backgrounds.
+                </Typography>
+                {!bgRemoveMode ? (
+                  <Button size="small" variant="outlined" fullWidth onClick={() => setBgRemoveMode(true)} sx={{ mb: 1 }}>
+                    Click to Remove Color
+                  </Button>
+                ) : (
+                  <Button size="small" variant="outlined" color="error" fullWidth onClick={() => setBgRemoveMode(false)} sx={{ mb: 1 }}>
+                    Cancel (Click Image to Pick Color)
+                  </Button>
+                )}
+                <Typography variant="caption" color="text.secondary">Tolerance: {colorTolerance}</Typography>
+                <Slider value={colorTolerance} onChange={(_, v) => setColorTolerance(v as number)} min={5} max={120} sx={{ mb: 2 }} />
 
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
                   Rotate
