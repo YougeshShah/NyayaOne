@@ -69,6 +69,9 @@ export function DashboardLayout() {
     { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/precedents", label: "नजिर खोज (Precedents)", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/drafting", label: "Drafting Panel", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/uk-precedents", label: "UK Case Law", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    // Opens India's official eCourts judgment portal directly -- no scraping/proxy, since it has no public API/open licence like UK's.
+    { to: "external:https://judgments.ecourts.gov.in/", label: "India Case Law ↗", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     // Reporting + finances last.
     { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/accounting", label: "Accounting", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: "EDUCATION" },
@@ -96,16 +99,29 @@ export function DashboardLayout() {
         </div>
 
         <nav>
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`}
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-          ))}
+          {navItems.map((item) =>
+            item.to.startsWith("external:") ? (
+              <a
+                key={item.to}
+                href={item.to.replace("external:", "")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.navLink}
+              >
+                {item.icon}
+                {item.label}
+              </a>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`}
+              >
+                {item.icon}
+                {item.label}
+              </NavLink>
+            )
+          )}
         </nav>
       </aside>
 
