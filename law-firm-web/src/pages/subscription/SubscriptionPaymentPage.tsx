@@ -3,6 +3,7 @@ import { Box, Button, Typography, Paper, Chip, TextField, Alert, MenuItem } from
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../../api/client";
 import { firmPaymentApi } from "../../api/firmPayment.api";
+import { useAuthStore } from "../../store/authStore";
 
 interface Plan {
   id: string;
@@ -20,6 +21,10 @@ const STATUS_COLOR: Record<string, "warning" | "success" | "error"> = {
 };
 
 export function SubscriptionPaymentPage() {
+  const user = useAuthStore((s) => s.user);
+  const isEducation = user?.tenantType === "EDUCATION";
+  const memberLabel = isEducation ? "staff" : "lawyers";
+  const itemLabel = isEducation ? "courses" : "cases";
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<"ESEWA" | "KHALTI" | "VOUCHER" | null>(null);
@@ -115,7 +120,7 @@ export function SubscriptionPaymentPage() {
               {p.priceMonthly ? `NPR ${p.priceMonthly}/mo` : "Contact Us"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {p.maxLawyers ? `${p.maxLawyers} lawyers` : "Unlimited lawyers"} · {p.maxCases ? `${p.maxCases} cases` : "Unlimited cases"}
+              {p.maxLawyers ? `${p.maxLawyers} ${memberLabel}` : `Unlimited ${memberLabel}`} · {p.maxCases ? `${p.maxCases} ${itemLabel}` : `Unlimited ${itemLabel}`}
             </Typography>
           </Paper>
         ))}
