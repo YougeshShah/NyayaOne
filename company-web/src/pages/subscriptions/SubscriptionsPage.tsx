@@ -207,7 +207,7 @@ export function SubscriptionsPage() {
 
       {/* ASSIGN PLAN DIALOG */}
       <Dialog open={assignDialogOpen} onClose={() => setAssignDialogOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>Assign Plan to Firm</DialogTitle>
+        <DialogTitle>Assign Plan to Organization</DialogTitle>
         <Box component="form" onSubmit={assignForm.handleSubmit(onAssign)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField select label="Organization" required fullWidth {...assignForm.register("lawFirmId", { required: true })}>
