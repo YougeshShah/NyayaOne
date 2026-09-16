@@ -11,6 +11,11 @@ const router = Router();
 // EDUCATION-type, ACTIVE institutions with a slug set are eligible.
 router.get("/public", lawFirmController.listPublic);
 
+// Public -- serves the firm's own marketing website HTML, no auth. Used by
+// Nginx/frontend to render {slug}.portal.technocraftx.com's homepage.
+router.get("/website/:slug", lawFirmController.getWebsite);
+router.get("/website-by-host", lawFirmController.getWebsiteByHost);
+
 // All law firm management routes are restricted to COMPANY (Technocraftx) accounts.
 router.use(authenticate, authorize("COMPANY"));
 
@@ -23,6 +28,7 @@ router.patch("/:id/suspend", requirePermission("lawfirm.suspend"), lawFirmContro
 router.patch("/:id/activate", requirePermission("lawfirm.approve"), lawFirmController.activate);
 router.patch("/:id/reject", requirePermission("lawfirm.approve"), lawFirmController.reject);
 router.patch("/:id/modules", requirePermission("lawfirm.approve"), lawFirmController.updateModules);
+router.put("/:id/website", requirePermission("lawfirm.approve"), lawFirmController.updateWebsite);
 router.delete("/:id", requirePermission("lawfirm.delete"), lawFirmController.remove);
 
 export default router;

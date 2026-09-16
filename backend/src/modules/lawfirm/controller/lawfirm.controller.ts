@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { lawFirmService } from "../service/lawfirm.service";
 import { listLawFirmsQuerySchema, lawFirmIdParamSchema, suspendLawFirmSchema, createLawFirmSchema, updateModulesSchema } from "../dto/lawfirm.dto";
 import { AppError } from "../../../common/errors/AppError";
+import { prisma } from "../../../database/prisma";
 
 export const lawFirmController = {
   async listPublic(req: Request, res: Response) {
@@ -74,5 +75,38 @@ export const lawFirmController = {
     const months = req.query.months ? parseInt(req.query.months as string, 10) : 6;
     const result = await lawFirmService.monthlyGrowth(months);
     res.status(200).json({ success: true, data: result });
+  },
+  async getWebsiteByHost(req: Request, res: Response) {
+    // Extracts the institution's slug from the request's own subdomain
+    // (e.g. "sitalawfirm.portal.technocraftx.com" -> "sitalawfirm") --
+    // used when Nginx proxies /site on the wildcard subdomain straight
+    // here, without needing per-slug Nginx config.
+    const host = req.headers.host || "";
+    const slug = host.split(".")[0];
+    const firm = await prisma.lawFirm.findUnique({ where: { slug }, select: { websiteHtml: true, status: true } });
+    if (!firm || !firm.websiteHtml || firm.status !== "ACTIVE") {
+      res.status(404).send("<html><body>No website published for this organization.</body></html>");
+      return;
+    }
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(firm.websiteHtml);
+  },
+
+  async getWebsite(req: Request, res: Response) {
+    const { slug } = req.params;
+    const firm = await prisma.lawFirm.findUnique({ where: { slug }, select: { websiteHtml: true, status: true } });
+    if (!firm || !firm.websiteHtml || firm.status !== "ACTIVE") {
+      res.status(404).send("<html><body>No website published for this organization.</body></html>");
+      return;
+    }
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(firm.websiteHtml);
+  },
+
+  async updateWebsite(req: Request, res: Response) {
+    const { id } = req.params;
+    const { websiteHtml } = req.body;
+    const firm = await prisma.lawFirm.update({ where: { id }, data: { websiteHtml } });
+    res.status(200).json({ success: true, data: { id: firm.id, slug: firm.slug } });
   },
 };

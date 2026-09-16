@@ -231,6 +231,7 @@ model LawFirm {
   courseFees      CourseFee[]
   courseContents  CourseContent[]
   paymentQrCodeUrl String? // uploaded QR code image (bank/wallet) students scan to pay this institution directly
+  websiteHtml      String? // full self-contained HTML for this firm/institution's public marketing page, edited by Company on their behalf, served at their own subdomain
   staffSalaries   StaffSalary[]
 
   createdAt       DateTime      @default(now())
