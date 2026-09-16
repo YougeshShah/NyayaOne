@@ -230,6 +230,7 @@ model LawFirm {
   invoices        Invoice[]
   courseFees      CourseFee[]
   courseContents  CourseContent[]
+  firmPaymentTransactions FirmPaymentTransaction[]
   paymentQrCodeUrl String? // uploaded QR code image (bank/wallet) students scan to pay this institution directly
   websiteHtml      String? // full self-contained HTML for this firm/institution's public marketing page, edited by Company on their behalf, served at their own subdomain
   staffSalaries   StaffSalary[]
@@ -681,6 +682,7 @@ model SubscriptionPlan {
   isActive      Boolean   @default(true)
 
   subscriptions FirmSubscription[]
+  firmPaymentTransactions FirmPaymentTransaction[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -1060,6 +1062,32 @@ model CaseDeadline {
 
   @@index([caseId])
   @@index([remindAt, sent])
+}
+
+// ------------------------------------------------------------
+// FIRM PAYMENT TRANSACTION — an institution/law firm paying Company for
+// its own platform subscription (FirmSubscription), via eSewa/Khalti/
+// manual voucher. Separate from PaymentTransaction, which is a STUDENT
+// paying for a COURSE -- different payer, different purpose.
+// ------------------------------------------------------------
+model FirmPaymentTransaction {
+  id              String   @id @default(uuid())
+  lawFirmId       String
+  lawFirm         LawFirm  @relation(fields: [lawFirmId], references: [id])
+  planId          String
+  plan            SubscriptionPlan @relation(fields: [planId], references: [id])
+  gateway         String // ESEWA | KHALTI | MANUAL
+  transactionUuid String   @unique
+  khaltiPidx      String?
+  amount          Float
+  status          String   @default("PENDING") // PENDING | COMPLETED | FAILED
+  voucherFileUrl  String? // for MANUAL gateway -- uploaded receipt
+  reviewedBy      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([lawFirmId])
+  @@index([status])
 }
 
 // ------------------------------------------------------------
