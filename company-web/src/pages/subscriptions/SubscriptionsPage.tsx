@@ -136,7 +136,7 @@ export function SubscriptionsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Law Firm</TableCell>
+              <TableCell>Organization</TableCell>
               <TableCell>Plan</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Started</TableCell>
@@ -210,7 +210,7 @@ export function SubscriptionsPage() {
         <DialogTitle>Assign Plan to Firm</DialogTitle>
         <Box component="form" onSubmit={assignForm.handleSubmit(onAssign)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField select label="Law Firm" required fullWidth {...assignForm.register("lawFirmId", { required: true })}>
+            <TextField select label="Organization" required fullWidth {...assignForm.register("lawFirmId", { required: true })}>
               {lawFirms?.items.map((f) => (
                 <MenuItem key={f.id} value={f.id}>
                   {f.name}
