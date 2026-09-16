@@ -25,6 +25,7 @@ import { ProfilePage } from "../pages/profile/ProfilePage";
 import { PaymentVouchersPage } from "../pages/payment-vouchers/PaymentVouchersPage";
 import { CourseContentAdminPage } from "../pages/course-content/CourseContentAdminPage";
 import { DraftingPanelPage } from "../pages/drafting/DraftingPanelPage";
+import { CaseWorkspacePage } from "../pages/cases/CaseWorkspacePage";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
@@ -43,6 +44,7 @@ export function AppRoutes() {
           <Route path="/payment-vouchers" element={<PaymentVouchersPage />} />
           <Route path="/course-content" element={<CourseContentAdminPage />} />
           <Route path="/drafting" element={<DraftingPanelPage />} />
+          <Route path="/cases/:caseId/workspace" element={<CaseWorkspacePage />} />
           <Route path="/cases" element={<CasesPage />} />
           <Route path="/cases/:id" element={<CaseDetailPage />} />
           <Route path="/hearings" element={<HearingsPage />} />
