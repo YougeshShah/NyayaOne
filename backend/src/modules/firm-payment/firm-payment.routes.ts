@@ -160,6 +160,11 @@ router.post(
   }
 );
 
+router.get("/plans", async (req: Request, res: Response) => {
+  const plans = await prisma.subscriptionPlan.findMany({ where: { isActive: true }, orderBy: { priceMonthly: "asc" } });
+  res.status(200).json({ success: true, data: plans });
+});
+
 router.get("/my-transactions", authorize("LAW_FIRM_ADMIN"), async (req: Request, res: Response) => {
   const lawFirmId = req.auth!.lawFirmId!;
   const transactions = await prisma.firmPaymentTransaction.findMany({

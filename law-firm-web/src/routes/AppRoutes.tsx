@@ -28,6 +28,7 @@ import { DraftingPanelPage } from "../pages/drafting/DraftingPanelPage";
 import { CaseWorkspacePage } from "../pages/cases/CaseWorkspacePage";
 import { UkPrecedentSearchPage } from "../pages/uk-precedents/UkPrecedentSearchPage";
 import { AiAssistantPage } from "../pages/ai-assistant/AiAssistantPage";
+import { SubscriptionPaymentPage } from "../pages/subscription/SubscriptionPaymentPage";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
@@ -49,6 +50,7 @@ export function AppRoutes() {
           <Route path="/cases/:caseId/workspace" element={<CaseWorkspacePage />} />
           <Route path="/uk-precedents" element={<UkPrecedentSearchPage />} />
           <Route path="/ai-assistant" element={<AiAssistantPage />} />
+          <Route path="/subscription" element={<SubscriptionPaymentPage />} />
           <Route path="/cases" element={<CasesPage />} />
           <Route path="/cases/:id" element={<CaseDetailPage />} />
           <Route path="/hearings" element={<HearingsPage />} />
