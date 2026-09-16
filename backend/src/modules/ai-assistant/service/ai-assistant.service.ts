@@ -37,7 +37,7 @@ ${context || "(No matching precedents found in the database for this question.)"
 
 QUESTION: ${question}
 
-Answer in the same language as the question (Nepali or English). For each point, cite the exact precedent title/case number/date it came from.`;
+Answer in the same language and script as the question -- if the question is in Devanagari script, answer in Devanagari; if it's in Roman-script Nepali (Nepali words spelled with English letters, e.g. "yo case ma k huncha"), answer in Roman-script Nepali; if English, answer in English. For each point, cite the exact precedent title/case number/date it came from.`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${env.gemini.apiKey}`,

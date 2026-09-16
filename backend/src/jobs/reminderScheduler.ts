@@ -131,6 +131,30 @@ async function processDueLiveClassReminders() {
   }
 }
 
+async function processDueCaseDeadlines() {
+  const dueDeadlines = await prisma.caseDeadline.findMany({
+    where: { remindAt: { lte: new Date() }, sent: false },
+    take: 100,
+    include: { case: { include: { lawyers: { include: { lawyer: true } } } } },
+  });
+
+  for (const deadline of dueDeadlines) {
+    const lawyerIds = deadline.case.lawyers.map((l) => l.lawyer.id);
+    if (lawyerIds.length > 0) {
+      const notification = await notificationRepository.createNotification({
+        title: `हदम्याद/Deadline: ${deadline.title}`,
+        body: `Case ${deadline.case.caseNumber} - "${deadline.title}" is due ${deadline.dueAt.toLocaleDateString()}`,
+        audience: "CASE_DEADLINE",
+        targetId: deadline.caseId,
+        createdBy: deadline.createdBy,
+      });
+      await notificationRepository.bulkCreateUserNotifications(notification.id, lawyerIds);
+    }
+    await prisma.caseDeadline.update({ where: { id: deadline.id }, data: { sent: true } });
+    logger.info(`Sent deadline reminder for case ${deadline.case.caseNumber}: "${deadline.title}"`);
+  }
+}
+
 export function startReminderScheduler() {
   logger.info("Hearing reminder scheduler started (checking every 30s)");
   setInterval(() => {
@@ -139,6 +163,9 @@ export function startReminderScheduler() {
     });
     processDueLiveClassReminders().catch((err) => {
       logger.error(`Live class reminder scheduler error: ${err instanceof Error ? err.message : String(err)}`);
+    });
+    processDueCaseDeadlines().catch((err) => {
+      logger.error(`Case deadline reminder scheduler error: ${err instanceof Error ? err.message : String(err)}`);
     });
   }, CHECK_INTERVAL_MS);
 }

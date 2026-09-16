@@ -97,6 +97,7 @@ enum NotificationAudience {
   INDIVIDUAL_USER
   INSTITUTION_STUDENTS
   ALL_INSTITUTION_ADMINS
+  CASE_DEADLINE
 }
 
 enum LibraryResourceType {
@@ -297,6 +298,7 @@ model User {
   courseSubscriptions CourseSubscription[] @relation("StudentCourseSubscriptions")
   paymentVouchers     PaymentVoucher[]       @relation("StudentPaymentVouchers")
   ownNotes            StudentNote[]          @relation("StudentOwnNotes")
+  caseNotesWritten    CaseNote[]             @relation("CaseNoteAuthor")
   liveClassAttendance LiveClassAttendance[] @relation("StudentLiveClassAttendance")
   writingSubmissions  WritingSubmission[]  @relation("StudentWritingSubmissions")
   feedbackGiven       Feedback[]           @relation("StudentFeedback")
@@ -415,6 +417,8 @@ model Case {
   lawyers         CaseLawyer[]
   hearings        Hearing[]
   documents       Document[]
+  notes           CaseNote[]
+  deadlines       CaseDeadline[]
 
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -1032,6 +1036,45 @@ model CourseContent {
   @@index([subjectId])
   @@index([lawFirmId])
   @@index([term])
+}
+
+// ------------------------------------------------------------
+// CASE DEADLINE — statute-of-limitations (हदम्याद), important meeting,
+// or filing deadline the lawyer sets manually for a case. A background
+// job (same pattern as HearingReminder) sends a notification when it's
+// due.
+// ------------------------------------------------------------
+model CaseDeadline {
+  id          String    @id @default(uuid())
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title       String // e.g. "हदम्याद - रिट निवेदन", "Filing deadline"
+  dueAt       DateTime
+  remindAt    DateTime // when to send the alert -- may be before dueAt
+  sent        Boolean   @default(false)
+  createdBy   String
+  createdAt   DateTime  @default(now())
+
+  @@index([caseId])
+  @@index([remindAt, sent])
+}
+
+// ------------------------------------------------------------
+// CASE NOTE — internal, confidential notes lawyers/staff leave on a
+// case for their own team -- NEVER visible to the client, even though
+// the client may have portal access to the same case's documents.
+// ------------------------------------------------------------
+model CaseNote {
+  id        String   @id @default(uuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  content   String
+  createdBy String
+  author    User     @relation("CaseNoteAuthor", fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
 }
 
 // ------------------------------------------------------------

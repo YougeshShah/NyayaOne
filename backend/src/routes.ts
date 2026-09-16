@@ -11,6 +11,8 @@ import paymentVoucherRoutes from "./modules/payment-voucher/routes/payment-vouch
 import studentNoteRoutes from "./modules/student-note/routes/student-note.routes";
 import courseContentRoutes from "./modules/course-content/routes/course-content.routes";
 import aiAssistantRoutes from "./modules/ai-assistant/routes/ai-assistant.routes";
+import caseNoteRoutes from "./modules/case-note/routes/case-note.routes";
+import caseDeadlineRoutes from "./modules/case-deadline/routes/case-deadline.routes";
 import clientPortalRoutes from "./modules/client-portal/routes/client-portal.routes";
 import reportRoutes from "./modules/report/routes/report.routes";
 import notificationRoutes from "./modules/notification/routes/notification.routes";
@@ -64,6 +66,8 @@ router.use("/payment-vouchers", paymentVoucherRoutes);
 router.use("/student-notes", studentNoteRoutes);
 router.use("/course-content", courseContentRoutes);
 router.use("/ai-assistant", aiAssistantRoutes);
+router.use("/case-notes", caseNoteRoutes);
+router.use("/case-deadlines", caseDeadlineRoutes);
 router.use("/client-portal", clientPortalRoutes);
 router.use("/reports", reportRoutes);
 router.use("/notifications", notificationRoutes);
