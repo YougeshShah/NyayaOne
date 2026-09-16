@@ -111,10 +111,10 @@ export function SubscriptionsPage() {
                 {p.description}
               </Typography>
               <Typography variant="caption" display="block">
-                Lawyers: {formatLimit(p.maxLawyers)}
+                Members: {formatLimit(p.maxLawyers)}
               </Typography>
               <Typography variant="caption" display="block">
-                Cases: {formatLimit(p.maxCases)}
+                Items: {formatLimit(p.maxCases)}
               </Typography>
               <Typography variant="caption" display="block">
                 Storage: {p.maxStorageMb ? `${(p.maxStorageMb / 1000).toFixed(1)} GB` : "Unlimited"}
@@ -192,8 +192,8 @@ export function SubscriptionsPage() {
               fullWidth
               {...planForm.register("priceMonthly")}
             />
-            <TextField label="Max Lawyers (blank = unlimited)" type="number" fullWidth {...planForm.register("maxLawyers")} />
-            <TextField label="Max Cases (blank = unlimited)" type="number" fullWidth {...planForm.register("maxCases")} />
+            <TextField label="Max Members (blank = unlimited)" type="number" fullWidth {...planForm.register("maxLawyers")} />
+            <TextField label="Max Items (Cases/Courses) (blank = unlimited)" type="number" fullWidth {...planForm.register("maxCases")} />
             <TextField label="Max Storage MB (blank = unlimited)" type="number" fullWidth {...planForm.register("maxStorageMb")} />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
