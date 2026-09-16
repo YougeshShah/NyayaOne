@@ -70,6 +70,7 @@ export function DashboardLayout() {
     { to: "/precedents", label: "नजिर खोज (Precedents)", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/drafting", label: "Drafting Panel", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/uk-precedents", label: "UK Case Law", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/ai-assistant", label: "AI Assistant", icon: <GavelIcon fontSize="small" />, module: null, tenantSpecific: null },
     // Opens India's official eCourts judgment portal directly -- no scraping/proxy, since it has no public API/open licence like UK's.
     { to: "external:https://judgments.ecourts.gov.in/", label: "India Case Law ↗", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     // Reporting + finances last.
