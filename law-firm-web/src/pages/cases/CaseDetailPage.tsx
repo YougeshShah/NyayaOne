@@ -82,9 +82,12 @@ export function CaseDetailPage() {
             {caseData.caseNumber} — {caseData.court.name}
           </Typography>
         </Box>
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <PriorityBadge priority={caseData.priority} />
           <StatusBadge status={caseData.status} />
+          <Button component={RouterLink} to={`/cases/${id}/workspace`} variant="outlined" size="small">
+            Case Workspace
+          </Button>
         </Box>
       </Box>
 

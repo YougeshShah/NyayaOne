@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
@@ -34,6 +35,7 @@ import { courseApi, subjectApi } from "../../api/courseAdmin.api";
 const STATUS_OPTIONS: (LawFirmStatus | "ALL")[] = ["ALL", "PENDING", "ACTIVE", "SUSPENDED", "REJECTED"];
 
 export function LawFirmsPage() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<LawFirmStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -215,6 +217,9 @@ export function LawFirmsPage() {
                   )}
                   <Button size="small" variant="outlined" onClick={() => setEditModulesFirm(firm)} sx={{ mr: 1 }}>
                     Edit Modules
+                  </Button>
+                  <Button size="small" variant="outlined" onClick={() => navigate(`/website-editor/${firm.id}`)} sx={{ mr: 1 }}>
+                    Edit Website
                   </Button>
                   <Button size="small" color="error" variant="outlined" onClick={() => handleDelete(firm)} disabled={remove.isPending}>
                     Delete
