@@ -74,6 +74,10 @@ export function PhotoEditorPage() {
   const [hasImage, setHasImage] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<"png" | "jpeg" | "webp">("png");
   const [tab, setTab] = useState(0);
+  const [newFontSize, setNewFontSize] = useState(32);
+  const [frameWidth, setFrameWidth] = useState(0);
+  const [frameColor, setFrameColor] = useState("#000000");
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const dragRef = useRef<{ id: string; kind: "overlay" | "layer"; offsetX: number; offsetY: number } | null>(null);
 
   const cssFilter = () => {
@@ -108,6 +112,12 @@ export function PhotoEditorPage() {
       if (layerImg) ctx.drawImage(layerImg, layer.x, layer.y, layer.width, layer.height);
     });
 
+    if (frameWidth > 0) {
+      ctx.strokeStyle = frameColor;
+      ctx.lineWidth = frameWidth;
+      ctx.strokeRect(frameWidth / 2, frameWidth / 2, canvas.width - frameWidth, canvas.height - frameWidth);
+    }
+
     overlays.forEach((o) => {
       if (o.kind === "text") {
         ctx.font = `bold ${o.fontSize}px sans-serif`;
@@ -135,7 +145,7 @@ export function PhotoEditorPage() {
         }
       }
     });
-  }, [rotation, brightness, contrast, saturation, filterPreset, overlays, imageLayers]);
+  }, [rotation, brightness, contrast, saturation, filterPreset, overlays, imageLayers, frameWidth, frameColor]);
 
   useEffect(() => {
     draw();
@@ -189,7 +199,7 @@ export function PhotoEditorPage() {
     if (!newText.trim()) return;
     setOverlays((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", text: newText, x: 40, y: 40 + prev.length * 44, fontSize: 32, color: newTextColor },
+      { id: Date.now().toString(), kind: "text", text: newText, x: 40, y: 40 + prev.length * 44, fontSize: newFontSize, color: newTextColor },
     ]);
     setNewText("");
   };
@@ -433,6 +443,19 @@ export function PhotoEditorPage() {
                     <MenuItem key={f.value} value={f.value}>{f.label}</MenuItem>
                   ))}
                 </TextField>
+
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>Frame / Border</Typography>
+                <Typography variant="caption" color="text.secondary">Width: {frameWidth}px</Typography>
+                <Slider value={frameWidth} onChange={(_, v) => setFrameWidth(v as number)} min={0} max={40} sx={{ mb: 1 }} />
+                <Box sx={{ display: "flex", gap: 0.75, mb: 2 }}>
+                  {TEXT_COLORS.map((c) => (
+                    <Box
+                      key={c}
+                      onClick={() => setFrameColor(c)}
+                      sx={{ width: 22, height: 22, borderRadius: "50%", bgcolor: c, cursor: "pointer", border: frameColor === c ? "2px solid #1d4ed8" : "1px solid #E5E7EB" }}
+                    />
+                  ))}
+                </Box>
               </>
             )}
 
@@ -443,6 +466,8 @@ export function PhotoEditorPage() {
                   <TextField size="small" fullWidth placeholder="Text..." value={newText} onChange={(e) => setNewText(e.target.value)} />
                   <IconButton color="primary" onClick={handleAddText}><TitleIcon /></IconButton>
                 </Box>
+                <Typography variant="caption" color="text.secondary">Text Size: {newFontSize}px</Typography>
+                <Slider value={newFontSize} onChange={(_, v) => setNewFontSize(v as number)} min={12} max={96} sx={{ mb: 1 }} />
                 <Box sx={{ display: "flex", gap: 0.75, mb: 2 }}>
                   {TEXT_COLORS.map((c) => (
                     <Box
@@ -498,11 +523,35 @@ export function PhotoEditorPage() {
                         key={l.id}
                         label={`Layer ${i + 1}`}
                         size="small"
+                        variant={selectedLayerId === l.id ? "filled" : "outlined"}
+                        color={selectedLayerId === l.id ? "primary" : "default"}
+                        onClick={() => setSelectedLayerId(l.id)}
                         onDelete={() => handleDeleteLayer(l.id)}
                         deleteIcon={<DeleteIcon fontSize="small" />}
                       />
                     ))}
                   </Box>
+                )}
+                {selectedLayerId && imageLayers.find((l) => l.id === selectedLayerId) && (
+                  <>
+                    <Typography variant="caption" color="text.secondary">
+                      Size: {Math.round(imageLayers.find((l) => l.id === selectedLayerId)!.width)}px
+                    </Typography>
+                    <Slider
+                      value={imageLayers.find((l) => l.id === selectedLayerId)!.width}
+                      onChange={(_, v) => {
+                        const layer = imageLayers.find((l) => l.id === selectedLayerId)!;
+                        const ratio = layer.height / layer.width;
+                        const newWidth = v as number;
+                        setImageLayers((prev) =>
+                          prev.map((l) => (l.id === selectedLayerId ? { ...l, width: newWidth, height: newWidth * ratio } : l))
+                        );
+                      }}
+                      min={30}
+                      max={600}
+                      sx={{ mb: 2 }}
+                    />
+                  </>
                 )}
                 <Typography variant="caption" color="text.secondary">
                   Click and drag any layer, text, or shape directly on the photo to reposition it.
