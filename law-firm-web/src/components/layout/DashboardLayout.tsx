@@ -68,6 +68,7 @@ export function DashboardLayout() {
     // Reference material.
     { to: "/library", label: "Legal Library", icon: <MenuBookIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/precedents", label: "नजिर खोज (Precedents)", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
+    { to: "/drafting", label: "Drafting Panel", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     // Reporting + finances last.
     { to: "/reports", label: t("reports"), icon: <AssessmentIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/accounting", label: "Accounting", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: "EDUCATION" },
