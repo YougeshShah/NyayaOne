@@ -299,6 +299,7 @@ model User {
   paymentVouchers     PaymentVoucher[]       @relation("StudentPaymentVouchers")
   ownNotes            StudentNote[]          @relation("StudentOwnNotes")
   caseNotesWritten    CaseNote[]             @relation("CaseNoteAuthor")
+  caseTasksAssigned   CaseTask[]             @relation("CaseTaskAssignee")
   liveClassAttendance LiveClassAttendance[] @relation("StudentLiveClassAttendance")
   writingSubmissions  WritingSubmission[]  @relation("StudentWritingSubmissions")
   feedbackGiven       Feedback[]           @relation("StudentFeedback")
@@ -419,6 +420,7 @@ model Case {
   documents       Document[]
   notes           CaseNote[]
   deadlines       CaseDeadline[]
+  tasks           CaseTask[]
 
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -1057,6 +1059,34 @@ model CaseDeadline {
 
   @@index([caseId])
   @@index([remindAt, sent])
+}
+
+// ------------------------------------------------------------
+// CASE TASK — project-management-style task a senior lawyer/admin
+// assigns to a team member within a case, with a due date and status.
+// ------------------------------------------------------------
+enum CaseTaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+model CaseTask {
+  id          String         @id @default(uuid())
+  caseId      String
+  case        Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  assignedTo  String
+  assignee    User           @relation("CaseTaskAssignee", fields: [assignedTo], references: [id])
+  dueDate     DateTime?
+  status      CaseTaskStatus @default(PENDING)
+  createdBy   String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([caseId])
+  @@index([assignedTo])
 }
 
 // ------------------------------------------------------------
