@@ -79,6 +79,9 @@ export function PhotoEditorPage() {
   const [frameColor, setFrameColor] = useState("#000000");
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const dragRef = useRef<{ id: string; kind: "overlay" | "layer"; offsetX: number; offsetY: number } | null>(null);
+  const [cropMode, setCropMode] = useState(false);
+  const [cropRect, setCropRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const cropStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const cssFilter = () => {
     const base = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
@@ -111,6 +114,15 @@ export function PhotoEditorPage() {
       const layerImg = layerImagesRef.current[layer.id];
       if (layerImg) ctx.drawImage(layerImg, layer.x, layer.y, layer.width, layer.height);
     });
+
+    if (cropRect) {
+      ctx.save();
+      ctx.strokeStyle = "#1d4ed8";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+      ctx.restore();
+    }
 
     if (frameWidth > 0) {
       ctx.strokeStyle = frameColor;
@@ -145,7 +157,7 @@ export function PhotoEditorPage() {
         }
       }
     });
-  }, [rotation, brightness, contrast, saturation, filterPreset, overlays, imageLayers, frameWidth, frameColor]);
+  }, [rotation, brightness, contrast, saturation, filterPreset, overlays, imageLayers, frameWidth, frameColor, cropRect]);
 
   useEffect(() => {
     draw();
@@ -325,6 +337,11 @@ export function PhotoEditorPage() {
 
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = getCanvasPos(e);
+    if (cropMode) {
+      cropStartRef.current = { x, y };
+      setCropRect({ x, y, w: 0, h: 0 });
+      return;
+    }
     const overlayId = hitTestOverlay(x, y);
     if (overlayId) {
       const o = overlays.find((o) => o.id === overlayId)!;
@@ -339,6 +356,12 @@ export function PhotoEditorPage() {
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (cropMode && cropStartRef.current) {
+      const { x, y } = getCanvasPos(e);
+      const start = cropStartRef.current;
+      setCropRect({ x: Math.min(start.x, x), y: Math.min(start.y, y), w: Math.abs(x - start.x), h: Math.abs(y - start.y) });
+      return;
+    }
     if (!dragRef.current) return;
     const { x, y } = getCanvasPos(e);
     const { id, kind, offsetX, offsetY } = dragRef.current;
@@ -351,6 +374,30 @@ export function PhotoEditorPage() {
 
   const handleCanvasMouseUp = () => {
     dragRef.current = null;
+    cropStartRef.current = null;
+  };
+
+  // Actually trims the base image down to the drawn selection -- creates
+  // a brand new in-memory image from the cropped pixels and swaps it in,
+  // so rotation/filters/overlays continue to work exactly as before on
+  // the newly-cropped photo.
+  const applyCrop = () => {
+    if (!cropRect || !canvasRef.current || cropRect.w < 5 || cropRect.h < 5) return;
+    const canvas = canvasRef.current;
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = cropRect.w;
+    cropCanvas.height = cropRect.h;
+    const cropCtx = cropCanvas.getContext("2d")!;
+    cropCtx.drawImage(canvas, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w, cropRect.h);
+
+    const newImg = new Image();
+    newImg.onload = () => {
+      imageRef.current = newImg;
+      setRotation(0);
+      setCropRect(null);
+      setCropMode(false);
+    };
+    newImg.src = cropCanvas.toDataURL("image/png");
   };
 
   return (
@@ -398,7 +445,7 @@ export function PhotoEditorPage() {
           ) : (
             <canvas
               ref={canvasRef}
-              style={{ maxWidth: "100%", maxHeight: 500, borderRadius: 8, cursor: overlays.length || imageLayers.length ? "move" : "default" }}
+              style={{ maxWidth: "100%", maxHeight: 500, borderRadius: 8, cursor: cropMode ? "crosshair" : (overlays.length || imageLayers.length ? "move" : "default") }}
               onMouseDown={handleCanvasMouseDown}
               onMouseMove={handleCanvasMouseMove}
               onMouseUp={handleCanvasMouseUp}
@@ -418,6 +465,22 @@ export function PhotoEditorPage() {
 
             {tab === 0 && (
               <>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+                  Crop
+                </Typography>
+                {!cropMode ? (
+                  <Button size="small" variant="outlined" fullWidth onClick={() => setCropMode(true)} sx={{ mb: 2 }}>
+                    Start Crop
+                  </Button>
+                ) : (
+                  <ButtonGroup fullWidth sx={{ mb: 2 }}>
+                    <Button onClick={applyCrop} disabled={!cropRect || cropRect.w < 5}>
+                      Apply Crop
+                    </Button>
+                    <Button onClick={() => { setCropMode(false); setCropRect(null); }}>Cancel</Button>
+                  </ButtonGroup>
+                )}
+
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
                   Rotate
                 </Typography>
