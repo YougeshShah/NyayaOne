@@ -71,6 +71,7 @@ export function DashboardLayout() {
     { to: "/drafting", label: "Drafting Panel", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/uk-precedents", label: "UK Case Law", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
     { to: "/ai-assistant", label: "AI Assistant", icon: <GavelIcon fontSize="small" />, module: "ai_legal_assistant", tenantSpecific: "LAW_FIRM" },
+    { to: "/ai-content", label: "AI Content Generator", icon: <GavelIcon fontSize="small" />, module: "ai_legal_assistant", tenantSpecific: null },
     { to: "/subscription", label: "Subscription", icon: <AssessmentIcon fontSize="small" />, module: null, tenantSpecific: null },
     // Opens India's official eCourts judgment portal directly -- no scraping/proxy, since it has no public API/open licence like UK's.
     { to: "external:https://judgments.ecourts.gov.in/", label: "India Case Law ↗", icon: <GavelIcon fontSize="small" />, module: "case_management", tenantSpecific: "LAW_FIRM" },
