@@ -17,11 +17,20 @@ export async function requireAiAssistantAccess(req: Request, res: Response, next
 
   const firm = await prisma.lawFirm.findUnique({
     where: { id: req.auth.lawFirmId },
-    select: { modulesEnabled: true },
+    select: {
+      modulesEnabled: true,
+      subscription: { select: { plan: { select: { name: true } } } },
+    },
   });
 
   if (!firm || !firm.modulesEnabled.includes("ai_legal_assistant")) {
     throw AppError.forbidden("AI Legal Assistant isn't enabled for your institution. Contact NyayaOne to request access.");
+  }
+
+  // Advance feature -- Free tier never has it, regardless of the toggle.
+  const planName = firm.subscription?.plan.name;
+  if (planName === "Free") {
+    throw AppError.forbidden("AI Legal Assistant is available on Professional plans and above. Please upgrade your subscription.");
   }
 
   next();
