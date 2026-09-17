@@ -184,6 +184,103 @@ router.post("/khalti/verify", authorize("STUDENT"), async (req: Request, res: Re
 });
 
 // Company oversight — all transactions across all students/courses.
+// Real-practice billing overview: combines student course payments
+// (PaymentTransaction) AND organization subscription payments
+// (FirmPaymentTransaction) into one summary -- these were previously two
+// completely separate, disconnected views, which doesn't reflect how the
+// business actually tracks revenue (both are real income, from different
+// customer types).
+router.get("/billing-summary", authorize("COMPANY"), async (req: Request, res: Response) => {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [
+    courseRevenue,
+    courseRevenueThisMonth,
+    firmRevenue,
+    firmRevenueThisMonth,
+    pendingCourseCount,
+    pendingFirmCount,
+    pendingVoucherCount,
+  ] = await Promise.all([
+    prisma.paymentTransaction.aggregate({ where: { status: "COMPLETED" }, _sum: { amount: true } }),
+    prisma.paymentTransaction.aggregate({ where: { status: "COMPLETED", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.firmPaymentTransaction.aggregate({ where: { status: "COMPLETED" }, _sum: { amount: true } }),
+    prisma.firmPaymentTransaction.aggregate({ where: { status: "COMPLETED", createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.paymentTransaction.count({ where: { status: "PENDING" } }),
+    prisma.firmPaymentTransaction.count({ where: { status: "PENDING", gateway: { not: "MANUAL" } } }),
+    prisma.firmPaymentTransaction.count({ where: { status: "PENDING", gateway: "MANUAL" } }),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      totalRevenue: (courseRevenue._sum.amount ?? 0) + (firmRevenue._sum.amount ?? 0),
+      totalRevenueThisMonth: (courseRevenueThisMonth._sum.amount ?? 0) + (firmRevenueThisMonth._sum.amount ?? 0),
+      courseRevenue: courseRevenue._sum.amount ?? 0,
+      firmRevenue: firmRevenue._sum.amount ?? 0,
+      pendingCourseCount,
+      pendingFirmCount,
+      pendingVoucherCount,
+    },
+  });
+});
+
+// Unified transaction feed -- both revenue streams in one list, newest first.
+router.get("/all-transactions", authorize("COMPANY"), async (req: Request, res: Response) => {
+  const { page = "1", limit = "20" } = req.query as Record<string, string>;
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+
+  const [courseTx, firmTx] = await Promise.all([
+    prisma.paymentTransaction.findMany({
+      include: { student: { select: { fullName: true, email: true } }, course: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    prisma.firmPaymentTransaction.findMany({
+      include: { lawFirm: { select: { name: true } }, plan: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+  ]);
+
+  const combined = [
+    ...courseTx.map((t) => ({
+      id: t.id,
+      type: "COURSE" as const,
+      payerName: t.student.fullName,
+      payerEmail: t.student.email,
+      itemName: t.course.name,
+      gateway: t.gateway,
+      amount: t.amount,
+      status: t.status,
+      voucherFileUrl: null as string | null,
+      createdAt: t.createdAt,
+    })),
+    ...firmTx.map((t) => ({
+      id: t.id,
+      type: "SUBSCRIPTION" as const,
+      payerName: t.lawFirm.name,
+      payerEmail: null,
+      itemName: t.plan.name,
+      gateway: t.gateway,
+      amount: t.amount,
+      status: t.status,
+      voucherFileUrl: t.voucherFileUrl,
+      createdAt: t.createdAt,
+    })),
+  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  const total = combined.length;
+  const paged = combined.slice((pageNum - 1) * limitNum, pageNum * limitNum);
+
+  res.status(200).json({
+    success: true,
+    data: { items: paged, pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) } },
+  });
+});
+
 router.get("/transactions", authorize("COMPANY"), async (req: Request, res: Response) => {
   const { status, gateway, page = "1", limit = "20" } = req.query as Record<string, string>;
   const pageNum = parseInt(page, 10);
