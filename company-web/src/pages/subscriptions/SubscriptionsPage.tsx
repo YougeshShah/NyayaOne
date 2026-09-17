@@ -47,7 +47,8 @@ export function SubscriptionsPage() {
   const { data: plans } = usePlans();
   const { data: subs } = useSubscriptions({ page: 1 });
   const { data: lawFirms } = useLawFirms({ page: 1, status: "ACTIVE" });
-  const { createPlan, assignPlan, updateStatus } = useSubscriptionActions();
+  const { createPlan, updatePlan, assignPlan, updateStatus } = useSubscriptionActions();
+  const [editingPlan, setEditingPlan] = useState<any>(null);
 
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -58,6 +59,19 @@ export function SubscriptionsPage() {
   });
 
   const onCreatePlan = (values: CreatePlanPayload) => {
+    if (editingPlan) {
+      updatePlan.mutate(
+        { id: editingPlan.id, payload: values },
+        {
+          onSuccess: () => {
+            planForm.reset();
+            setEditingPlan(null);
+            setPlanDialogOpen(false);
+          },
+        }
+      );
+      return;
+    }
     createPlan.mutate(values, {
       onSuccess: () => {
         planForm.reset();
@@ -83,9 +97,9 @@ export function SubscriptionsPage() {
         </Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button variant="outlined" onClick={() => setAssignDialogOpen(true)}>
-            Assign Plan to Firm
+            Assign Plan to Organization
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setPlanDialogOpen(true)}>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setEditingPlan(null); planForm.reset({}); setPlanDialogOpen(true); }}>
             New Plan
           </Button>
         </Box>
@@ -119,11 +133,25 @@ export function SubscriptionsPage() {
               <Typography variant="caption" display="block">
                 Storage: {p.maxStorageMb ? `${(p.maxStorageMb / 1000).toFixed(1)} GB` : "Unlimited"}
               </Typography>
-              <Chip
-                size="small"
-                label={`${p._count?.subscriptions ?? 0} firm(s)`}
-                sx={{ mt: 1.5 }}
-              />
+              <Box sx={{ display: "flex", gap: 0.5, alignItems: "center", mt: 1.5, flexWrap: "wrap" }}>
+                <Chip
+                  size="small"
+                  label={`${p._count?.subscriptions ?? 0} org(s)`}
+                />
+                {p.isActive === false && <Chip size="small" label="Inactive" color="default" variant="outlined" />}
+              </Box>
+              <Box sx={{ display: "flex", gap: 1, mt: 1.5 }}>
+                <Button size="small" onClick={() => { setEditingPlan(p); planForm.reset({ name: p.name, description: p.description ?? "", priceMonthly: p.priceMonthly ?? undefined, maxLawyers: p.maxLawyers ?? undefined, maxCases: p.maxCases ?? undefined, maxStorageMb: p.maxStorageMb ?? undefined }); setPlanDialogOpen(true); }}>
+                  Edit
+                </Button>
+                <Button
+                  size="small"
+                  color={p.isActive === false ? "primary" : "error"}
+                  onClick={() => updatePlan.mutate({ id: p.id, payload: { isActive: p.isActive === false } })}
+                >
+                  {p.isActive === false ? "Activate" : "Deactivate"}
+                </Button>
+              </Box>
             </Paper>
           </Grid>
         ))}
@@ -172,6 +200,15 @@ export function SubscriptionsPage() {
                       Cancel
                     </Button>
                   )}
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      assignForm.reset({ lawFirmId: s.lawFirmId, planId: s.planId });
+                      setAssignDialogOpen(true);
+                    }}
+                  >
+                    Change Plan
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -179,9 +216,9 @@ export function SubscriptionsPage() {
         </Table>
       </TableContainer>
 
-      {/* CREATE PLAN DIALOG */}
+      {/* CREATE/EDIT PLAN DIALOG */}
       <Dialog open={planDialogOpen} onClose={() => setPlanDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>New Subscription Plan</DialogTitle>
+        <DialogTitle>{editingPlan ? "Edit Subscription Plan" : "New Subscription Plan"}</DialogTitle>
         <Box component="form" onSubmit={planForm.handleSubmit(onCreatePlan)}>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField label="Plan Name" required fullWidth {...planForm.register("name", { required: true })} />
@@ -199,7 +236,7 @@ export function SubscriptionsPage() {
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setPlanDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={createPlan.isPending}>
-              {createPlan.isPending ? "Saving..." : "Create Plan"}
+              {(createPlan.isPending || updatePlan.isPending) ? "Saving..." : editingPlan ? "Update Plan" : "Create Plan"}
             </Button>
           </DialogActions>
         </Box>

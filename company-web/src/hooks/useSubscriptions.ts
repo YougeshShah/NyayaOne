@@ -20,6 +20,11 @@ export function useSubscriptionActions() {
     onSuccess: invalidatePlans,
   });
 
+  const updatePlan = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreatePlanPayload> & { isActive?: boolean } }) => subscriptionApi.updatePlan(id, payload),
+    onSuccess: invalidatePlans,
+  });
+
   const assignPlan = useMutation({
     mutationFn: (payload: { lawFirmId: string; planId: string; status: SubscriptionStatus }) => subscriptionApi.assignPlan(payload),
     onSuccess: invalidateSubs,
@@ -30,5 +35,5 @@ export function useSubscriptionActions() {
     onSuccess: invalidateSubs,
   });
 
-  return { createPlan, assignPlan, updateStatus };
+  return { createPlan, updatePlan, assignPlan, updateStatus };
 }
