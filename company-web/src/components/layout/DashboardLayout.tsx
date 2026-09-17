@@ -209,7 +209,7 @@ export function DashboardLayout() {
         <aside className={styles.sidebar}>{SidebarInner}</aside>
       )}
 
-      <div className={styles.mainContent}>
+      <div className={styles.mainContent} style={isMobile ? { marginLeft: 0 } : undefined}>
         <Toolbar sx={{ bgcolor: "#fff", borderBottom: "1px solid #e5e7eb", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
           <Box>
             {isMobile && (

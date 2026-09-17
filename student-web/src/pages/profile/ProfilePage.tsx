@@ -110,7 +110,7 @@ export function ProfilePage() {
       </Typography>
 
       <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb", mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
           <Box sx={{ position: "relative" }}>
             <Avatar src={getAvatarUrl(displayUser?.avatarUrl)} sx={{ width: 80, height: 80, fontSize: 32 }}>
               {displayUser?.fullName?.charAt(0) ?? "U"}

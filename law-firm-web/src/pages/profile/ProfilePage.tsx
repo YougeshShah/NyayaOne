@@ -132,7 +132,7 @@ export function ProfilePage() {
       </Typography>
 
       <Paper elevation={0} sx={{ p: 3, border: "1px solid #e5e7eb", mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
           <Box sx={{ position: "relative" }}>
             <Avatar src={getAvatarUrl(displayUser?.avatarUrl)} sx={{ width: 80, height: 80, fontSize: 32 }}>
               {displayUser?.fullName?.charAt(0) ?? "U"}
@@ -159,8 +159,8 @@ export function ProfilePage() {
               )}
             </Box>
             {authUser?.tenantSlug && (
-              <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="caption" color="text.secondary">
+              <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                <Typography variant="caption" color="text.secondary" sx={{ wordBreak: "break-word" }}>
                   Institution Code (share this with your students so they can register):
                 </Typography>
                 <Chip
