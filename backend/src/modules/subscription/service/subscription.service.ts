@@ -54,10 +54,20 @@ export const subscriptionService = {
     if (!plan) throw AppError.notFound("Plan not found");
     if (!plan.isActive) throw AppError.badRequest("This plan is not active and cannot be assigned");
 
+    // Auto-calculate expiry from the plan's own billing cycle, starting from
+    // TODAY (the day it's assigned) -- if the person didn't manually
+    // override it. durationMonths: null means lifetime/no-expiry.
+    let expiresAt = input.expiresAt;
+    if (!expiresAt && plan.durationMonths) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + plan.durationMonths);
+      expiresAt = d;
+    }
+
     return subscriptionRepository.upsertForFirm(input.lawFirmId, {
       planId: input.planId,
       status: input.status,
-      expiresAt: input.expiresAt,
+      expiresAt,
     });
   },
 
