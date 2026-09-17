@@ -24,6 +24,7 @@ export const availableModules = [
   "live_classes",
   "document_templates",
   "precedent_search",
+  "ai_legal_assistant",
   "speaking_prompts",
 ] as const;
 

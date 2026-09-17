@@ -24,6 +24,7 @@ import { WritingGradingPage } from "../pages/writing-grading/WritingGradingPage"
 import { ContentGeneratorPage } from "../pages/content-generator/ContentGeneratorPage";
 import { PhotoEditorPage } from "../pages/photo-editor/PhotoEditorPage";
 import { WebsiteEditorPage } from "../pages/website-editor/WebsiteEditorPage";
+import { FirmVouchersPage } from "../pages/firm-vouchers/FirmVouchersPage";
 import { TransactionsPage } from "../pages/transactions/TransactionsPage";
 import { UserAdminPage } from "../pages/user-admin/UserAdminPage";
 import { ProfilePage } from "../pages/profile/ProfilePage";
@@ -61,6 +62,7 @@ export function AppRoutes() {
           <Route path="/content-generator" element={<ContentGeneratorPage />} />
           <Route path="/photo-editor" element={<PhotoEditorPage />} />
           <Route path="/website-editor/:firmId" element={<WebsiteEditorPage />} />
+          <Route path="/firm-vouchers" element={<FirmVouchersPage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/user-admin" element={<UserAdminPage />} />
           <Route path="/profile" element={<ProfilePage />} />

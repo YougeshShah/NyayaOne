@@ -99,6 +99,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/grant-subscription", labelKey: "grantSubscription", icon: <CardMembershipIcon fontSize="small" />, permission: "library.manage" },
       { to: "/transactions", labelKey: "transactions", icon: <ReceiptLongIcon fontSize="small" />, permission: "library.manage" },
       { to: "/subscriptions", labelKey: "subscriptions", icon: <PaymentIcon fontSize="small" />, permission: null },
+      { to: "/firm-vouchers", labelKey: "firmVouchers", icon: <PaymentIcon fontSize="small" />, permission: null },
     ],
   },
   {
