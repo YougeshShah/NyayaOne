@@ -13,7 +13,8 @@ import MicIcon from "@mui/icons-material/MicOutlined";
 import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import LanguageIcon from "@mui/icons-material/LanguageOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Avatar, Box, Button, Drawer, IconButton, Toolbar, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Avatar, Box, Button, Collapse, Drawer, IconButton, Toolbar, Typography, useMediaQuery, useTheme } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { useTranslation } from "../../i18n/LanguageContext";
@@ -26,6 +27,8 @@ export function DashboardLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const toggleGroup = (label: string) => setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
 
   const { data: myPermissions } = useQuery({
     queryKey: ["my-tenant-permissions"],
@@ -134,13 +137,25 @@ export function DashboardLayout() {
         <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>{tenantLabel}</Typography>
       </Box>
       <Box component="nav" sx={{ flex: 1, overflowY: "auto", py: 1 }}>
-        {visibleGroups.map((group, gi) => (
+        {visibleGroups.map((group, gi) => {
+          const isOpen = group.label === "" || (openGroups[group.label] ?? true);
+          return (
           <Box key={gi} sx={{ mb: 1 }}>
             {group.label && (
-              <Typography variant="overline" sx={{ px: 2.5, color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700 }}>
-                {group.label}
-              </Typography>
+              <Box
+                onClick={() => toggleGroup(group.label)}
+                sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 0.5, cursor: "pointer" }}
+              >
+                <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700 }}>
+                  {group.label}
+                </Typography>
+                <ExpandMoreIcon
+                  fontSize="small"
+                  sx={{ color: "rgba(255,255,255,0.4)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+                />
+              </Box>
             )}
+            <Collapse in={isOpen} timeout={150}>
             {group.items.map((item) =>
               item.to.startsWith("external:") ? (
                 <Box
@@ -178,8 +193,10 @@ export function DashboardLayout() {
                 </Box>
               )
             )}
+            </Collapse>
           </Box>
-        ))}
+          );
+        })}
       </Box>
     </Box>
   );
