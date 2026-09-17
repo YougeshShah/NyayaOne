@@ -29,6 +29,10 @@ export const subscriptionApi = {
     return data.data;
   },
 
+  async deletePlan(id: string): Promise<void> {
+    await apiClient.delete(`/subscriptions/plans/${id}`);
+  },
+
   async listSubscriptions(params: { status?: SubscriptionStatus; page?: number }) {
     const { data } = await apiClient.get<ApiSuccessResponse<PaginatedResult<FirmSubscription>>>("/subscriptions", { params });
     return data.data;

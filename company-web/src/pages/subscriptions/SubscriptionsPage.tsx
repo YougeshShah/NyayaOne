@@ -47,7 +47,7 @@ export function SubscriptionsPage() {
   const { data: plans } = usePlans();
   const { data: subs } = useSubscriptions({ page: 1 });
   const { data: lawFirms } = useLawFirms({ page: 1, status: "ACTIVE" });
-  const { createPlan, updatePlan, assignPlan, updateStatus } = useSubscriptionActions();
+  const { createPlan, updatePlan, deletePlan, assignPlan, updateStatus } = useSubscriptionActions();
   const [editingPlan, setEditingPlan] = useState<any>(null);
 
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
@@ -151,6 +151,19 @@ export function SubscriptionsPage() {
                 >
                   {p.isActive === false ? "Activate" : "Deactivate"}
                 </Button>
+                {p.isActive === false && (
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={() => {
+                      if (window.confirm(`Permanently delete "${p.name}"? This cannot be undone.`)) {
+                        deletePlan.mutate(p.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>
+                )}
               </Box>
             </Paper>
           </Grid>

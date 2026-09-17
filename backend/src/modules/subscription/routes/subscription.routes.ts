@@ -11,6 +11,7 @@ router.use(authenticate);
 router.get("/plans", subscriptionController.listPlans);
 router.post("/plans", authorize("COMPANY"), subscriptionController.createPlan);
 router.patch("/plans/:id", authorize("COMPANY"), subscriptionController.updatePlan);
+router.delete("/plans/:id", authorize("COMPANY"), subscriptionController.deletePlan);
 
 // Firm's own subscription (any firm-side account can view their own firm's plan)
 router.get("/my-firm", authorize("LAW_FIRM_ADMIN", "LAWYER", "STAFF"), subscriptionController.myFirmSubscription);

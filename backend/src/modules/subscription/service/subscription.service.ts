@@ -19,6 +19,16 @@ export const subscriptionService = {
     return subscriptionRepository.updatePlan(id, input);
   },
 
+  async deletePlan(id: string) {
+    const existing = await subscriptionRepository.findPlanById(id);
+    if (!existing) throw AppError.notFound("Plan not found");
+    const activeCount = await subscriptionRepository.countActiveSubscriptionsForPlan(id);
+    if (activeCount > 0) {
+      throw AppError.badRequest(`Cannot delete -- ${activeCount} organization(s) are currently on this plan. Reassign them to another plan first, or deactivate this plan instead.`);
+    }
+    return subscriptionRepository.deletePlan(id);
+  },
+
   async listSubscriptions(status?: "TRIAL" | "ACTIVE" | "EXPIRED" | "CANCELLED", page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const { items, total } = await subscriptionRepository.listAll({ status, skip, take: limit });

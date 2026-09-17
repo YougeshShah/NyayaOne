@@ -11,6 +11,14 @@ export const subscriptionRepository = {
     });
   },
 
+  countActiveSubscriptionsForPlan(planId: string) {
+    return prisma.firmSubscription.count({ where: { planId, status: { in: ["TRIAL", "ACTIVE"] } } });
+  },
+
+  deletePlan(id: string) {
+    return prisma.subscriptionPlan.delete({ where: { id } });
+  },
+
   findPlanById(id: string) {
     return prisma.subscriptionPlan.findUnique({ where: { id } });
   },

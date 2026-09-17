@@ -25,6 +25,11 @@ export function useSubscriptionActions() {
     onSuccess: invalidatePlans,
   });
 
+  const deletePlan = useMutation({
+    mutationFn: (id: string) => subscriptionApi.deletePlan(id),
+    onSuccess: invalidatePlans,
+  });
+
   const assignPlan = useMutation({
     mutationFn: (payload: { lawFirmId: string; planId: string; status: SubscriptionStatus }) => subscriptionApi.assignPlan(payload),
     onSuccess: invalidateSubs,
@@ -35,5 +40,5 @@ export function useSubscriptionActions() {
     onSuccess: invalidateSubs,
   });
 
-  return { createPlan, updatePlan, assignPlan, updateStatus };
+  return { createPlan, updatePlan, deletePlan, assignPlan, updateStatus };
 }

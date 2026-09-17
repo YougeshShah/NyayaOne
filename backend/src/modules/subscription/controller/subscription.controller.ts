@@ -23,6 +23,12 @@ export const subscriptionController = {
     res.status(201).json({ success: true, message: "Plan created", data: result });
   },
 
+  async deletePlan(req: Request, res: Response) {
+    const { id } = planIdParamSchema.parse(req.params);
+    await subscriptionService.deletePlan(id);
+    res.status(200).json({ success: true, message: "Plan deleted" });
+  },
+
   async updatePlan(req: Request, res: Response) {
     const { id } = planIdParamSchema.parse(req.params);
     const input = updatePlanSchema.parse(req.body);
