@@ -135,7 +135,10 @@ export function DashboardLayout() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     NAV_GROUPS.forEach((g) => {
-      initial[g.key] = g.items.some((i) => location.pathname.startsWith(i.to));
+      // On mobile, open every group by default -- a hamburger menu should
+      // show all options at once so nothing is hidden behind an extra tap;
+      // on desktop, only the group containing the current page auto-opens.
+      initial[g.key] = isMobile || g.items.some((i) => location.pathname.startsWith(i.to));
     });
     return initial;
   });
