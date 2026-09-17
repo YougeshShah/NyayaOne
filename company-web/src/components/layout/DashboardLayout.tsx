@@ -26,7 +26,8 @@ import LockResetIcon from "@mui/icons-material/LockResetOutlined";
 import CardMembershipIcon from "@mui/icons-material/CardMembershipOutlined";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Avatar, Box, Button, Collapse, IconButton, Toolbar, Typography } from "@mui/material";
+import { Avatar, Box, Button, Collapse, Drawer, IconButton, Toolbar, Typography, useMediaQuery, useTheme } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import styles from "./DashboardLayout.module.css";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
@@ -128,6 +129,9 @@ export function DashboardLayout() {
 
   // A group starts open if the current page lives inside it, so navigating
   // via a link (not just clicking the group header) never hides where you are.
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     NAV_GROUPS.forEach((g) => {
@@ -138,9 +142,8 @@ export function DashboardLayout() {
 
   const toggleGroup = (key: string) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  return (
-    <div>
-      <aside className={styles.sidebar}>
+  const SidebarInner = (
+    <>
         <div className={styles.logoArea}>
           <Typography variant="h6" sx={{ color: "#fff", fontWeight: 800 }}>
             NyayaOne
@@ -151,7 +154,7 @@ export function DashboardLayout() {
         </div>
 
         <nav>
-          <NavLink to="/dashboard" className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`}>
+          <NavLink to="/dashboard" onClick={() => isMobile && setMobileOpen(false)} className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`}>
             <DashboardIcon fontSize="small" />
             {t("dashboard")}
           </NavLink>
@@ -193,18 +196,38 @@ export function DashboardLayout() {
             </Box>
           ))}
         </nav>
-      </aside>
+     </>
+  );
+
+  return (
+    <div>
+      {isMobile ? (
+        <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} ModalProps={{ keepMounted: true }} PaperProps={{ className: styles.sidebar, sx: { position: "static", height: "100%" } }}>
+          {SidebarInner}
+        </Drawer>
+      ) : (
+        <aside className={styles.sidebar}>{SidebarInner}</aside>
+      )}
 
       <div className={styles.mainContent}>
-        <Toolbar sx={{ bgcolor: "#fff", borderBottom: "1px solid #e5e7eb", justifyContent: "flex-end", gap: 2 }}>
+        <Toolbar sx={{ bgcolor: "#fff", borderBottom: "1px solid #e5e7eb", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
+          <Box>
+            {isMobile && (
+              <IconButton onClick={() => setMobileOpen(true)}>
+                <MenuIcon />
+              </IconButton>
+            )}
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
           <Button
             size="small"
             startIcon={<LanguageIcon fontSize="small" />}
             onClick={() => setLanguage(language === "en" ? "ne" : "en")}
+            sx={{ display: { xs: "none", sm: "inline-flex" } }}
           >
             {language === "en" ? "नेपाली" : "English"}
           </Button>
-          <Box sx={{ textAlign: "right" }}>
+          <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
             <Typography variant="body2" fontWeight={600}>
               {user?.fullName}
             </Typography>
@@ -220,9 +243,10 @@ export function DashboardLayout() {
           <IconButton onClick={logout} title={t("logout")}>
             <LogoutIcon />
           </IconButton>
+          </Box>
         </Toolbar>
 
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: "auto" }}>
           <Outlet />
         </Box>
       </div>
