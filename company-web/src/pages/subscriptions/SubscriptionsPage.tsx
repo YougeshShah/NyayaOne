@@ -130,7 +130,7 @@ export function SubscriptionsPage() {
       </Grid>
 
       <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
-        Firm Subscriptions
+        Organization Subscriptions
       </Typography>
       <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
         <Table size="small">
