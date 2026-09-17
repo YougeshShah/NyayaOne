@@ -205,7 +205,7 @@ export function DashboardLayout() {
   return (
     <div>
       {isMobile ? (
-        <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} ModalProps={{ keepMounted: true }} PaperProps={{ className: styles.sidebar, sx: { position: "static", height: "100%" } }}>
+        <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} ModalProps={{ keepMounted: true }} PaperProps={{ className: styles.sidebar, sx: { position: "static", height: "100%", bgcolor: "#12233a" } }}>
           {SidebarInner}
         </Drawer>
       ) : (
