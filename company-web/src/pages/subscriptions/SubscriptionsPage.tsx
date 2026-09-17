@@ -231,6 +231,17 @@ export function SubscriptionsPage() {
             />
             <TextField label="Max Members (blank = unlimited)" type="number" fullWidth {...planForm.register("maxLawyers")} />
             <TextField label="Max Items (Cases/Courses) (blank = unlimited)" type="number" fullWidth {...planForm.register("maxCases")} />
+            <TextField select label="For Which Organization Type?" fullWidth defaultValue="" {...planForm.register("tenantType")}>
+              <MenuItem value="">Both (Law Firm & Institution)</MenuItem>
+              <MenuItem value="LAW_FIRM">Law Firm Only</MenuItem>
+              <MenuItem value="EDUCATION">Institution Only</MenuItem>
+            </TextField>
+            <TextField select label="Billing Cycle" fullWidth defaultValue="1" {...planForm.register("durationMonths")}>
+              <MenuItem value="1">Monthly</MenuItem>
+              <MenuItem value="3">Every 3 Months</MenuItem>
+              <MenuItem value="6">Every 6 Months</MenuItem>
+              <MenuItem value="12">Yearly</MenuItem>
+            </TextField>
             <TextField label="Max Storage MB (blank = unlimited)" type="number" fullWidth {...planForm.register("maxStorageMb")} />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

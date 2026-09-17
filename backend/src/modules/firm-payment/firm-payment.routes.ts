@@ -161,7 +161,15 @@ router.post(
 );
 
 router.get("/plans", async (req: Request, res: Response) => {
-  const plans = await prisma.subscriptionPlan.findMany({ where: { isActive: true }, orderBy: { priceMonthly: "asc" } });
+  const lawFirmId = req.auth!.lawFirmId!;
+  const firm = await prisma.lawFirm.findUnique({ where: { id: lawFirmId }, select: { tenantType: true } });
+  // Plans with tenantType: null are shared/available to everyone; otherwise
+  // only show plans built for this org's own type (Law Firm sees Law Firm
+  // plans, Institution sees Institution plans, never the other's).
+  const plans = await prisma.subscriptionPlan.findMany({
+    where: { isActive: true, OR: [{ tenantType: null }, { tenantType: firm?.tenantType }] },
+    orderBy: { priceMonthly: "asc" },
+  });
   res.status(200).json({ success: true, data: plans });
 });
 

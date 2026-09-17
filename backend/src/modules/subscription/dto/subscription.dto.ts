@@ -7,6 +7,8 @@ export const createPlanSchema = z.object({
   maxLawyers: z.coerce.number().int().positive().optional(),
   maxCases: z.coerce.number().int().positive().optional(),
   maxStorageMb: z.coerce.number().int().positive().optional(),
+  tenantType: z.string().optional().transform((v) => (v === "" ? undefined : v)),
+  durationMonths: z.coerce.number().int().positive().optional(),
 });
 export type CreatePlanInput = z.infer<typeof createPlanSchema>;
 

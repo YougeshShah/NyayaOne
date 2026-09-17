@@ -9,6 +9,8 @@ export interface CreatePlanPayload {
   maxLawyers?: number;
   maxCases?: number;
   maxStorageMb?: number;
+  tenantType?: string;
+  durationMonths?: number;
 }
 
 export const subscriptionApi = {
