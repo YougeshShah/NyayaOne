@@ -20,11 +20,20 @@ export async function requirePrecedentAccess(req: Request, res: Response, next: 
 
   const firm = await prisma.lawFirm.findUnique({
     where: { id: req.auth.lawFirmId },
-    select: { modulesEnabled: true },
+    select: {
+      modulesEnabled: true,
+      subscription: { select: { plan: { select: { name: true } } } },
+    },
   });
 
   if (!firm || !firm.modulesEnabled.includes("precedent_search")) {
     throw AppError.forbidden("Precedent search isn't enabled for your institution. Contact your administrator.");
+  }
+
+  // Advance feature -- Free tier never has it, regardless of the toggle.
+  const planName = firm.subscription?.plan.name;
+  if (planName === "Free") {
+    throw AppError.forbidden("Precedent search is available on Professional plans and above. Please upgrade your subscription.");
   }
 
   next();
