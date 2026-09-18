@@ -126,6 +126,7 @@ export default function ProfileScreen() {
           <Text style={styles.sectionHeader}>Study Tools</Text>
           <View style={styles.menuCard}>
             <MenuRow icon="search-outline" label="नजिर खोज (Precedent Search)" onPress={() => router.push("/precedents")} />
+            <MenuRow icon="document-text-outline" label="My Notes" onPress={() => router.push("/my-notes")} />
           </View>
         </>
       )}
