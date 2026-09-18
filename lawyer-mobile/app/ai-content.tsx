@@ -1,0 +1,133 @@
+import { useState } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
+import { useMutation } from "@tanstack/react-query";
+import { apiClient } from "../src/api/client";
+import { colors, spacing, radius } from "../src/theme/theme";
+
+const DOCUMENT_TYPES = [
+  "Legal Notice",
+  "Client Engagement Letter",
+  "Demand Letter",
+  "Affidavit (सपथपत्र)",
+  "Power of Attorney (मुख्तियारनामा)",
+  "Rental/Lease Agreement",
+  "NDA",
+];
+
+export default function AiContentScreen() {
+  const [documentType, setDocumentType] = useState(DOCUMENT_TYPES[0]);
+  const [details, setDetails] = useState("");
+  const [language, setLanguage] = useState<"en" | "ne">("en");
+  const [copied, setCopied] = useState(false);
+
+  const generate = useMutation({
+    mutationFn: async () => {
+      const { data } = await apiClient.post("/ai-content/generate", { documentType, details, language });
+      return data.data as { content: string };
+    },
+  });
+
+  const handleCopy = async () => {
+    if (generate.data?.content) {
+      await Clipboard.setStringAsync(generate.data.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Text style={styles.subtitle}>
+        Generate a first draft. Always review and edit before use — this is a starting point, not a finished document.
+      </Text>
+
+      <Text style={styles.label}>Document Type</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.typeScroll}>
+        {DOCUMENT_TYPES.map((t) => (
+          <TouchableOpacity
+            key={t}
+            style={[styles.typeChip, documentType === t && styles.typeChipActive]}
+            onPress={() => setDocumentType(t)}
+          >
+            <Text style={[styles.typeChipText, documentType === t && styles.typeChipTextActive]}>{t}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <Text style={styles.label}>Language</Text>
+      <View style={styles.langRow}>
+        <TouchableOpacity style={[styles.langChip, language === "en" && styles.typeChipActive]} onPress={() => setLanguage("en")}>
+          <Text style={[styles.typeChipText, language === "en" && styles.typeChipTextActive]}>English</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.langChip, language === "ne" && styles.typeChipActive]} onPress={() => setLanguage("ne")}>
+          <Text style={[styles.typeChipText, language === "ne" && styles.typeChipTextActive]}>Nepali</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.label}>Details (names, dates, key facts...)</Text>
+      <TextInput
+        style={styles.textArea}
+        multiline
+        numberOfLines={6}
+        value={details}
+        onChangeText={setDetails}
+        placeholder="e.g. Client: Ram Sharma. Issue: Tenant hasn't paid rent for 2 months..."
+        textAlignVertical="top"
+      />
+
+      <TouchableOpacity
+        style={[styles.generateButton, (!details.trim() || generate.isPending) && styles.generateButtonDisabled]}
+        onPress={() => generate.mutate()}
+        disabled={!details.trim() || generate.isPending}
+      >
+        {generate.isPending ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.generateButtonText}>Generate Draft</Text>}
+      </TouchableOpacity>
+
+      {generate.isError && (
+        <Text style={styles.errorText}>
+          {(generate.error as any)?.response?.data?.message || "Something went wrong. Please try again."}
+        </Text>
+      )}
+
+      {generate.data?.content && (
+        <View style={styles.resultBox}>
+          <View style={styles.resultHeader}>
+            <Text style={styles.resultTitle}>Generated Draft</Text>
+            <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
+              <Ionicons name={copied ? "checkmark" : "copy-outline"} size={16} color={colors.primary} />
+              <Text style={styles.copyButtonText}>{copied ? "Copied!" : "Copy"}</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.resultText}>{generate.data.content}</Text>
+        </View>
+      )}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff" },
+  content: { padding: spacing.md, paddingBottom: 40 },
+  subtitle: { fontSize: 13, color: "#6B7280", marginBottom: spacing.md },
+  label: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: spacing.xs, marginTop: spacing.sm },
+  typeScroll: { marginBottom: spacing.sm },
+  typeChip: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8, marginRight: 8 },
+  typeChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  typeChipText: { fontSize: 13, color: "#374151" },
+  typeChipTextActive: { color: "#fff", fontWeight: "600" },
+  langRow: { flexDirection: "row", gap: 8, marginBottom: spacing.sm },
+  langChip: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 8 },
+  textArea: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: radius.md, padding: spacing.sm, minHeight: 120, fontSize: 14 },
+  generateButton: { backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 14, alignItems: "center", marginTop: spacing.md },
+  generateButtonDisabled: { opacity: 0.5 },
+  generateButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  errorText: { color: "#DC2626", marginTop: spacing.sm, fontSize: 13 },
+  resultBox: { marginTop: spacing.lg, borderWidth: 1, borderColor: "#E5E7EB", borderRadius: radius.md, padding: spacing.md },
+  resultHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
+  resultTitle: { fontWeight: "700", fontSize: 15 },
+  copyButton: { flexDirection: "row", alignItems: "center", gap: 4 },
+  copyButtonText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+  resultText: { fontSize: 14, color: "#111827", lineHeight: 20 },
+});
