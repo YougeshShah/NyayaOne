@@ -89,6 +89,14 @@ export default function CaseDetailScreen() {
         <Text style={styles.generateDocButtonText}>Generate Document</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.generateDocButton, { backgroundColor: "#0F172A" }]}
+        onPress={() => router.push({ pathname: "/case/[id]/workspace", params: { id } })}
+      >
+        <Ionicons name="clipboard-outline" size={18} color="#fff" />
+        <Text style={styles.generateDocButtonText}>Case Workspace</Text>
+      </TouchableOpacity>
+
       <Text style={styles.sectionTitle}>{t("hearingHistory")}</Text>
       {caseData.hearings.length === 0 && (
         <Card style={{ marginBottom: spacing.md }}>
