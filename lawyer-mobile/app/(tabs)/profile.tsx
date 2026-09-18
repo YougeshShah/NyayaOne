@@ -147,6 +147,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
         {user?.tenantType === "LAW_FIRM" && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/drafting")}>
+            <Ionicons name="create-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Drafting Panel</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+        {user?.tenantType === "LAW_FIRM" && (
           <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/ai-assistant")}>
             <Ionicons name="sparkles-outline" size={20} color={colors.primary} />
             <Text style={styles.actionButtonText}>AI Legal Assistant</Text>
