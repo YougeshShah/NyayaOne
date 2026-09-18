@@ -127,6 +127,7 @@ export default function ProfileScreen() {
           <View style={styles.menuCard}>
             <MenuRow icon="search-outline" label="नजिर खोज (Precedent Search)" onPress={() => router.push("/precedents")} />
             <MenuRow icon="document-text-outline" label="My Notes" onPress={() => router.push("/my-notes")} />
+            <MenuRow icon="receipt-outline" label="Submit Payment Receipt" onPress={() => router.push("/payment/voucher")} />
           </View>
         </>
       )}
