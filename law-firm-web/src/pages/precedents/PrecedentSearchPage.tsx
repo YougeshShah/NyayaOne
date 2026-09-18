@@ -91,7 +91,7 @@ export function PrecedentSearchPage() {
         सर्वोच्च अदालतका फैसला हरू — कुनैपनि शब्दले खोज्न मिल्छ। सबै फैसला अदालतबाट जारी भए जस्तै, unchanged देखाइन्छ।
       </Typography>
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 3, position: "sticky", top: 0, zIndex: 10, bgcolor: "#fff", py: 1.5, borderBottom: "1px solid #E5E7EB" }}>
         <TextField
           fullWidth
           placeholder="कुनैपनि शब्द, पक्षको नाम, मुद्दा नं. खोज्नुहोस्..."
@@ -194,7 +194,7 @@ export function PrecedentSearchPage() {
           )}
           {detail && !loadingDetail && (
             <>
-              <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <Box sx={{ display: "flex", gap: 1, mb: 2, position: "sticky", top: 0, zIndex: 10, bgcolor: "#fff", py: 1, borderBottom: "1px solid #E5E7EB" }}>
                 <TextField
                   fullWidth
                   size="small"
