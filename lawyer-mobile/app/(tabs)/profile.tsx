@@ -139,6 +139,13 @@ export default function ProfileScreen() {
           <Text style={styles.actionButtonText}>नजिर खोज (Precedent Search)</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
+        {user?.tenantType === "LAW_FIRM" && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/ai-assistant")}>
+            <Ionicons name="sparkles-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>AI Legal Assistant</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
         {user?.tenantType === "EDUCATION" && (
           <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/live-classes")}>
             <Ionicons name="videocam-outline" size={20} color={colors.primary} />
