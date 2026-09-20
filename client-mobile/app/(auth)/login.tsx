@@ -34,7 +34,7 @@ export default function LoginScreen() {
         <Text style={styles.langToggleText}>{language === "en" ? "नेपाली" : "English"}</Text>
       </TouchableOpacity>
       <View style={styles.logoWrap}>
-        <Text style={styles.brand}>NyayaOne</Text>
+        <Text style={styles.brand}>TechnoOne</Text>
         <Text style={styles.subBrand}>{t("clientApp")}</Text>
       </View>
 

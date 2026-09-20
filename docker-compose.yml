@@ -51,9 +51,9 @@ services:
       - backend
     networks:
       - nyayaone_net
-  law-firm-web:
+  portal-web:
     build:
-      context: ./law-firm-web
+      context: ./portal-web
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: https://api.technocraftx.com/api/v1

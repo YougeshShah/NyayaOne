@@ -9,13 +9,13 @@ export default function AboutScreen() {
       <View style={styles.logoCircle}>
         <Text style={styles.logoText}>N</Text>
       </View>
-      <Text style={styles.appName}>NyayaOne</Text>
+      <Text style={styles.appName}>TechnoOne</Text>
       <Text style={styles.tagline}>Law, IELTS, IOE, Doctors, Loksewa — all in one place</Text>
       <Text style={styles.version}>Version {appVersion}</Text>
 
       <View style={styles.divider} />
 
-      <Text style={styles.p}>NyayaOne is developed and operated by Technocraftx Pvt. Ltd.</Text>
+      <Text style={styles.p}>TechnoOne is developed and operated by Technocraftx Pvt. Ltd.</Text>
       <Text style={styles.p}>© {new Date().getFullYear()} Technocraftx Pvt. Ltd. All rights reserved.</Text>
     </ScrollView>
   );

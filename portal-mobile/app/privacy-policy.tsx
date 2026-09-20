@@ -3,12 +3,12 @@ import { ScrollView, Text, StyleSheet } from "react-native";
 export default function PrivacyPolicyScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
-      <Text style={styles.h1}>Privacy Policy — NyayaOne</Text>
+      <Text style={styles.h1}>Privacy Policy — TechnoOne</Text>
       <Text style={styles.meta}>Last Updated: {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</Text>
 
       <Text style={styles.h2}>1. Who We Are</Text>
       <Text style={styles.p}>
-        NyayaOne is operated by Technocraftx Pvt. Ltd. This policy explains what personal data we collect, why, and how we protect it.
+        TechnoOne is operated by Technocraftx Pvt. Ltd. This policy explains what personal data we collect, why, and how we protect it.
         Contact: support@technocraftx.com.
       </Text>
 

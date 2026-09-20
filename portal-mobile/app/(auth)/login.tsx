@@ -35,7 +35,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <View style={styles.logoWrap}>
-        <Text style={styles.brand}>NyayaOne</Text>
+        <Text style={styles.brand}>TechnoOne</Text>
         <Text style={styles.subBrand}>{t("lawyerApp")}</Text>
       </View>
 

@@ -12,7 +12,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <Text style={styles.title}>NyayaOne Learn</Text>
+      <Text style={styles.title}>TechnoOne Learn</Text>
       <Text style={styles.subtitle}>Law, IELTS, IOE, Doctors, Loksewa — all in one place</Text>
 
       {login.isError && <Text style={styles.error}>Login failed. Check your credentials.</Text>}

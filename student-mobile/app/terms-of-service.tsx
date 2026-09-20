@@ -3,11 +3,11 @@ import { ScrollView, Text, StyleSheet } from "react-native";
 export default function TermsOfServiceScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
-      <Text style={styles.h1}>Terms of Service — NyayaOne</Text>
+      <Text style={styles.h1}>Terms of Service — TechnoOne</Text>
       <Text style={styles.meta}>Last Updated: {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</Text>
 
       <Text style={styles.h2}>1. Who We Are</Text>
-      <Text style={styles.p}>NyayaOne is operated by Technocraftx Pvt. Ltd., based in Kathmandu, Nepal. Contact: support@technocraftx.com.</Text>
+      <Text style={styles.p}>TechnoOne is operated by Technocraftx Pvt. Ltd., based in Kathmandu, Nepal. Contact: support@technocraftx.com.</Text>
 
       <Text style={styles.h2}>2. Accounts</Text>
       <Text style={styles.p}>
@@ -36,7 +36,7 @@ export default function TermsOfServiceScreen() {
 
       <Text style={styles.h2}>6. Content Ownership</Text>
       <Text style={styles.p}>
-        Course materials, questions, and library content are owned by NyayaOne or the publishing institution, licensed to you for
+        Course materials, questions, and library content are owned by TechnoOne or the publishing institution, licensed to you for
         personal study use only. Content you submit remains reviewable by staff/institution graders for feedback purposes.
       </Text>
 

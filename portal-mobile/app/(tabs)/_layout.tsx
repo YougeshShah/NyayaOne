@@ -43,7 +43,7 @@ export default function TabsLayout() {
         name="dashboard"
         options={{
           title: t("dashboard"),
-          headerTitle: "NyayaOne",
+          headerTitle: "TechnoOne",
           tabBarIcon: ({ color, size }) => <Ionicons name="grid-outline" size={size} color={color} />,
         }}
       />

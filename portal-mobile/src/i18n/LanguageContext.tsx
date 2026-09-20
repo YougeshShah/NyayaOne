@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import * as SecureStore from "expo-secure-store";
 import { translations, Language, TranslationKey } from "./translations";
 
-const STORAGE_KEY = "nyayaone-language";
+const STORAGE_KEY = "technoone-language";
 
 interface LanguageContextValue {
   language: Language;

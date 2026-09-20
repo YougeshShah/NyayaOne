@@ -66,7 +66,7 @@ export default function SubscriptionScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.subtitle}>Choose a plan and pay to keep your institution's NyayaOne subscription active.</Text>
+      <Text style={styles.subtitle}>Choose a plan and pay to keep your institution's TechnoOne subscription active.</Text>
 
       {(plans ?? []).map((p) => (
         <TouchableOpacity
