@@ -15,6 +15,11 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Install OpenSSL and libc6-compat required by Prisma immediately --
+# without this, Prisma's query engine fails to detect libssl on
+# Alpine, causing the container to crash-loop at startup.
+RUN apk update && apk add --no-cache libc6-compat openssl
+
 COPY package*.json ./
 RUN npm ci --omit=dev
 RUN npx prisma generate --schema=./prisma/schema.prisma || true
