@@ -1,21 +1,59 @@
 {
   "project_info": {
-    "project_number": "616350549685",
-    "project_id": "nyayaone-48068",
-    "storage_bucket": "nyayaone-48068.firebasestorage.app"
+    "project_number": "299524445345",
+    "project_id": "technoone-8794a",
+    "storage_bucket": "technoone-8794a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:616350549685:android:2fb12af19d24f341a920fc",
+        "mobilesdk_app_id": "1:299524445345:android:689647ab7798f4c8014ce0",
         "android_client_info": {
-          "package_name": "com.trailblazetech.nyayaone.lawyer"
+          "package_name": "com.technocraftx.technoone.client"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDPvjQ4vS8aJ4SBKG_l6BmC3yaaBmZc06I"
+          "current_key": "AIzaSyBfnYbcXp1BlLVycD5a5Zscg_ZRiksHW4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:299524445345:android:d19f2733f60d94af014ce0",
+        "android_client_info": {
+          "package_name": "com.technocraftx.technoone.portal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfnYbcXp1BlLVycD5a5Zscg_ZRiksHW4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:299524445345:android:563bbb72db3cbabe014ce0",
+        "android_client_info": {
+          "package_name": "com.technocraftx.technoone.student"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfnYbcXp1BlLVycD5a5Zscg_ZRiksHW4M"
         }
       ],
       "services": {

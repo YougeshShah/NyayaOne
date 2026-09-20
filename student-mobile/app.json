@@ -19,7 +19,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"
       },
-      "package": "com.trailblazetech.nyayaone.student"
+      "package": "com.technocraftx.technoone.student"
     },
     "plugins": [
       "expo-router",

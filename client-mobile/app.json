@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1565C0"
       },
-      "package": "com.trailblazetech.nyayaone.client",
+      "package": "com.technocraftx.technoone.client",
       "permissions": [
         "NOTIFICATIONS"
       ]
