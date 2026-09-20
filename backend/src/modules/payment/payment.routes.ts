@@ -45,7 +45,7 @@ router.post("/esewa/initiate", authorize("STUDENT"), async (req: Request, res: R
   if (!req.auth) throw AppError.unauthorized();
   const input = initiateSchema.parse(req.body);
 
-  const transactionUuid = `nyayaone-${Date.now()}-${req.auth.userId.slice(0, 8)}`;
+  const transactionUuid = `technoone-${Date.now()}-${req.auth.userId.slice(0, 8)}`;
   const signature = esewaSignature(input.amount, transactionUuid, ESEWA_MERCHANT_ID);
 
   // Record the pending transaction so the callback can look up which
@@ -127,7 +127,7 @@ router.post("/khalti/initiate", authorize("STUDENT"), async (req: Request, res: 
   const input = initiateSchema.parse(req.body);
 
   const student = await prisma.user.findUnique({ where: { id: req.auth.userId } });
-  const purchaseOrderId = `nyayaone-${Date.now()}-${req.auth.userId.slice(0, 8)}`;
+  const purchaseOrderId = `technoone-${Date.now()}-${req.auth.userId.slice(0, 8)}`;
 
   const khaltiResponse = await axios.post(
     KHALTI_INITIATE_URL,
@@ -136,7 +136,7 @@ router.post("/khalti/initiate", authorize("STUDENT"), async (req: Request, res: 
       website_url: FRONTEND_URL,
       amount: Math.round(input.amount * 100), // Khalti wants paisa
       purchase_order_id: purchaseOrderId,
-      purchase_order_name: "NyayaOne Course Subscription",
+      purchase_order_name: "TechnoOne Course Subscription",
       customer_info: { name: student?.fullName ?? "Student", email: student?.email },
     },
     { headers: { Authorization: `Key ${KHALTI_SECRET_KEY}` } }

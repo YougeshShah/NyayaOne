@@ -414,7 +414,7 @@ export const authService = {
       where: { id: userId },
       data: {
         status: "DELETED",
-        email: `deleted-${userId}@deleted.nyayaone.local`,
+        email: `deleted-${userId}@deleted.technoone.local`,
         fullName: "Deleted User",
         phone: null,
         bio: null,

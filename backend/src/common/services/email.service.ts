@@ -13,11 +13,11 @@ const transporter = nodemailer.createTransport({
 
 export const emailService = {
   async sendVerificationCode(to: string, code: string, purpose: "REGISTRATION" | "PASSWORD_RESET") {
-    const subject = purpose === "REGISTRATION" ? "Verify your NyayaOne account" : "Reset your NyayaOne password";
+    const subject = purpose === "REGISTRATION" ? "Verify your TechnoOne account" : "Reset your TechnoOne password";
     const heading = purpose === "REGISTRATION" ? "Verify Your Email" : "Password Reset Code";
 
     await transporter.sendMail({
-      from: `"NyayaOne" <${process.env.EMAIL_USER}>`,
+      from: `"TechnoOne" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html: `

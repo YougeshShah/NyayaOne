@@ -55,7 +55,7 @@ const router = Router();
 
 // Health check (no auth required) — useful for Docker/uptime checks later
 router.get("/health", (req, res) => {
-  res.status(200).json({ success: true, message: "NyayaOne API is running", timestamp: new Date().toISOString() });
+  res.status(200).json({ success: true, message: "TechnoOne API is running", timestamp: new Date().toISOString() });
 });
 
 router.use("/auth", authRoutes);

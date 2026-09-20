@@ -15,7 +15,7 @@ export const pushService = {
     await pushRepository.sendPushBatch([
       {
         to: pushToken,
-        title: "NyayaOne Test Notification",
+        title: "TechnoOne Test Notification",
         body: "If you see this, push notifications are working correctly! 🎉",
       },
     ]);

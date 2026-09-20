@@ -8,7 +8,7 @@ import { AppError } from "../../../common/errors/AppError";
 export const aiContentService = {
   async generate(documentType: string, details: string, language: "en" | "ne") {
     if (!env.gemini.apiKey) {
-      throw AppError.badRequest("AI content generation is not configured. Contact NyayaOne support.");
+      throw AppError.badRequest("AI content generation is not configured. Contact TechnoOne support.");
     }
 
     const prompt = `You are a legal/institutional document drafting assistant for a Nepali law firm or educational institution. Draft a "${documentType}" based on these details:

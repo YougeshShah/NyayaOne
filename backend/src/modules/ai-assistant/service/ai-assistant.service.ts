@@ -5,7 +5,7 @@ import { precedentService } from "../../precedent/service/precedent.service";
 export const aiAssistantService = {
   async ask(question: string, lawFirmId: string | null) {
     if (!env.gemini.apiKey) {
-      throw AppError.badRequest("AI assistant is not configured. Contact NyayaOne support.");
+      throw AppError.badRequest("AI assistant is not configured. Contact TechnoOne support.");
     }
 
     // Retrieval step: pull the most relevant precedents from our own

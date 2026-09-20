@@ -89,7 +89,7 @@ export const staffPayrollService = {
     const payments = await this.listPayments(lawFirmId, search);
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "NyayaOne";
+    workbook.creator = "TechnoOne";
     const sheet = workbook.addWorksheet("Staff Payments");
 
     sheet.columns = [

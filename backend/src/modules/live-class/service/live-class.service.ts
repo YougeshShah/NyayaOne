@@ -19,7 +19,7 @@ function generateRoomName(title: string): string {
     .replace(/(^-|-$)/g, "")
     .slice(0, 40);
   const uniqueSuffix = randomBytes(4).toString("hex");
-  return `nyayaone-${slug}-${uniqueSuffix}`;
+  return `technoone-${slug}-${uniqueSuffix}`;
 }
 
 export const liveClassService = {

@@ -172,7 +172,7 @@ export const institutionFeeService = {
     const transactions = await this.listTransactions(lawFirmId, search);
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "NyayaOne";
+    workbook.creator = "TechnoOne";
     const sheet = workbook.addWorksheet("Payments");
 
     sheet.columns = [

@@ -58,7 +58,7 @@ export const reportService = {
     const cases = await fetchCasesForReport(lawFirmId, status);
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "NyayaOne";
+    workbook.creator = "TechnoOne";
     const sheet = workbook.addWorksheet("Cases");
 
     sheet.columns = [
@@ -191,7 +191,7 @@ function buildPdf(title: string, renderBody: (doc: PDFKit.PDFDocument) => void):
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    doc.fontSize(16).font("Helvetica-Bold").text("NyayaOne", { align: "left" });
+    doc.fontSize(16).font("Helvetica-Bold").text("TechnoOne", { align: "left" });
     doc.fontSize(13).font("Helvetica-Bold").text(title);
     doc.fontSize(9).font("Helvetica").fillColor("#666").text(`Generated: ${new Date().toLocaleString()}`);
     doc.moveDown(1);

@@ -12,7 +12,7 @@ async function bootstrap() {
     logger.info("Database connected successfully");
 
     app.listen(env.port, () => {
-      logger.info(`NyayaOne API running on http://localhost:${env.port}/api/${env.apiVersion}`);
+      logger.info(`TechnoOne API running on http://localhost:${env.port}/api/${env.apiVersion}`);
       logger.info(`Environment: ${env.nodeEnv}`);
     });
 

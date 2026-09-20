@@ -24,7 +24,7 @@ export async function requireAiAssistantAccess(req: Request, res: Response, next
   });
 
   if (!firm || !firm.modulesEnabled.includes("ai_legal_assistant")) {
-    throw AppError.forbidden("AI Legal Assistant isn't enabled for your institution. Contact NyayaOne to request access.");
+    throw AppError.forbidden("AI Legal Assistant isn't enabled for your institution. Contact TechnoOne to request access.");
   }
 
   // Advance feature -- Free tier never has it, regardless of the toggle.

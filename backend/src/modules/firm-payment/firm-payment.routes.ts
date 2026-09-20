@@ -42,7 +42,7 @@ const initiateSchema = z.object({ planId: z.string().uuid(), amount: z.number().
 router.post("/esewa/initiate", authorize("LAW_FIRM_ADMIN"), async (req: Request, res: Response) => {
   const lawFirmId = req.auth!.lawFirmId!;
   const input = initiateSchema.parse(req.body);
-  const transactionUuid = `nyayaone-firm-${Date.now()}-${lawFirmId.slice(0, 8)}`;
+  const transactionUuid = `technoone-firm-${Date.now()}-${lawFirmId.slice(0, 8)}`;
   const signature = esewaSignature(input.amount, transactionUuid, ESEWA_MERCHANT_ID);
 
   await prisma.firmPaymentTransaction.create({
@@ -96,7 +96,7 @@ router.post("/khalti/initiate", authorize("LAW_FIRM_ADMIN"), async (req: Request
   const lawFirmId = req.auth!.lawFirmId!;
   const input = initiateSchema.parse(req.body);
   const firm = await prisma.lawFirm.findUnique({ where: { id: lawFirmId } });
-  const purchaseOrderId = `nyayaone-firm-${Date.now()}-${lawFirmId.slice(0, 8)}`;
+  const purchaseOrderId = `technoone-firm-${Date.now()}-${lawFirmId.slice(0, 8)}`;
 
   const khaltiResponse = await axios.post(
     KHALTI_INITIATE_URL,
@@ -105,7 +105,7 @@ router.post("/khalti/initiate", authorize("LAW_FIRM_ADMIN"), async (req: Request
       website_url: FRONTEND_URL,
       amount: Math.round(input.amount * 100),
       purchase_order_id: purchaseOrderId,
-      purchase_order_name: "NyayaOne Firm Subscription",
+      purchase_order_name: "TechnoOne Firm Subscription",
       customer_info: { name: firm?.name ?? "Firm", email: firm?.email },
     },
     { headers: { Authorization: `Key ${KHALTI_SECRET_KEY}` } }
@@ -152,7 +152,7 @@ router.post(
     const { planId, amount } = z.object({ planId: z.string().uuid(), amount: z.coerce.number().positive() }).parse(req.body);
     if (!req.file) throw AppError.badRequest("Voucher file is required");
     const fileUrl = `/uploads/vouchers/${req.file.filename}`;
-    const transactionUuid = `nyayaone-firm-voucher-${Date.now()}-${lawFirmId.slice(0, 8)}`;
+    const transactionUuid = `technoone-firm-voucher-${Date.now()}-${lawFirmId.slice(0, 8)}`;
     const transaction = await prisma.firmPaymentTransaction.create({
       data: { lawFirmId, planId, gateway: "MANUAL", transactionUuid, amount, status: "PENDING", voucherFileUrl: fileUrl },
     });
