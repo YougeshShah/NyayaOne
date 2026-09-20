@@ -76,7 +76,7 @@ function buildFullHtml(name: string, sections: Section[]) {
 <body>
 <header style="padding:24px;border-bottom:1px solid #e2e8f0;"><strong>${name}</strong></header>
 ${body}
-<footer style="padding:32px;text-align:center;color:#64748b;font-size:14px;border-top:1px solid #e2e8f0;">&copy; 2026 ${name}. Powered by NyayaOne.</footer>
+<footer style="padding:32px;text-align:center;color:#64748b;font-size:14px;border-top:1px solid #e2e8f0;">&copy; 2026 ${name}. Powered by TechnoOne.</footer>
 </body>
 </html>`;
 }

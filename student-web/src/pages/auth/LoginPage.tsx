@@ -31,7 +31,7 @@ export function LoginPage() {
     >
       <Paper elevation={0} sx={{ p: 4, width: 400, borderRadius: 3 }}>
         <Typography variant="h5" fontWeight={700} textAlign="center" sx={{ mb: 0.5 }}>
-          NyayaOne Learn
+          TechnoOne Learn
         </Typography>
         <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
           Law, IELTS, IOE, Doctors, Loksewa — exam prep, all in one place

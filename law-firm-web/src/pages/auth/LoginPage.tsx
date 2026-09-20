@@ -18,7 +18,7 @@ export function LoginPage() {
       <Paper elevation={8} className={styles.loginCard}>
         <div className={styles.logoWrap}>
           <Typography variant="h4" className={styles.brandTitle}>
-            NyayaOne
+            TechnoOne
           </Typography>
           <Typography className={styles.brandSubtitle}>Partner Portal — Law Firms &amp; Institutions</Typography>
         </div>

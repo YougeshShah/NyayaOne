@@ -30,6 +30,6 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false }),
     }),
-    { name: "nyayaone-student-auth" }
+    { name: "technoone-student-auth" }
   )
 );

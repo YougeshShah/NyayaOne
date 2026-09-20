@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { translations, Language, TranslationKey } from "./translations";
 
-const STORAGE_KEY = "nyayaone-company-web-language";
+const STORAGE_KEY = "technoone-company-web-language";
 
 interface LanguageContextValue {
   language: Language;

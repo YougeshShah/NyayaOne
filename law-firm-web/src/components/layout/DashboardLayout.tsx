@@ -49,7 +49,7 @@ export function DashboardLayout() {
     : isEducation ? "Institution Dashboard" : "Law Firm Dashboard";
 
   useEffect(() => {
-    document.title = `NyayaOne — ${tenantLabel}`;
+    document.title = `TechnoOne — ${tenantLabel}`;
   }, [tenantLabel]);
   const roleLabel = user?.accountType === "LAW_FIRM_ADMIN" ? (isEducation ? "Institution Admin" : "Law Firm Admin") : user?.accountType?.replace(/_/g, " ") ?? "";
 
@@ -133,7 +133,7 @@ export function DashboardLayout() {
   const sidebarContent = (
     <Box sx={{ width: SIDEBAR_WIDTH, height: "100%", bgcolor: "#0F172A", color: "#fff", display: "flex", flexDirection: "column" }}>
       <Box sx={{ p: 2.5, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-        <Typography variant="h6" sx={{ color: "#fff", fontWeight: 800 }}>NyayaOne</Typography>
+        <Typography variant="h6" sx={{ color: "#fff", fontWeight: 800 }}>TechnoOne</Typography>
         <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>{tenantLabel}</Typography>
       </Box>
       <Box component="nav" sx={{ flex: 1, overflowY: "auto", py: 1 }}>

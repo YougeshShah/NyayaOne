@@ -63,7 +63,7 @@ export function DashboardLayout() {
             sx={{ flexGrow: 1, cursor: "pointer", fontSize: { xs: 16, sm: 20 } }}
             onClick={() => navigate("/")}
           >
-            NyayaOne Learn
+            TechnoOne Learn
           </Typography>
 
           {!isMobile && navLinks.map((link) => (

@@ -149,7 +149,7 @@ export function DashboardLayout() {
     <>
         <div className={styles.logoArea}>
           <Typography variant="h6" sx={{ color: "#fff", fontWeight: 800 }}>
-            NyayaOne
+            TechnoOne
           </Typography>
           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>
             Company Control Center

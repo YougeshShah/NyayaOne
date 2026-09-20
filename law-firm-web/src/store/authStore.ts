@@ -26,6 +26,6 @@ export const useAuthStore = create<AuthState>()(
       updateUser: (partial) => set((state) => ({ user: state.user ? { ...state.user, ...partial } : state.user })),
       logout: () => set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false }),
     }),
-    { name: "nyayaone-lawfirm-auth" }
+    { name: "technoone-lawfirm-auth" }
   )
 );

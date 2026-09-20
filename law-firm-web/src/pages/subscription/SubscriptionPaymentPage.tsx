@@ -96,7 +96,7 @@ export function SubscriptionPaymentPage() {
         Subscription & Billing
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Choose a plan and pay to keep your institution's NyayaOne subscription active.
+        Choose a plan and pay to keep your institution's TechnoOne subscription active.
       </Typography>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

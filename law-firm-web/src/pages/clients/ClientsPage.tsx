@@ -229,7 +229,7 @@ export function ClientsPage() {
         <DialogTitle>Grant Mobile App Access</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            {invitingClient?.fullName} will be able to log in to the NyayaOne Client App using their email ({invitingClient?.email}) and this password.
+            {invitingClient?.fullName} will be able to log in to the TechnoOne Client App using their email ({invitingClient?.email}) and this password.
           </Typography>
           {inviteResult && <Alert severity={inviteResult.startsWith("Portal") ? "success" : "error"}>{inviteResult}</Alert>}
           <PasswordField
