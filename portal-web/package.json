@@ -1,7 +1,7 @@
 {
-  "name": "nyayaone-law-firm-web",
+  "name": "technoone-law-firm-web",
   "version": "1.0.0",
-  "description": "NyayaOne Law Firm Dashboard - Technocraftx",
+  "description": "TechnoOne Law Firm Dashboard - Technocraftx",
   "private": true,
   "type": "module",
   "scripts": {

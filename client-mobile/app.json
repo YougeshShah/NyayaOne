@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "NyayaOne Client",
-    "slug": "nyayaone-client",
+    "name": "TechnoOne Client",
+    "slug": "technoone-client",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "nyayaone-client",
+    "scheme": "technoone-client",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.trailblazetech.nyayaone.client"
+      "bundleIdentifier": "com.trailblazetech.technoone.client"
     },
     "android": {
       "googleServicesFile": "./google-services.json",

@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "NyayaOne Learn",
-    "slug": "nyayaone-student",
+    "name": "TechnoOne Learn",
+    "slug": "technoone-student",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "nyayaone-student",
+    "scheme": "technoone-student",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.trailblazetech.nyayaone.student"
+      "bundleIdentifier": "com.trailblazetech.technoone.student"
     },
     "android": {
       "adaptiveIcon": {

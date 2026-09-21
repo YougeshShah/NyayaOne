@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "NyayaOne Lawyer",
-    "slug": "nyayaone-lawyer",
+    "name": "TechnoOne Lawyer",
+    "slug": "technoone-lawyer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "nyayaone-lawyer",
+    "scheme": "technoone-lawyer",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.trailblazetech.nyayaone.lawyer"
+      "bundleIdentifier": "com.trailblazetech.technoone.lawyer"
     },
     "android": {
       "googleServicesFile": "./google-services.json",

@@ -1,7 +1,7 @@
 {
-  "name": "nyayaone-student-web",
+  "name": "technoone-student-web",
   "version": "1.0.0",
-  "description": "NyayaOne Student Learning Platform - Law, IELTS, IOE, Doctors, Loksewa prep",
+  "description": "TechnoOne Student Learning Platform - Law, IELTS, IOE, Doctors, Loksewa prep",
   "private": true,
   "type": "module",
   "scripts": {
