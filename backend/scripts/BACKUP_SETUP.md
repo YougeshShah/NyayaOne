@@ -2,13 +2,13 @@
 
 ## 1. Make the script executable
 ```bash
-chmod +x ~/nyayaone/backend/scripts/backup-database.sh
+chmod +x ~/technoone/backend/scripts/backup-database.sh
 ```
 
 ## 2. Test it once manually
 ```bash
-~/nyayaone/backend/scripts/backup-database.sh
-ls -la ~/nyayaone-backups/
+~/technoone/backend/scripts/backup-database.sh
+ls -la ~/technoone-backups/
 ```
 You should see a `.sql.gz` file appear.
 
@@ -18,7 +18,7 @@ crontab -e
 ```
 Add this line (runs daily at 2:00 AM server time):
 ```
-0 2 * * * /home/YOUR_USERNAME/nyayaone/backend/scripts/backup-database.sh >> /home/YOUR_USERNAME/nyayaone-backups/backup.log 2>&1
+0 2 * * * /home/YOUR_USERNAME/technoone/backend/scripts/backup-database.sh >> /home/YOUR_USERNAME/technoone-backups/backup.log 2>&1
 ```
 (Replace `YOUR_USERNAME` with your actual server username, and adjust the path if your repo lives elsewhere.)
 
@@ -26,7 +26,7 @@ Save and exit — cron picks it up automatically, no restart needed.
 
 ## 4. Restoring from a backup (if you ever need to)
 ```bash
-gunzip -c ~/nyayaone-backups/nyayaone-backup-2026-08-07.sql.gz | docker exec -i nyayaone_postgres_prod psql -U nyayaone nyayaone_db
+gunzip -c ~/technoone-backups/technoone-backup-2026-08-07.sql.gz | docker exec -i technoone_postgres_prod psql -U technoone technoone_db
 ```
 
 ## Later — Off-Server Copy (Recommended, Do When Ready)
