@@ -85,5 +85,7 @@ networks:
 volumes:
   nyayaone_pg_data:
     driver: local
+    name: nyayaone_nyayaone_pg_data
   nyayaone_uploads:
     driver: local
+    name: nyayaone_nyayaone_uploads
