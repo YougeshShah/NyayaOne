@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TechnoOne Lawyer",
-    "slug": "technoone-lawyer",
+    "slug": "technoone-portal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -60,8 +60,9 @@
       "apiBaseUrl": "http://36.253.137.131/api/v1",
       "router": {},
       "eas": {
-        "projectId": "5138b5f9-3bb1-4851-84b3-b830f353e437"
+        "projectId": "0d9e22b0-b968-4c2d-93fb-232036a79f3f"
       }
-    }
+    },
+    "owner": "yougeshshah"
   }
 }
