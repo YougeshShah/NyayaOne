@@ -88,4 +88,4 @@ volumes:
     name: technoone_pg_data_clean
   nyayaone_uploads:
     driver: local
-    name: nyayaone_nyayaone_uploads
+    name: technoone_uploads_clean
