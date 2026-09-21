@@ -1,9 +1,9 @@
-# Terms of Service — NyayaOne
+# Terms of Service — TechnoOne
 
 **Last Updated: August 26, 2026**
 
 ## 1. Who We Are
-NyayaOne is operated by Technocraftx Pvt. Ltd., based in Kathmandu, Nepal.
+TechnoOne is operated by Technocraftx Pvt. Ltd., based in Kathmandu, Nepal.
 Contact: support@technocraftx.com.
 
 ## 2. Accounts
@@ -36,7 +36,7 @@ You agree not to:
   disrupt the service.
 
 ## 6. Content Ownership
-- Course materials, questions, and library content are owned by NyayaOne
+- Course materials, questions, and library content are owned by TechnoOne
   or the institution that published them, and are licensed to you for
   personal study use only — not for resale or redistribution.
 - Content you submit (e.g. essay submissions for grading) remains

@@ -1,4 +1,4 @@
-# NyayaOne Backend — Phase 0 / Phase 1 Foundation
+# TechnoOne Backend — Phase 0 / Phase 1 Foundation
 
 Legal Technology Platform backend for Technocraftx.
 Clean Architecture: `controller → service → repository → database`.
@@ -62,7 +62,7 @@ curl http://localhost:5000/api/v1/health
 ```
 Expected response:
 ```json
-{"success":true,"message":"NyayaOne API is running","timestamp":"..."}
+{"success":true,"message":"TechnoOne API is running","timestamp":"..."}
 ```
 
 Test login:

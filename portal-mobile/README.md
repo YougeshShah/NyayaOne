@@ -1,4 +1,4 @@
-# NyayaOne — Lawyer Mobile App (Expo Development Build)
+# TechnoOne — Lawyer Mobile App (Expo Development Build)
 
 ## ⚠️ IMPORTANT — Read Before Starting
 
@@ -70,7 +70,7 @@ to:
 
 ⚠️ Your phone and PC must be on the **same WiFi network**.
 
-⚠️ Your backend's CORS_ORIGIN in `~/nyayaone/backend/.env` may also need this IP added later if you hit CORS issues — but since mobile apps don't send an Origin header the way browsers do, this is usually not needed for native apps (only affects the two web dashboards).
+⚠️ Your backend's CORS_ORIGIN in `~/technoone/backend/.env` may also need this IP added later if you hit CORS issues — but since mobile apps don't send an Origin header the way browsers do, this is usually not needed for native apps (only affects the two web dashboards).
 
 ## Step 4: Build the Development Client (one-time, ~10-15 min)
 
@@ -90,7 +90,7 @@ sources" if prompted).
 npx expo start --dev-client
 ```
 
-Scan the QR code with your phone's camera, or open the NyayaOne Lawyer app you
+Scan the QR code with your phone's camera, or open the TechnoOne Lawyer app you
 just installed — it will connect to this dev server automatically (same WiFi).
 
 ## Login

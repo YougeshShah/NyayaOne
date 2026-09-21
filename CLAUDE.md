@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository overview
 
-NyayaOne is a multi-tenant legal-tech platform (Technocraftx) for Nepali law firms. It is a monorepo of five independent apps that all talk to one Express/Prisma backend:
+TechnoOne is a multi-tenant legal-tech platform (Technocraftx) for Nepali law firms. It is a monorepo of five independent apps that all talk to one Express/Prisma backend:
 
 | App | Stack | Who uses it |
 |---|---|---|

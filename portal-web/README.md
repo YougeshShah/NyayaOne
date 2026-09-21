@@ -1,4 +1,4 @@
-# NyayaOne — Law Firm Dashboard (Web)
+# TechnoOne — Law Firm Dashboard (Web)
 
 Web dashboard used by **law firm admins, lawyers, and staff** to manage clients,
 cases, hearings, and (for admins) their firm's lawyers/staff.
@@ -17,7 +17,7 @@ npm run dev
 
 Opens at: **http://localhost:3001**
 
-⚠️ Backend (`~/nyayaone/backend`, port 5000) must be running at the same time.
+⚠️ Backend (`~/technoone/backend`, port 5000) must be running at the same time.
 
 ## Login
 

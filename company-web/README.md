@@ -1,6 +1,6 @@
-# NyayaOne — Company Control Center (Web Dashboard)
+# TechnoOne — Company Control Center (Web Dashboard)
 
-Web dashboard used by **Technocraftx** to manage the entire NyayaOne platform:
+Web dashboard used by **Technocraftx** to manage the entire TechnoOne platform:
 approve/suspend law firms, manage courts, and (in later phases) view platform analytics,
 manage the legal library, and send notifications.
 

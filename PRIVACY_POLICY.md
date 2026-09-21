@@ -1,9 +1,9 @@
-# Privacy Policy — NyayaOne
+# Privacy Policy — TechnoOne
 
 **Last Updated: August 26, 2026**
 
 ## 1. Who We Are
-NyayaOne is operated by Technocraftx Pvt. Ltd.. This policy explains
+TechnoOne is operated by Technocraftx Pvt. Ltd.. This policy explains
 what personal data we collect, why, and how we protect it.
 Contact: support@technocraftx.com.
 

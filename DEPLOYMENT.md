@@ -1,4 +1,4 @@
-# NyayaOne — Production Deployment (Single Server)
+# TechnoOne — Production Deployment (Single Server)
 
 Covers 0–10 organizations. A 4 vCPU / 8GB RAM Ubuntu 24.04 server is enough
 to start (matches the "Option 1: Single Server (Best for MVP)" spec).
@@ -13,13 +13,13 @@ sudo systemctl enable --now docker
 
 ## 2. Get the Code onto the Server
 
-Copy/clone the `nyayaone/` folder (backend, company-web, law-firm-web,
+Copy/clone the `technoone/` folder (backend, company-web, law-firm-web,
 student-web, docker-compose.prod.yml, reverse-proxy.conf) onto the server.
 
 ## 3. Configure Environment
 
 ```bash
-cd nyayaone
+cd technoone
 cp .env.prod.example .env.prod
 nano .env.prod
 ```
@@ -83,7 +83,7 @@ Migrations run automatically on backend startup (`prisma migrate deploy`).
 
 ```bash
 docker compose -f docker-compose.prod.yml exec postgres \
-  pg_dump -U nyayaone nyayaone_db > backup-$(date +%F).sql
+  pg_dump -U technoone technoone_db > backup-$(date +%F).sql
 ```
 Run this on a cron schedule and copy backups off-server (e.g. to
 Backblaze B2 / any S3-compatible storage).

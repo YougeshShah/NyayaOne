@@ -1,4 +1,4 @@
-# NyayaOne — Client Mobile App (Expo Development Build)
+# TechnoOne — Client Mobile App (Expo Development Build)
 
 Mobile app for **clients** to track their own cases, hearings, and documents.
 Read-only — clients cannot edit legal information (matches roadmap requirement).
