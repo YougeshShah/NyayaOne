@@ -12,7 +12,7 @@ export const translations = {
     signingIn: "Signing in...",
     email: "Email",
     password: "Password",
-    lawyerApp: "Lawyer App",
+    lawyerApp: "Portal App",
 
     // Dashboard
     welcomeBack: "Welcome back,",
@@ -133,7 +133,7 @@ export const translations = {
     signingIn: "साइन इन हुँदैछ...",
     email: "इमेल",
     password: "पासवर्ड",
-    lawyerApp: "वकिल एप",
+    lawyerApp: "पोर्टल एप",
 
     // Dashboard
     welcomeBack: "स्वागत छ,",
