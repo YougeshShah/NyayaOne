@@ -44,7 +44,7 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "http://36.253.137.131/api/v1",
+      "apiBaseUrl": "http://36.253.137.131:5000/api/v1",
       "router": {},
       "eas": {
         "projectId": "89e0dbbc-0268-4d32-ad72-98bcace72545"

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TechnoOne Lawyer",
+    "name": "TechnoOne Portal",
     "slug": "technoone-portal",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -57,7 +57,7 @@
       "expo-sharing"
     ],
     "extra": {
-      "apiBaseUrl": "http://36.253.137.131/api/v1",
+      "apiBaseUrl": "http://36.253.137.131:5000/api/v1",
       "router": {},
       "eas": {
         "projectId": "78d11982-b031-4d74-b665-e1df2042844f"
