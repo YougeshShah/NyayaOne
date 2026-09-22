@@ -56,7 +56,7 @@
       "expo-sharing"
     ],
     "extra": {
-      "apiBaseUrl": "http://36.253.137.131:5000/api/v1",
+      "apiBaseUrl": "https://api.technocraftx.com/api/v1",
       "router": {},
       "eas": {
         "projectId": "2e325725-188f-4258-8ff5-9fea536c242a"
