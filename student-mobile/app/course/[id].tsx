@@ -31,9 +31,12 @@ export default function CourseDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
       {!isSubscribed && (
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>🔓 Free demo content — subscribe on the website for full access.</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.banner}
+          onPress={() => router.push({ pathname: "/payment/course", params: { courseId: id } })}
+        >
+          <Text style={styles.bannerText}>🔓 Free demo content — tap here to subscribe for full access.</Text>
+        </TouchableOpacity>
       )}
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
