@@ -43,6 +43,14 @@ export default function CourseDetailScreen() {
             <Ionicons name="library-outline" size={22} color="#2563EB" />
             <Text style={styles.quickActionLabel}>Library</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push(`/course-content/${id}`)}>
+            <Ionicons name="document-text-outline" size={22} color="#2563EB" />
+            <Text style={styles.quickActionLabel}>Content</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push("/my-notes")}>
+            <Ionicons name="create-outline" size={22} color="#2563EB" />
+            <Text style={styles.quickActionLabel}>My Notes</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push(`/flashcards?courseId=${id}`)}>
             <Ionicons name="albums-outline" size={22} color="#2563EB" />
             <Text style={styles.quickActionLabel}>Flashcards</Text>
