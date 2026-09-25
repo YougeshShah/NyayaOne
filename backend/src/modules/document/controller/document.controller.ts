@@ -68,4 +68,20 @@ export const documentController = {
     await documentService.toggleClientVisibility(id, lawFirmId, visibleToClient);
     res.status(200).json({ success: true, message: "Visibility updated" });
   },
+
+  async createDocumentRequest(req: Request, res: Response) {
+    const { lawFirmId, userId } = requireFirmContext(req);
+    const { caseId, title, description } = req.body;
+    if (!caseId || !title) throw AppError.badRequest("caseId and title are required.");
+    const result = await documentService.createDocumentRequest(lawFirmId, userId, caseId, title, description);
+    res.status(201).json({ success: true, message: "Document request created", data: result });
+  },
+
+  async listDocumentRequests(req: Request, res: Response) {
+    const { lawFirmId } = requireFirmContext(req);
+    const caseId = req.query.caseId as string;
+    if (!caseId) throw AppError.badRequest("caseId query param is required.");
+    const result = await documentService.listDocumentRequests(lawFirmId, caseId);
+    res.status(200).json({ success: true, data: result });
+  },
 };

@@ -75,4 +75,25 @@ export const documentService = {
     await this.getById(id, lawFirmId);
     return documentRepository.setClientVisibility(id, lawFirmId, visibleToClient);
   },
+
+  async createDocumentRequest(lawFirmId: string, userId: string, caseId: string, title: string, description: string | undefined) {
+    const { prisma } = await import("../../../database/prisma");
+    const caseRecord = await prisma.case.findFirst({ where: { id: caseId, lawFirmId } });
+    if (!caseRecord) {
+      const { AppError } = await import("../../../common/errors/AppError");
+      throw AppError.notFound("Case not found");
+    }
+    return prisma.documentRequest.create({
+      data: { lawFirmId, caseId, title, description, requestedById: userId },
+    });
+  },
+
+  async listDocumentRequests(lawFirmId: string, caseId: string) {
+    const { prisma } = await import("../../../database/prisma");
+    return prisma.documentRequest.findMany({
+      where: { lawFirmId, caseId },
+      orderBy: { createdAt: "desc" },
+      include: { requestedBy: { select: { fullName: true } }, fulfilledDocument: { select: { id: true, fileName: true } } },
+    });
+  },
 };
