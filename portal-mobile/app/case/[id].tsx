@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "../../src/api/client";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -21,6 +23,19 @@ export default function CaseDetailScreen() {
   const downloadDoc = useDownloadCaseDocument();
   const toggleVisibility = useToggleDocumentVisibility(id);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [requestDocModal, setRequestDocModal] = useState(false);
+  const [requestTitle, setRequestTitle] = useState("");
+  const [requestDesc, setRequestDesc] = useState("");
+  const queryClient = useQueryClient();
+  const createDocRequest = useMutation({
+    mutationFn: () => apiClient.post("/documents/document-requests", { caseId: id, title: requestTitle, description: requestDesc || undefined }),
+    onSuccess: () => {
+      setRequestDocModal(false);
+      setRequestTitle("");
+      setRequestDesc("");
+      queryClient.invalidateQueries({ queryKey: ["document-requests", id] });
+    },
+  });
 
   if (isLoading || !caseData) {
     return (
@@ -96,6 +111,47 @@ export default function CaseDetailScreen() {
         <Ionicons name="clipboard-outline" size={18} color="#fff" />
         <Text style={styles.generateDocButtonText}>Case Workspace</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.generateDocButton, { backgroundColor: "#B45309" }]}
+        onPress={() => setRequestDocModal(true)}
+      >
+        <Ionicons name="document-attach-outline" size={18} color="#fff" />
+        <Text style={styles.generateDocButtonText}>Request Document from Client</Text>
+      </TouchableOpacity>
+
+      <Modal visible={requestDocModal} animationType="slide" transparent onRequestClose={() => setRequestDocModal(false)}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}>
+          <View style={{ backgroundColor: "#fff", borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20 }}>
+            <Text style={{ fontSize: 17, fontWeight: "700", marginBottom: 12 }}>Request a Document</Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 8, padding: 10, marginBottom: 10 }}
+              placeholder="e.g. Property Deed Copy"
+              value={requestTitle}
+              onChangeText={setRequestTitle}
+            />
+            <TextInput
+              style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 8, padding: 10, minHeight: 70, marginBottom: 16 }}
+              placeholder="Additional details (optional)"
+              value={requestDesc}
+              onChangeText={setRequestDesc}
+              multiline
+            />
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10 }}>
+              <TouchableOpacity onPress={() => setRequestDocModal(false)} style={{ paddingHorizontal: 16, paddingVertical: 10 }}>
+                <Text style={{ color: "#6B7280", fontWeight: "600" }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => createDocRequest.mutate()}
+                disabled={!requestTitle.trim() || createDocRequest.isPending}
+                style={{ backgroundColor: "#B45309", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "700" }}>{createDocRequest.isPending ? "Sending..." : "Send Request"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Text style={styles.sectionTitle}>{t("hearingHistory")}</Text>
       {caseData.hearings.length === 0 && (
