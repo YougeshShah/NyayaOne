@@ -20,4 +20,12 @@ router.post("/documents", (req: Request, res: Response, next: NextFunction) => {
   });
 }, clientPortalController.uploadDocument);
 
+router.get("/document-requests", clientPortalController.myDocumentRequests);
+router.post("/document-requests/:id/fulfill", (req: Request, res: Response, next: NextFunction) => {
+  documentUpload.single("file")(req, res, (err) => {
+    if (err) return next(mapMulterError(err));
+    next();
+  });
+}, clientPortalController.fulfillDocumentRequest);
+
 export default router;

@@ -86,4 +86,61 @@ export const clientPortalService = {
 
     return doc;
   },
+
+  async myDocumentRequests(userId: string) {
+    const client = await requireClientRecord(userId);
+    return prisma.documentRequest.findMany({
+      where: { case: { clients: { some: { clientId: client.id } } } },
+      orderBy: { createdAt: "desc" },
+      include: { case: { select: { caseNumber: true } } },
+    });
+  },
+
+  async fulfillDocumentRequest(userId: string, requestId: string, file: Express.Multer.File) {
+    const client = await requireClientRecord(userId);
+    const request = await prisma.documentRequest.findUnique({
+      where: { id: requestId },
+      include: { case: { include: { clients: true } } },
+    });
+    if (!request || !request.case.clients.some((c) => c.clientId === client.id)) {
+      fs.unlink(file.path, () => {});
+      throw AppError.notFound("Document request not found");
+    }
+    if (request.status === "FULFILLED") {
+      fs.unlink(file.path, () => {});
+      throw AppError.badRequest("This request has already been fulfilled");
+    }
+
+    const relativePath = path.join(client.lawFirmId, path.basename(file.path));
+    const doc = await documentRepository.create({
+      lawFirmId: client.lawFirmId,
+      caseId: request.caseId,
+      fileName: file.originalname,
+      fileUrl: relativePath,
+      fileType: file.mimetype,
+      fileSizeKb: Math.round(file.size / 1024),
+      category: "OTHER" as any,
+      uploadedById: userId,
+    });
+
+    await prisma.documentRequest.update({
+      where: { id: requestId },
+      data: { status: "FULFILLED", fulfilledDocumentId: doc.id },
+    });
+
+    try {
+      const notification = await notificationRepository.createNotification({
+        title: "Document Request Fulfilled",
+        body: `${client.fullName} uploaded "${request.title}" for case ${request.case.caseNumber}.`,
+        audience: "INDIVIDUAL_USER",
+        targetId: request.requestedById,
+        createdBy: userId,
+      });
+      await notificationRepository.bulkCreateUserNotifications(notification.id, [request.requestedById]);
+    } catch {
+      // Notification failure should never break the actual upload.
+    }
+
+    return doc;
+  },
 };

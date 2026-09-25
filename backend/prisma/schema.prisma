@@ -222,6 +222,7 @@ model LawFirm {
   clients         Client[]
   cases           Case[]
   documents       Document[]
+  documentRequests DocumentRequest[]
   subscription    FirmSubscription?
   roles           Role[] // this tenant's own custom staff roles
   hostedLiveClasses LiveClass[] // classes this institution's own staff scheduled
@@ -289,6 +290,7 @@ model User {
   casesAsLawyer     CaseLawyer[]
   hearingsCreated   Hearing[]        @relation("HearingCreatedBy")
   documentsUploaded Document[]       @relation("DocumentUploadedBy")
+  documentRequestsMade DocumentRequest[] @relation("DocumentRequestedBy")
   clientProfile     Client?          @relation("ClientUserLink")
   notifications     UserNotification[]
   auditLogs         AuditLog[]
@@ -421,6 +423,7 @@ model Case {
   lawyers         CaseLawyer[]
   hearings        Hearing[]
   documents       Document[]
+  documentRequests DocumentRequest[]
   notes           CaseNote[]
   deadlines       CaseDeadline[]
   tasks           CaseTask[]
@@ -529,8 +532,45 @@ model Document {
 
   createdAt    DateTime         @default(now())
 
+  fulfilledByRequest DocumentRequest?
+
   @@index([lawFirmId])
   @@index([caseId])
+}
+
+enum DocumentRequestStatus {
+  PENDING
+  FULFILLED
+  CANCELLED
+}
+
+// A lawyer/staff asking a client to upload a specific document (e.g.
+// "Property Deed copy") -- separate from Document itself so the client
+// sees a clear checklist of what's still owed, not just a raw upload button.
+model DocumentRequest {
+  id                  String                 @id @default(uuid())
+  lawFirm             LawFirm                @relation(fields: [lawFirmId], references: [id])
+  lawFirmId           String
+
+  case                Case                   @relation(fields: [caseId], references: [id])
+  caseId              String
+
+  title               String // e.g. "Property Deed Copy"
+  description         String?
+  status              DocumentRequestStatus  @default(PENDING)
+
+  requestedBy         User                   @relation("DocumentRequestedBy", fields: [requestedById], references: [id])
+  requestedById        String
+
+  fulfilledDocument    Document?             @relation(fields: [fulfilledDocumentId], references: [id])
+  fulfilledDocumentId  String?               @unique
+
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  @@index([lawFirmId])
+  @@index([caseId])
+  @@index([status])
 }
 
 // ------------------------------------------------------------

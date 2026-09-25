@@ -55,4 +55,19 @@ export const clientPortalController = {
     const result = await clientPortalService.uploadDocument(userId, caseId, category || "OTHER", req.file);
     res.status(201).json({ success: true, message: "Document uploaded successfully", data: result });
   },
+
+  async myDocumentRequests(req: Request, res: Response) {
+    const userId = requireUserId(req);
+    const result = await clientPortalService.myDocumentRequests(userId);
+    res.status(200).json({ success: true, data: result });
+  },
+
+  async fulfillDocumentRequest(req: Request, res: Response) {
+    const userId = requireUserId(req);
+    if (!req.file) {
+      throw AppError.badRequest("No file was uploaded. Attach a file under field name 'file'.");
+    }
+    const result = await clientPortalService.fulfillDocumentRequest(userId, req.params.id, req.file);
+    res.status(201).json({ success: true, message: "Document submitted successfully", data: result });
+  },
 };
