@@ -128,6 +128,7 @@ export default function ProfileScreen() {
             <MenuRow icon="search-outline" label="नजिर खोज (Precedent Search)" onPress={() => router.push("/precedents")} />
             <MenuRow icon="document-text-outline" label="My Notes" onPress={() => router.push("/my-notes")} />
             <MenuRow icon="receipt-outline" label="Submit Payment Receipt" onPress={() => router.push("/payment/voucher")} />
+            <MenuRow icon="chatbubble-ellipses-outline" label="Chat Assistant" onPress={() => router.push("/chatbot")} />
           </View>
         </>
       )}
