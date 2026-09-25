@@ -22,18 +22,32 @@ RULES:
 4. This is a DRAFT for the user to review and edit -- do not claim it is legally finalized or exhaustive.
 5. Do not invent specific facts, names, dates, or figures beyond what's given -- use clear placeholders like [DATE] for anything missing.`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${env.gemini.apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-      }
-    );
+    // Gemini occasionally returns 503 "model is overloaded" during traffic
+    // spikes -- this is transient, so retry a couple of times with a short
+    // backoff before surfacing an error to the user.
+    const maxAttempts = 3;
+    let response: Response | null = null;
+    let lastErrText = "";
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${env.gemini.apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        }
+      );
+      if (response.ok) break;
+      lastErrText = await response.text();
+      const isOverloaded = response.status === 503 || lastErrText.includes("UNAVAILABLE") || lastErrText.includes("overloaded");
+      if (!isOverloaded || attempt === maxAttempts) break;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+    }
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw AppError.badRequest(`AI content generation failed: ${errText.slice(0, 200)}`);
+    if (!response || !response.ok) {
+      throw AppError.badRequest(
+        `AI content generation is temporarily busy. Please try again in a moment. (${lastErrText.slice(0, 150)})`
+      );
     }
 
     const data = (await response.json()) as any;
