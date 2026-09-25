@@ -43,6 +43,21 @@ export default function SubscriptionScreen() {
     }
   };
 
+  const payWithEsewa = async () => {
+    if (!selectedPlan?.priceMonthly) return;
+    setLoading("ESEWA");
+    try {
+      const { data } = await apiClient.post("/firm-payment/esewa/initiate", { planId: selectedPlan.id, amount: selectedPlan.priceMonthly });
+      const { formUrl, fields } = data.data;
+      const params = new URLSearchParams(fields as any).toString();
+      await Linking.openURL(`${formUrl}?${params}`);
+    } catch (err: any) {
+      Alert.alert("Error", err?.response?.data?.message || "Could not start eSewa payment.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const uploadVoucher = async () => {
     if (!selectedPlan?.priceMonthly) return;
     const result = await DocumentPicker.getDocumentAsync({ type: ["image/*", "application/pdf"] });
@@ -85,6 +100,9 @@ export default function SubscriptionScreen() {
       {selectedPlan?.priceMonthly ? (
         <View style={styles.payBox}>
           <Text style={styles.payTitle}>Pay NPR {selectedPlan.priceMonthly} for {selectedPlan.name}</Text>
+          <TouchableOpacity style={[styles.payButton, { backgroundColor: "#60BB46" }]} onPress={payWithEsewa} disabled={!!loading}>
+            {loading === "ESEWA" ? <ActivityIndicator color="#fff" /> : <Text style={styles.payButtonText}>Pay with eSewa</Text>}
+          </TouchableOpacity>
           <TouchableOpacity style={[styles.payButton, { backgroundColor: "#5C2D91" }]} onPress={payWithKhalti} disabled={!!loading}>
             {loading === "KHALTI" ? <ActivityIndicator color="#fff" /> : <Text style={styles.payButtonText}>Pay with Khalti</Text>}
           </TouchableOpacity>
