@@ -15,6 +15,7 @@
       "bundleIdentifier": "com.trailblazetech.technoone.student"
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"

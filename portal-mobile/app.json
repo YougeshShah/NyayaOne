@@ -15,6 +15,7 @@
       "bundleIdentifier": "com.trailblazetech.technoone.lawyer"
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
