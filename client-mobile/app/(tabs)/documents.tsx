@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, Modal } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +20,7 @@ const CATEGORIES: { value: string; label: string }[] = [
 ];
 
 export default function DocumentsScreen() {
+  const router = useRouter();
   const { data, isLoading } = useMyDocuments();
   const { data: cases } = useMyCases();
   const uploadDocument = useUploadDocument();
@@ -106,6 +108,13 @@ export default function DocumentsScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={[styles.uploadButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: colors.primary }]}
+        onPress={() => router.push("/document-requests")}
+      >
+        <Ionicons name="list-outline" size={18} color={colors.primary} />
+        <Text style={[styles.uploadButtonText, { color: colors.primary }]}>View Document Requests</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.uploadButton} onPress={handlePickFile} disabled={uploadDocument.isPending}>
         <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
         <Text style={styles.uploadButtonText}>{uploadDocument.isPending ? "Uploading..." : "Upload Document"}</Text>
