@@ -41,6 +41,10 @@ export default function ChatbotScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={90}>
+      <View style={styles.privacyBanner}>
+        <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+        <Text style={styles.privacyText}>Don't share personal or sensitive details here — messages are processed by a third-party AI service.</Text>
+      </View>
       <FlatList
         ref={listRef}
         data={messages}
@@ -88,6 +92,8 @@ export default function ChatbotScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  privacyBanner: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#F3F4F6", paddingHorizontal: 12, paddingVertical: 8 },
+  privacyText: { flex: 1, fontSize: 11, color: "#6B7280" },
   list: { padding: 16, flexGrow: 1 },
   emptyText: { color: "#6B7280", textAlign: "center", marginTop: 40, paddingHorizontal: 20 },
   messageRow: { flexDirection: "row", gap: 8, marginBottom: 16, alignItems: "flex-start" },
