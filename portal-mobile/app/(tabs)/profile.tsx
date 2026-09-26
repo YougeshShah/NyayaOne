@@ -158,9 +158,9 @@ export default function ProfileScreen() {
           <Text style={styles.actionButtonText}>Subscription</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/chatbot")}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Chat Assistant</Text>
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/messages")}>
+          <Ionicons name="chatbubbles-outline" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>Messages</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
         {user?.tenantType === "LAW_FIRM" && (
