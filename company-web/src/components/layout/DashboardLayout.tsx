@@ -35,7 +35,9 @@ import { useLogout } from "../../hooks/useAuth";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { TranslationKey } from "../../i18n/translations";
 import { getAvatarUrl } from "../../api/profile.api";
-import { ChatWidget } from "../ChatWidget";
+// AI ChatWidget is kept in the codebase (src/components/ChatWidget.tsx) but
+// no longer rendered here -- Company staff use the Support Ticket inbox
+// (Institution/Law Firm <-> Company) instead of a chat widget.
 
 interface NavItem {
   to: string;
@@ -254,7 +256,6 @@ export function DashboardLayout() {
 
         <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: "auto" }}>
           <Outlet />
-          <ChatWidget />
         </Box>
       </div>
     </div>
