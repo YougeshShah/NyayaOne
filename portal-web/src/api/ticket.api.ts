@@ -17,18 +17,22 @@ export interface TicketCommentItem {
   ticketId: string;
   authorId: string;
   content: string;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
   createdAt: string;
   author: { id: string; fullName: string; accountType: string };
 }
 
 export interface TicketDetail extends TicketSummary {
   description: string;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
   comments: TicketCommentItem[];
 }
 
 export const ticketApi = {
-  async create(subject: string, description: string) {
-    const { data } = await apiClient.post("/tickets", { subject, description });
+  async create(subject: string, description: string, attachmentUrl?: string, attachmentType?: string) {
+    const { data } = await apiClient.post("/tickets", { subject, description, attachmentUrl, attachmentType });
     return data.data;
   },
 
@@ -42,13 +46,22 @@ export const ticketApi = {
     return data.data;
   },
 
-  async addComment(id: string, content: string): Promise<TicketCommentItem> {
-    const { data } = await apiClient.post(`/tickets/${id}/comments`, { content });
+  async addComment(id: string, content: string, attachmentUrl?: string, attachmentType?: string): Promise<TicketCommentItem> {
+    const { data } = await apiClient.post(`/tickets/${id}/comments`, { content, attachmentUrl, attachmentType });
     return data.data;
   },
 
   async updateStatus(id: string, status: TicketStatus) {
     const { data } = await apiClient.patch(`/tickets/${id}/status`, { status });
+    return data.data;
+  },
+
+  async uploadAttachment(file: File): Promise<{ attachmentUrl: string; attachmentType: string }> {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await apiClient.post("/tickets/attachments", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return data.data;
   },
 };

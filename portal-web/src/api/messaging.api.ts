@@ -20,6 +20,8 @@ export interface MessageItem {
   conversationId: string;
   senderId: string;
   content: string;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
   isRead: boolean;
   createdAt: string;
 }
@@ -47,8 +49,26 @@ export const messagingApi = {
     return data.data;
   },
 
-  async sendMessage(conversationId: string, content: string): Promise<MessageItem> {
-    const { data } = await apiClient.post(`/messaging/conversations/${conversationId}/messages`, { content });
+  async sendMessage(
+    conversationId: string,
+    content: string,
+    attachmentUrl?: string,
+    attachmentType?: string
+  ): Promise<MessageItem> {
+    const { data } = await apiClient.post(`/messaging/conversations/${conversationId}/messages`, {
+      content,
+      attachmentUrl,
+      attachmentType,
+    });
+    return data.data;
+  },
+
+  async uploadAttachment(file: File): Promise<{ attachmentUrl: string; attachmentType: string }> {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await apiClient.post("/messaging/attachments", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return data.data;
   },
 
