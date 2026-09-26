@@ -19,6 +19,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { getAvatarUrl } from "../../api/profile.api";
+import { ChatWidget } from "../ChatWidget";
 
 const SIDEBAR_WIDTH = 260;
 
@@ -246,6 +247,7 @@ export function DashboardLayout() {
 
         <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: "auto" }}>
           <Outlet />
+          <ChatWidget />
         </Box>
       </Box>
     </Box>
