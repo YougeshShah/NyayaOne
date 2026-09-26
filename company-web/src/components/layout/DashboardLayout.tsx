@@ -34,6 +34,7 @@ import { useLogout } from "../../hooks/useAuth";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { TranslationKey } from "../../i18n/translations";
 import { getAvatarUrl } from "../../api/profile.api";
+import { ChatWidget } from "../ChatWidget";
 
 interface NavItem {
   to: string;
@@ -251,6 +252,7 @@ export function DashboardLayout() {
 
         <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: "auto" }}>
           <Outlet />
+          <ChatWidget />
         </Box>
       </div>
     </div>
