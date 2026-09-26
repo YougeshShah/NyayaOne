@@ -1,8 +1,9 @@
 import { Tabs, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-// TEMPORARILY DISABLED for crash diagnosis — re-enable once confirmed safe.
-import { ChatWidget } from "../../src/components/ChatWidget";
+// The AI chatbot widget is kept in the codebase (src/components/ChatWidget.tsx)
+// but is no longer rendered here -- replaced by real Teacher/Staff <-> Student
+// messaging, reachable from the Profile menu instead of a floating button.
 import { useMyNotifications } from "../../src/hooks";
 
 function NotificationBell() {
@@ -37,7 +38,6 @@ export default function TabsLayout() {
           options={{ title: "Profile", tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} /> }}
         />
       </Tabs>
-      <ChatWidget />
     </>
   );
 }
