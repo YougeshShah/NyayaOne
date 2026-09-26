@@ -13,6 +13,29 @@ function convertToDevanagariDigits(text: string): string {
   return text.replace(/[0-9]/g, (d) => ENGLISH_TO_DEVANAGARI_DIGITS[d]);
 }
 
+// The AI assistant hands us the user's whole natural-language question
+// (often mixed Devanagari + English/Roman-script instruction words, e.g.
+// "निर्णय नं. ९१०० yesko full summary दिनुहोस्"), not a clean search term.
+// Our precedent text is entirely in Devanagari, so any Roman-script word in
+// the question ("summary", "full", "yesko") can never match it -- and
+// plainto_tsquery ANDs every token together, so that one non-matching word
+// silently zeroes out an otherwise exact match on the decision number.
+//
+// Fix: drop every token that contains no Devanagari character before
+// building the query, and keep the remaining Devanagari tokens AND'ed
+// together as before (still via plainto_tsquery, which is what makes a
+// selective token like a decision number narrow the match down to the
+// right record instead of matching half the table). An earlier attempt
+// used an OR query instead, but words like "निर्णय"/"नं" appear in every
+// single title, so OR-ing them in matched almost the entire table --
+// AND (after removing only the non-Devanagari noise) is the correct fix.
+const DEVANAGARI_RANGE = /[ऀ-ॿ]/;
+function extractDevanagariQuery(search: string): string {
+  const converted = convertToDevanagariDigits(search);
+  const words = converted.split(/\s+/).filter((w) => DEVANAGARI_RANGE.test(w));
+  return words.join(" ");
+}
+
 export const precedentRepository = {
   // Full-text search is done via raw SQL against the generated tsvector
   // column (Prisma's query builder has no native full-text search support).
@@ -25,7 +48,7 @@ export const precedentRepository = {
     lawFirmId?: string | null; // caller's own institution -- null/undefined = company-wide only
     skip: number;
     take: number;
-  }) {
+  }): Promise<{ items: any[]; total: number }> {
     // Normalize digits so "9100" and "९१००" both match the same content.
     if (params.search) {
       params = { ...params, search: convertToDevanagariDigits(params.search) };
@@ -37,11 +60,16 @@ export const precedentRepository = {
     const categoryClause = params.category ? Prisma.sql`AND "category" = ${params.category}` : Prisma.empty;
 
     if (params.search && params.search.trim()) {
-      const searchClause = Prisma.sql`"searchVector" @@ plainto_tsquery('simple', ${params.search})`;
+      // Fall back to the original raw text if nothing Devanagari survived
+      // filtering (e.g. a pure-English question) -- best effort rather than
+      // an empty query.
+      const devanagariQuery = extractDevanagariQuery(params.search);
+      const effectiveQuery = devanagariQuery || params.search;
+      const searchClause = Prisma.sql`"searchVector" @@ plainto_tsquery('simple', ${effectiveQuery})`;
       const items = await prisma.$queryRaw<any[]>(Prisma.sql`
         SELECT id, "sourceId", "sourceUrl", title, "caseType", category, court, "benchType",
                judges, "decisionDate", "caseNumber", petitioner, respondent, "hostLawFirmId", "createdAt",
-               ts_rank("searchVector", plainto_tsquery('simple', ${params.search})) AS rank
+               ts_rank("searchVector", plainto_tsquery('simple', ${effectiveQuery})) AS rank
         FROM "Precedent"
         WHERE ${searchClause} ${categoryClause} ${visibilityClause}
         ORDER BY rank DESC
