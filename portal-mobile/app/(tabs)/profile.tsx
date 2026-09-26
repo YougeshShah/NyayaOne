@@ -127,6 +127,13 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
+        {user?.accountType === "LAW_FIRM_ADMIN" && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/tickets")}>
+            <Ionicons name="help-buoy-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Support Tickets</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
         {user?.accountType === "LAW_FIRM_ADMIN" && user?.tenantType === "EDUCATION" && (
           <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/usage-limits")}>
             <Ionicons name="speedometer-outline" size={20} color={colors.primary} />
