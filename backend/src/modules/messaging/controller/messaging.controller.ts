@@ -39,9 +39,18 @@ export const messagingController = {
   async sendMessage(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const { id } = conversationIdParamSchema.parse(req.params);
-    const { content } = sendMessageSchema.parse(req.body);
-    const result = await messagingService.sendMessage(req.auth, id, content);
+    const { content, attachmentUrl, attachmentType } = sendMessageSchema.parse(req.body);
+    const result = await messagingService.sendMessage(req.auth, id, content, attachmentUrl, attachmentType);
     res.status(201).json({ success: true, data: result });
+  },
+
+  async uploadAttachment(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    if (!req.file) throw AppError.badRequest("No file uploaded.");
+    res.status(201).json({
+      success: true,
+      data: { attachmentUrl: `chat-attachments/${req.file.filename}`, attachmentType: req.file.mimetype },
+    });
   },
 
   async unreadCount(req: Request, res: Response) {

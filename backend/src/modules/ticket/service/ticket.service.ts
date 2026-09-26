@@ -17,12 +17,18 @@ export const ticketService = {
   // Only a tenant admin (law firm or institution) can open a ticket --
   // matches "Institution/LawFirm <-> Company" support, not every staff
   // member individually.
-  async create(auth: AuthUser, subject: string, description: string) {
+  async create(
+    auth: AuthUser,
+    subject: string,
+    description: string,
+    attachmentUrl?: string,
+    attachmentType?: string
+  ) {
     if (auth.accountType !== "LAW_FIRM_ADMIN" || !auth.lawFirmId) {
       throw AppError.forbidden("Only a law firm/institution admin can open a support ticket.");
     }
     return prisma.supportTicket.create({
-      data: { lawFirmId: auth.lawFirmId, createdById: auth.userId, subject, description },
+      data: { lawFirmId: auth.lawFirmId, createdById: auth.userId, subject, description, attachmentUrl, attachmentType },
     });
   },
 
@@ -73,9 +79,14 @@ export const ticketService = {
     return { ...ticket, lawFirm, createdBy, comments };
   },
 
-  async addComment(auth: AuthUser, ticketId: string, content: string) {
+  async addComment(auth: AuthUser, ticketId: string, content: string, attachmentUrl?: string, attachmentType?: string) {
     const ticket = await this.assertAccess(auth, ticketId);
     if (ticket.status === "CLOSED") throw AppError.badRequest("This ticket is closed.");
+
+    const trimmed = content.trim();
+    if (!trimmed && !attachmentUrl) {
+      throw AppError.badRequest("Reply must have text or an attachment.");
+    }
 
     // First reply from Company support automatically moves an OPEN ticket
     // to IN_PROGRESS -- gives the institution visible confirmation someone
@@ -83,7 +94,7 @@ export const ticketService = {
     const nextStatus = ticket.status === "OPEN" && auth.accountType === "COMPANY" ? "IN_PROGRESS" : ticket.status;
 
     const [comment] = await prisma.$transaction([
-      prisma.ticketComment.create({ data: { ticketId, authorId: auth.userId, content } }),
+      prisma.ticketComment.create({ data: { ticketId, authorId: auth.userId, content: trimmed, attachmentUrl, attachmentType } }),
       prisma.supportTicket.update({ where: { id: ticketId }, data: { status: nextStatus as any } }),
     ]);
     return comment;

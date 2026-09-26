@@ -7,6 +7,7 @@ import AssessmentIcon from "@mui/icons-material/AssessmentOutlined";
 import MicIcon from "@mui/icons-material/MicOutlined";
 import NotificationsIcon from "@mui/icons-material/NotificationsOutlined";
 import HistoryIcon from "@mui/icons-material/HistoryOutlined";
+import SupportAgentIcon from "@mui/icons-material/SupportAgentOutlined";
 import MenuBookIcon from "@mui/icons-material/MenuBookOutlined";
 import BadgeIcon from "@mui/icons-material/BadgeOutlined";
 import PaymentIcon from "@mui/icons-material/PaymentsOutlined";
@@ -110,6 +111,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/notifications", labelKey: "notifications", icon: <NotificationsIcon fontSize="small" />, permission: "notification.broadcast" },
       { to: "/audit-logs", labelKey: "auditLogs", icon: <HistoryIcon fontSize="small" />, permission: "auditlog.view" },
+      { to: "/support-tickets", labelKey: "supportTickets", icon: <SupportAgentIcon fontSize="small" />, permission: null },
       { to: "/user-admin", labelKey: "userAdmin", icon: <LockResetIcon fontSize="small" />, permission: "user.manage" },
     ],
   },

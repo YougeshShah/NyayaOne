@@ -165,14 +165,27 @@ export const messagingService = {
     return { items: items.reverse(), page, total, totalPages: Math.ceil(total / limit) };
   },
 
-  async sendMessage(auth: AuthUser, conversationId: string, content: string) {
+  async sendMessage(
+    auth: AuthUser,
+    conversationId: string,
+    content: string,
+    attachmentUrl?: string,
+    attachmentType?: string
+  ) {
     await this.assertParticipant(conversationId, auth.userId);
 
+    const trimmed = content.trim();
+    if (!trimmed && !attachmentUrl) {
+      throw AppError.badRequest("Message must have text or an attachment.");
+    }
+
+    const previewText = trimmed || (attachmentType?.startsWith("image/") ? "📷 Photo" : "📎 Attachment");
+
     const [message] = await prisma.$transaction([
-      prisma.message.create({ data: { conversationId, senderId: auth.userId, content } }),
+      prisma.message.create({ data: { conversationId, senderId: auth.userId, content: trimmed, attachmentUrl, attachmentType } }),
       prisma.conversation.update({
         where: { id: conversationId },
-        data: { lastMessageAt: new Date(), lastMessageText: content.slice(0, 200) },
+        data: { lastMessageAt: new Date(), lastMessageText: previewText.slice(0, 200) },
       }),
     ]);
 

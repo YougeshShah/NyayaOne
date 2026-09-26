@@ -12,8 +12,8 @@ import {
 export const ticketController = {
   async create(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
-    const { subject, description } = createTicketSchema.parse(req.body);
-    const result = await ticketService.create(req.auth, subject, description);
+    const { subject, description, attachmentUrl, attachmentType } = createTicketSchema.parse(req.body);
+    const result = await ticketService.create(req.auth, subject, description, attachmentUrl, attachmentType);
     res.status(201).json({ success: true, message: "Ticket opened", data: result });
   },
 
@@ -34,9 +34,18 @@ export const ticketController = {
   async addComment(req: Request, res: Response) {
     if (!req.auth) throw AppError.unauthorized();
     const { id } = ticketIdParamSchema.parse(req.params);
-    const { content } = addCommentSchema.parse(req.body);
-    const result = await ticketService.addComment(req.auth, id, content);
+    const { content, attachmentUrl, attachmentType } = addCommentSchema.parse(req.body);
+    const result = await ticketService.addComment(req.auth, id, content, attachmentUrl, attachmentType);
     res.status(201).json({ success: true, data: result });
+  },
+
+  async uploadAttachment(req: Request, res: Response) {
+    if (!req.auth) throw AppError.unauthorized();
+    if (!req.file) throw AppError.badRequest("No file uploaded.");
+    res.status(201).json({
+      success: true,
+      data: { attachmentUrl: `chat-attachments/${req.file.filename}`, attachmentType: req.file.mimetype },
+    });
   },
 
   async updateStatus(req: Request, res: Response) {

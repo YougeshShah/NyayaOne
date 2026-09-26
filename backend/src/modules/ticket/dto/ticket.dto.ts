@@ -3,10 +3,14 @@ import { z } from "zod";
 export const createTicketSchema = z.object({
   subject: z.string().min(3).max(200),
   description: z.string().min(1).max(4000),
+  attachmentUrl: z.string().optional(),
+  attachmentType: z.string().optional(),
 });
 
 export const addCommentSchema = z.object({
-  content: z.string().min(1).max(4000),
+  content: z.string().max(4000).optional().default(""),
+  attachmentUrl: z.string().optional(),
+  attachmentType: z.string().optional(),
 });
 
 export const ticketIdParamSchema = z.object({

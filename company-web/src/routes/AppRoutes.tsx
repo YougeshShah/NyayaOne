@@ -10,6 +10,7 @@ import { AuditLogsPage } from "../pages/audit-logs/AuditLogsPage";
 import { LibraryPage } from "../pages/library/LibraryPage";
 import { PrecedentSearchPage } from "../pages/precedents/PrecedentSearchPage";
 import { CompanyStaffPage } from "../pages/company-staff/CompanyStaffPage";
+import { TicketInboxPage } from "../pages/support-tickets/TicketInboxPage";
 import { SubscriptionsPage } from "../pages/subscriptions/SubscriptionsPage";
 import { DocumentTemplatesPage } from "../pages/document-templates/DocumentTemplatesPage";
 import { CoursesAdminPage } from "../pages/courses-admin/CoursesAdminPage";
@@ -48,6 +49,7 @@ export function AppRoutes() {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/precedents" element={<PrecedentSearchPage />} />
           <Route path="/company-staff" element={<CompanyStaffPage />} />
+          <Route path="/support-tickets" element={<TicketInboxPage />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
           <Route path="/document-templates" element={<DocumentTemplatesPage />} />
           <Route path="/courses-admin" element={<CoursesAdminPage />} />

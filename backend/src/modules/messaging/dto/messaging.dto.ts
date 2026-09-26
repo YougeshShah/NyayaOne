@@ -5,7 +5,9 @@ export const createConversationSchema = z.object({
 });
 
 export const sendMessageSchema = z.object({
-  content: z.string().min(1).max(4000),
+  content: z.string().max(4000).optional().default(""),
+  attachmentUrl: z.string().optional(),
+  attachmentType: z.string().optional(),
 });
 
 export const conversationIdParamSchema = z.object({

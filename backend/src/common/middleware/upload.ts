@@ -247,3 +247,41 @@ export const courseContentUpload = multer({
   fileFilter,
   limits: { fileSize: MAX_FILE_SIZE_BYTES },
 });
+
+
+// Chat/ticket attachments -- screenshots or short documents shared inside
+// a real messaging conversation or a support ticket. Own folder, image +
+// PDF only, moderate size cap (a screenshot, not a video).
+const CHAT_ATTACHMENT_MAX_SIZE_BYTES = 8 * 1024 * 1024; // 8MB
+const CHAT_ATTACHMENT_ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+  "image/webp",
+  "application/pdf",
+]);
+
+const chatAttachmentStorage = multer.diskStorage({
+  destination: (req: Request, file, cb) => {
+    const dir = path.join(process.cwd(), env.storage.localUploadDir, "chat-attachments");
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.auth?.userId || "user"}-${Date.now()}-${uuidv4()}${ext}`);
+  },
+});
+
+function chatAttachmentFileFilter(req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  if (!CHAT_ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    return cb(new Error("Unsupported file type. Allowed: JPG, PNG, WEBP, PDF"));
+  }
+  cb(null, true);
+}
+
+export const chatAttachmentUpload = multer({
+  storage: chatAttachmentStorage,
+  fileFilter: chatAttachmentFileFilter,
+  limits: { fileSize: CHAT_ATTACHMENT_MAX_SIZE_BYTES },
+});
