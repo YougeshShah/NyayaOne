@@ -29,8 +29,10 @@ function canMessage(
   a: { accountType: string; lawFirmId: string | null },
   b: { accountType: string; lawFirmId: string | null }
 ): boolean {
-  if (a.accountType === "COMPANY") return b.accountType === "LAW_FIRM_ADMIN";
-  if (b.accountType === "COMPANY") return a.accountType === "LAW_FIRM_ADMIN";
+  // Institution/Law firm <-> Company now goes through the Support Ticket
+  // system instead of real-time chat -- Company is never a valid
+  // messaging counterpart here.
+  if (a.accountType === "COMPANY" || b.accountType === "COMPANY") return false;
 
   if (a.accountType === "CLIENT") {
     return STAFF_TYPES.includes(b.accountType) && !!a.lawFirmId && a.lawFirmId === b.lawFirmId;
@@ -60,12 +62,10 @@ export const messagingService = {
     });
     if (!me) throw AppError.unauthorized();
 
+    // Company staff have no real-time messaging counterparts -- they use
+    // the Support Ticket inbox instead.
     if (me.accountType === "COMPANY") {
-      return prisma.user.findMany({
-        where: { accountType: "LAW_FIRM_ADMIN", status: "ACTIVE" },
-        select: contactSelect,
-        orderBy: { fullName: "asc" },
-      });
+      return [];
     }
 
     if (me.accountType === "CLIENT" || me.accountType === "STUDENT") {
@@ -77,15 +77,12 @@ export const messagingService = {
       });
     }
 
-    // LAWYER / LAW_FIRM_ADMIN / STAFF -- their own clients & students, plus
-    // Company support for the tenant admin.
+    // LAWYER / LAW_FIRM_ADMIN / STAFF -- their own clients & students.
+    // Company support is handled by the Support Ticket system, not chat.
     const where: any = {
       status: "ACTIVE",
       OR: [{ lawFirmId: me.lawFirmId, accountType: { in: ["CLIENT", "STUDENT"] } }],
     };
-    if (me.accountType === "LAW_FIRM_ADMIN") {
-      where.OR.push({ accountType: "COMPANY" });
-    }
     return prisma.user.findMany({ where, select: contactSelect, orderBy: { fullName: "asc" } });
   },
 
