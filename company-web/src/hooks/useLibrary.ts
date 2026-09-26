@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { libraryApi, LibraryResourceFormValues } from "../api/library.api";
+import { libraryApi, LibraryResourceFormValues, LibraryResourceListParams } from "../api/library.api";
 
-export function useLibraryResources(params: { type?: string; category?: string; search?: string; page?: number }) {
+export function useLibraryResources(params: LibraryResourceListParams) {
   return useQuery({
     queryKey: ["library-resources", params],
     queryFn: () => libraryApi.list(params),

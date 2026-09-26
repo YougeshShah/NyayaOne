@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Alert,
   Autocomplete,
   Box,
   Button,
@@ -11,7 +10,6 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  MenuItem,
   Paper,
   Switch,
   Table,
@@ -32,55 +30,49 @@ import { useLibraryResources, useLibraryActions } from "../../hooks/useLibrary";
 import { LibraryResourceFormValues } from "../../api/library.api";
 import { LibraryResourceType } from "../../types/library.types";
 import { useTranslation } from "../../i18n/LanguageContext";
-import { getGroupedTypeOptions, getLibraryTypeLabel } from "../../i18n/libraryTaxonomy";
-
-const RESOURCE_TYPES: LibraryResourceType[] = [
-  "CONSTITUTION",
-  "ACT",
-  "ORDINANCE",
-  "REGULATION",
-  "RULE",
-  "FORMATION_ORDER",
-  "POLICY",
-  "INTERNATIONAL_TREATY",
-  "HISTORICAL_DOCUMENT",
-  "ANNUAL_REPORT",
-  "RTI_DISCLOSURE",
-  "CIRCULAR",
-  "GOVERNMENT_NOTICE",
-  "GAZETTE",
-  "SUPREME_COURT_DECISION",
-  "HIGH_COURT_DECISION",
-  "ARTICLE",
-  "RESEARCH_PAPER",
-  "JOURNAL",
-  "TEMPLATE",
-  "LEGAL_FORM",
-];
-
-// Common subcategory labels seen on Nepal Law Commission's own site —
-// offered as suggestions for the free-text "category" field, not enforced.
-const SUGGESTED_CATEGORIES = ["हालसालैका ऐन", "खण्ड अनुसार", "खण्ड बाहेकका ऐन", "वर्णानुक्रम अनुसारको सूची"];
+import {
+  getGroupedTypeOptions,
+  getLibraryTypeLabel,
+  LIBRARY_HEADINGS,
+  LibraryHeadingKey,
+  getTypesForHeading,
+  getCategoryOptionsForType,
+  getCategoryDisplayLabel,
+} from "../../i18n/libraryTaxonomy";
 
 export function LibraryPage() {
   const { t, language } = useTranslation();
   const groupedTypeOptions = getGroupedTypeOptions(language);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<import("../../types/library.types").LibraryResource | null>(null);
-  const [type, setType] = useState("ALL");
+
+  // Nested filter: Heading (Level 1) -> Type (Level 2) -> Category (Level 3),
+  // mirroring Nepal Law Commission's own site structure end-to-end.
+  const [heading, setHeading] = useState<LibraryHeadingKey | "ALL">("ALL");
+  const [type, setType] = useState<string>("ALL");
+  const [category, setCategory] = useState<string>("ALL");
   const [search, setSearch] = useState("");
+
+  const typesForHeading = heading === "ALL" ? null : getTypesForHeading(heading as LibraryHeadingKey);
+  const typeOptions = typesForHeading ?? groupedTypeOptions.map((o) => o.type);
+  const categoryOptions = type !== "ALL" ? getCategoryOptionsForType(type as LibraryResourceType, language) : [];
+  const isRepealedFilter = heading === "repealed" ? true : undefined;
 
   const { data, isLoading } = useLibraryResources({
     type: type === "ALL" ? undefined : type,
+    category: category === "ALL" ? undefined : category,
+    isRepealed: isRepealedFilter,
     search: search || undefined,
     page: 1,
     limit: 50,
-  } as any);
+  });
   const { create, update, remove } = useLibraryActions();
 
-  const { register, handleSubmit, reset, control, formState } = useForm<LibraryResourceFormValues>({
+  const { register, handleSubmit, reset, control, watch, formState } = useForm<LibraryResourceFormValues>({
     defaultValues: { isDownloadable: true },
   });
+  const watchedType = watch("type") as LibraryResourceType | undefined;
+  const dialogCategorySuggestions = getCategoryOptionsForType(watchedType, language);
 
   const openCreateDialog = () => {
     setEditingResource(null);
@@ -134,10 +126,10 @@ export function LibraryPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>
-            Legal Library
+            {t("legalLibrary")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {data?.pagination.total ?? 0} resources published
+            {data?.pagination.total ?? 0} {t("resourcesPublishedSuffix")}
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateDialog}>
@@ -145,19 +137,66 @@ export function LibraryPage() {
         </Button>
       </Box>
 
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        {/* Level 1: Heading (मौजुदा कानून / खारेज भएका कानून / विविध / अन्य) */}
         <Autocomplete
           size="small"
-          sx={{ minWidth: 260 }}
-          options={["ALL", ...groupedTypeOptions.map((o) => o.type)]}
-          groupBy={(opt) => (opt === "ALL" ? "" : groupedTypeOptions.find((o) => o.type === opt)?.group || "")}
-          getOptionLabel={(opt) => (opt === "ALL" ? t("allTypes") : getLibraryTypeLabel(opt as any, language))}
+          sx={{ minWidth: 220 }}
+          options={["ALL", ...LIBRARY_HEADINGS.map((h) => h.key)]}
+          getOptionLabel={(opt) =>
+            opt === "ALL" ? t("allHeadings") : LIBRARY_HEADINGS.find((h) => h.key === opt)?.label[language] || opt
+          }
+          value={heading}
+          onChange={(_, val) => {
+            setHeading((val as LibraryHeadingKey) || "ALL");
+            setType("ALL");
+            setCategory("ALL");
+          }}
+          disableClearable
+          renderInput={(params) => <TextField {...params} label={t("heading")} />}
+        />
+
+        {/* Level 2: Type, scoped to the chosen heading */}
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 220 }}
+          options={["ALL", ...typeOptions]}
+          groupBy={
+            heading === "ALL"
+              ? (opt) => (opt === "ALL" ? "" : groupedTypeOptions.find((o) => o.type === opt)?.group || "")
+              : undefined
+          }
+          getOptionLabel={(opt) => (opt === "ALL" ? t("allTypes") : getLibraryTypeLabel(opt as LibraryResourceType, language))}
           value={type}
-          onChange={(_, val) => setType(val || "ALL")}
+          onChange={(_, val) => {
+            setType((val as string) || "ALL");
+            setCategory("ALL");
+          }}
           disableClearable
           renderInput={(params) => <TextField {...params} label={t("type")} />}
         />
-        <TextField label="Search title, act name, or keyword" size="small" fullWidth value={search} onChange={(e) => setSearch(e.target.value)} />
+
+        {/* Level 3: Category (sub-subheading), only meaningful once a type with subcategories is chosen */}
+        <Autocomplete
+          size="small"
+          sx={{ minWidth: 220 }}
+          disabled={categoryOptions.length === 0}
+          options={["ALL", ...categoryOptions.map((o) => o.value)]}
+          getOptionLabel={(opt) => (opt === "ALL" ? t("allCategories") : getCategoryDisplayLabel(opt, language))}
+          value={category}
+          onChange={(_, val) => setCategory((val as string) || "ALL")}
+          disableClearable
+          renderInput={(params) => <TextField {...params} label={t("category")} />}
+        />
+
+        <TextField
+          label={t("searchLibraryPlaceholder")}
+          size="small"
+          fullWidth
+          sx={{ minWidth: 240 }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </Box>
 
       <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
@@ -175,14 +214,14 @@ export function LibraryPage() {
             {isLoading && (
               <TableRow>
                 <TableCell colSpan={5} align="center">
-                  Loading...
+                  {t("loading")}
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && data?.items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} align="center">
-                  No resources published yet
+                  {t("noResourcesFound")}
                 </TableCell>
               </TableRow>
             )}
@@ -190,9 +229,12 @@ export function LibraryPage() {
               <TableRow key={r.id} hover>
                 <TableCell>{r.title}</TableCell>
                 <TableCell>
-                  <Chip size="small" label={getLibraryTypeLabel(r.type, language)} variant="outlined" />
+                  <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                    <Chip size="small" label={getLibraryTypeLabel(r.type, language)} variant="outlined" />
+                    {r.isRepealed && <Chip size="small" color="warning" label={t("repealed")} variant="outlined" />}
+                  </Box>
                 </TableCell>
-                <TableCell>{r.category || "—"}</TableCell>
+                <TableCell>{r.category ? getCategoryDisplayLabel(r.category, language) : "—"}</TableCell>
                 <TableCell align="center">{r.isDownloadable ? t("yes") : t("no")}</TableCell>
                 <TableCell align="right">
                   <Button size="small" startIcon={<EditIcon fontSize="small" />} onClick={() => openEditDialog(r)} sx={{ mr: 1 }}>
@@ -222,7 +264,7 @@ export function LibraryPage() {
                 <Autocomplete
                   options={groupedTypeOptions.map((o) => o.type)}
                   groupBy={(opt) => groupedTypeOptions.find((o) => o.type === opt)?.group || ""}
-                  getOptionLabel={(opt) => getLibraryTypeLabel(opt as any, language)}
+                  getOptionLabel={(opt) => getLibraryTypeLabel(opt as LibraryResourceType, language)}
                   value={field.value || "ACT"}
                   onChange={(_, val) => field.onChange(val)}
                   renderInput={(params) => <TextField {...params} label={t("type")} required error={!!formState.errors.type} />}
@@ -230,24 +272,37 @@ export function LibraryPage() {
               )}
             />
             <Box sx={{ display: "flex", gap: 2 }}>
-              <TextField
-                label={t("category")}
-                fullWidth
-                {...register("category")}
-                helperText={`Suggestions: ${SUGGESTED_CATEGORIES.join(", ")}`}
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    freeSolo
+                    fullWidth
+                    options={dialogCategorySuggestions.map((o) => o.value)}
+                    getOptionLabel={(opt) => getCategoryDisplayLabel(opt as string, language) || (opt as string)}
+                    inputValue={field.value || ""}
+                    onInputChange={(_, val) => field.onChange(val)}
+                    onChange={(_, val) => field.onChange(val || "")}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={t("category")}
+                        helperText={dialogCategorySuggestions.length > 0 ? t("categorySuggestionsHelp") : undefined}
+                      />
+                    )}
+                  />
+                )}
               />
-              <TextField label="Act Name" fullWidth {...register("actName")} />
+              <TextField label={t("actName")} fullWidth {...register("actName")} />
             </Box>
-            <FormControlLabel
-              control={<Checkbox {...register("isRepealed")} />}
-              label="Repealed (खारेज भएको) — this law/document is no longer in force"
-            />
+            <FormControlLabel control={<Checkbox {...register("isRepealed")} />} label={t("repealedCheckboxLabel")} />
             <Box sx={{ display: "flex", gap: 2 }}>
-              <TextField label="Section" fullWidth {...register("section")} />
-              <TextField label="Chapter" fullWidth {...register("chapter")} />
+              <TextField label={t("section")} fullWidth {...register("section")} />
+              <TextField label={t("chapter")} fullWidth {...register("chapter")} />
             </Box>
-            <TextField label="Keywords (comma-separated)" fullWidth {...register("keywords")} />
-            <TextField label="Content (for articles/text resources)" fullWidth multiline rows={3} {...register("content")} />
+            <TextField label={t("keywordsCommaSeparated")} fullWidth {...register("keywords")} />
+            <TextField label={t("contentForArticles")} fullWidth multiline rows={3} {...register("content")} />
 
             <Controller
               name="file"
@@ -255,7 +310,7 @@ export function LibraryPage() {
               render={({ field: { onChange, value } }) => (
                 <Box>
                   <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}>
-                    {value ? (value as File).name : "Attach File (PDF/DOCX — optional)"}
+                    {value ? (value as File).name : t("attachFileOptional")}
                     <input
                       type="file"
                       hidden
@@ -267,10 +322,10 @@ export function LibraryPage() {
               )}
             />
 
-            <FormControlLabel control={<Switch defaultChecked {...register("isDownloadable")} />} label="Allow download" />
+            <FormControlLabel control={<Switch defaultChecked {...register("isDownloadable")} />} label={t("allowDownload")} />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setDialogOpen(false)}>{t("cancel")}</Button>
             <Button type="submit" variant="contained" disabled={isSaving}>
               {isSaving ? t("saving") : editingResource ? t("saveChanges") : t("publishResource")}
             </Button>

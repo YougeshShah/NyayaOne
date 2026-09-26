@@ -80,8 +80,91 @@ export const LIBRARY_TYPE_GROUPS: { key: string; label: { en: string; ne: string
 ];
 
 // Flat, ordered list of {type, groupLabel} pairs for building a grouped Autocomplete.
+// Used by the create/edit dialog's Type field, which must still be able to manage
+// every type (portal-web / student-web / portal-mobile read resources of ALL these
+// types, so Company Web's admin form keeps them all reachable).
 export function getGroupedTypeOptions(lang: Language): { type: LibraryResourceType; group: string; label: string }[] {
   return LIBRARY_TYPE_GROUPS.flatMap((g) =>
     g.types.map((type) => ({ type, group: g.label[lang], label: getLibraryTypeLabel(type, lang) }))
   );
+}
+
+// ---------------------------------------------------------------------------
+// List-page filter: mirrors the exact 4-heading structure from Nepal Law
+// Commission's site (मौजुदा कानून / खारेज भएका कानून / विविध), plus one
+// "अन्य स्रोतहरू" catch-all heading so every other type stays filterable —
+// nothing is removed from the system, just organised to match the real site.
+// "सेवाहरू" (कानून तर्जुमा / खोज तथा अध्ययन) is the Commission's own website
+// navigation, not a document category, so it has no heading here.
+// ---------------------------------------------------------------------------
+export type LibraryHeadingKey = "existing-law" | "repealed" | "misc" | "other";
+
+export const LIBRARY_HEADINGS: {
+  key: LibraryHeadingKey;
+  label: { en: string; ne: string };
+  groupKey?: string;
+  isRepealedView?: boolean;
+}[] = [
+  { key: "existing-law", label: { en: "Existing Laws", ne: "मौजुदा कानून" }, groupKey: "existing-law" },
+  { key: "repealed", label: { en: "Repealed Laws", ne: "खारेज भएका कानून" }, groupKey: "existing-law", isRepealedView: true },
+  { key: "misc", label: { en: "Miscellaneous", ne: "विविध" }, groupKey: "misc" },
+  { key: "other", label: { en: "Other Resources", ne: "अन्य स्रोतहरू" } },
+];
+
+export function getLibraryHeadingLabel(key: LibraryHeadingKey, lang: Language): string {
+  return LIBRARY_HEADINGS.find((h) => h.key === key)?.label[lang] || key;
+}
+
+// Types that fall under a given Level-1 heading (Level-2 of the nested filter).
+export function getTypesForHeading(key: LibraryHeadingKey): LibraryResourceType[] {
+  const heading = LIBRARY_HEADINGS.find((h) => h.key === key);
+  if (!heading) return [];
+  if (heading.groupKey) {
+    return LIBRARY_TYPE_GROUPS.find((g) => g.key === heading.groupKey)?.types || [];
+  }
+  // "other" catch-all = every type not already covered by existing-law/misc.
+  const covered = new Set<LibraryResourceType>([
+    ...(LIBRARY_TYPE_GROUPS.find((g) => g.key === "existing-law")?.types || []),
+    ...(LIBRARY_TYPE_GROUPS.find((g) => g.key === "misc")?.types || []),
+  ]);
+  return LIBRARY_TYPE_GROUPS.flatMap((g) => g.types).filter((t) => !covered.has(t));
+}
+
+// Level-3 (sub-subheading) options, scoped per type — matching the exact
+// subcategory labels used on Nepal Law Commission's site under ऐन/नियमावली.
+// `value` is the canonical string stored in LibraryResource.category (always
+// Nepali, so existing data and new data line up regardless of UI language).
+export const LIBRARY_CATEGORY_OPTIONS: Partial<Record<LibraryResourceType, { value: string; en: string; ne: string }[]>> = {
+  ACT: [
+    { value: "हालसालैका ऐन", en: "Recent Acts", ne: "हालसालैका ऐन" },
+    { value: "खण्ड अनुसार", en: "By Volume", ne: "खण्ड अनुसार" },
+    { value: "खण्ड बाहेकका ऐन", en: "Acts outside the Volume", ne: "खण्ड बाहेकका ऐन" },
+    { value: "वर्णानुक्रम अनुसारको सूची", en: "Alphabetical List", ne: "वर्णानुक्रम अनुसारको सूची" },
+  ],
+  REGULATION: [
+    { value: "खण्ड अनुसार", en: "By Volume", ne: "खण्ड अनुसार" },
+    { value: "वर्णानुक्रम अनुसारको सूची", en: "Alphabetical List", ne: "वर्णानुक्रम अनुसारको सूची" },
+  ],
+};
+
+export function getCategoryOptionsForType(
+  type: LibraryResourceType | undefined,
+  lang: Language
+): { value: string; label: string }[] {
+  if (!type) return [];
+  const opts = LIBRARY_CATEGORY_OPTIONS[type] || [];
+  return opts.map((o) => ({ value: o.value, label: o[lang] }));
+}
+
+const ALL_CATEGORY_OPTIONS_FLAT: { value: string; en: string; ne: string }[] = Object.values(LIBRARY_CATEGORY_OPTIONS).flatMap(
+  (opts) => opts || []
+);
+
+// Renders a stored category value in the current UI language when it matches
+// a known subcategory; falls back to the raw stored text for anything typed
+// freehand outside the suggested list (older data, edge cases).
+export function getCategoryDisplayLabel(value: string | undefined | null, lang: Language): string {
+  if (!value) return "";
+  const match = ALL_CATEGORY_OPTIONS_FLAT.find((o) => o.value === value);
+  return match ? match[lang] : value;
 }

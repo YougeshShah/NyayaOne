@@ -16,6 +16,15 @@ export interface LibraryResourceFormValues {
   file?: File | null;
 }
 
+export interface LibraryResourceListParams {
+  type?: string;
+  category?: string;
+  isRepealed?: boolean;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
 function toFormData(values: LibraryResourceFormValues): FormData {
   const formData = new FormData();
   formData.append("title", values.title);
@@ -33,7 +42,7 @@ function toFormData(values: LibraryResourceFormValues): FormData {
 }
 
 export const libraryApi = {
-  async list(params: { type?: string; category?: string; search?: string; page?: number; limit?: number }) {
+  async list(params: LibraryResourceListParams) {
     const { data } = await apiClient.get<ApiSuccessResponse<PaginatedResult<LibraryResource>>>("/library", { params });
     return data.data;
   },
