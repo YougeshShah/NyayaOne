@@ -1,0 +1,195 @@
+import { prisma } from "../../../database/prisma";
+import { AppError } from "../../../common/errors/AppError";
+
+type AuthUser = { userId: string; accountType: string; lawFirmId: string | null };
+
+// Staff-side account types -- the "professional" side of every messaging
+// pair (Lawyer<->Client, Teacher/Institution<->Student). CLIENT and STUDENT
+// never message each other or Company directly -- they go through their
+// own law firm/institution's staff.
+const STAFF_TYPES = ["LAWYER", "LAW_FIRM_ADMIN", "STAFF"];
+
+const contactSelect = {
+  id: true,
+  fullName: true,
+  avatarUrl: true,
+  accountType: true,
+} as const;
+
+/**
+ * Decides whether two account types are allowed to message each other.
+ * Covers exactly the three real-world relationships TechnoOne supports:
+ *   - Law firm staff <-> their own Clients (same lawFirmId)
+ *   - Institution staff ("teachers") <-> their own Students (same lawFirmId)
+ *   - Institution/Law firm Admin <-> Company (TechnoOne) support
+ * Everything else (Client<->Student, Client<->Company, Student<->Student,
+ * etc.) is rejected -- those should always go through the tenant's own staff.
+ */
+function canMessage(
+  a: { accountType: string; lawFirmId: string | null },
+  b: { accountType: string; lawFirmId: string | null }
+): boolean {
+  if (a.accountType === "COMPANY") return b.accountType === "LAW_FIRM_ADMIN";
+  if (b.accountType === "COMPANY") return a.accountType === "LAW_FIRM_ADMIN";
+
+  if (a.accountType === "CLIENT") {
+    return STAFF_TYPES.includes(b.accountType) && !!a.lawFirmId && a.lawFirmId === b.lawFirmId;
+  }
+  if (b.accountType === "CLIENT") {
+    return STAFF_TYPES.includes(a.accountType) && !!b.lawFirmId && a.lawFirmId === b.lawFirmId;
+  }
+
+  if (a.accountType === "STUDENT") {
+    return STAFF_TYPES.includes(b.accountType) && !!a.lawFirmId && a.lawFirmId === b.lawFirmId;
+  }
+  if (b.accountType === "STUDENT") {
+    return STAFF_TYPES.includes(a.accountType) && !!b.lawFirmId && a.lawFirmId === b.lawFirmId;
+  }
+
+  return false;
+}
+
+export const messagingService = {
+  canMessage,
+
+  // Who the current user is allowed to start a new conversation with.
+  async listContacts(auth: AuthUser) {
+    const me = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { accountType: true, lawFirmId: true },
+    });
+    if (!me) throw AppError.unauthorized();
+
+    if (me.accountType === "COMPANY") {
+      return prisma.user.findMany({
+        where: { accountType: "LAW_FIRM_ADMIN", status: "ACTIVE" },
+        select: contactSelect,
+        orderBy: { fullName: "asc" },
+      });
+    }
+
+    if (me.accountType === "CLIENT" || me.accountType === "STUDENT") {
+      if (!me.lawFirmId) return [];
+      return prisma.user.findMany({
+        where: { lawFirmId: me.lawFirmId, accountType: { in: STAFF_TYPES as any }, status: "ACTIVE" },
+        select: contactSelect,
+        orderBy: { fullName: "asc" },
+      });
+    }
+
+    // LAWYER / LAW_FIRM_ADMIN / STAFF -- their own clients & students, plus
+    // Company support for the tenant admin.
+    const where: any = {
+      status: "ACTIVE",
+      OR: [{ lawFirmId: me.lawFirmId, accountType: { in: ["CLIENT", "STUDENT"] } }],
+    };
+    if (me.accountType === "LAW_FIRM_ADMIN") {
+      where.OR.push({ accountType: "COMPANY" });
+    }
+    return prisma.user.findMany({ where, select: contactSelect, orderBy: { fullName: "asc" } });
+  },
+
+  async getOrCreateConversation(auth: AuthUser, targetUserId: string) {
+    if (targetUserId === auth.userId) throw AppError.badRequest("You can't message yourself.");
+
+    const [me, target] = await Promise.all([
+      prisma.user.findUnique({ where: { id: auth.userId }, select: { id: true, accountType: true, lawFirmId: true } }),
+      prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { id: true, accountType: true, lawFirmId: true, status: true },
+      }),
+    ]);
+    if (!me) throw AppError.unauthorized();
+    if (!target || target.status !== "ACTIVE") throw AppError.notFound("User not found.");
+    if (!canMessage(me, target)) throw AppError.forbidden("You're not allowed to message this user.");
+
+    const [userAId, userBId] = [me.id, target.id].sort();
+
+    return prisma.conversation.upsert({
+      where: { userAId_userBId: { userAId, userBId } },
+      update: {},
+      create: { userAId, userBId },
+    });
+  },
+
+  async listConversations(auth: AuthUser) {
+    const conversations = await prisma.conversation.findMany({
+      where: { OR: [{ userAId: auth.userId }, { userBId: auth.userId }] },
+      orderBy: { lastMessageAt: "desc" },
+      include: {
+        userA: { select: contactSelect },
+        userB: { select: contactSelect },
+        messages: {
+          where: { senderId: { not: auth.userId }, isRead: false },
+          select: { id: true },
+        },
+      },
+    });
+
+    return conversations.map((c) => {
+      const other = c.userAId === auth.userId ? c.userB : c.userA;
+      return {
+        id: c.id,
+        otherUser: other,
+        lastMessageText: c.lastMessageText,
+        lastMessageAt: c.lastMessageAt,
+        unreadCount: c.messages.length,
+      };
+    });
+  },
+
+  async assertParticipant(conversationId: string, userId: string) {
+    const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+    if (!conversation) throw AppError.notFound("Conversation not found.");
+    if (conversation.userAId !== userId && conversation.userBId !== userId) throw AppError.forbidden();
+    return conversation;
+  },
+
+  async listMessages(auth: AuthUser, conversationId: string, page: number, limit: number) {
+    await this.assertParticipant(conversationId, auth.userId);
+
+    const [items, total] = await Promise.all([
+      prisma.message.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.message.count({ where: { conversationId } }),
+    ]);
+
+    // Mark whatever the other person sent as read the moment this user
+    // fetches the thread (equivalent to opening the chat).
+    await prisma.message.updateMany({
+      where: { conversationId, senderId: { not: auth.userId }, isRead: false },
+      data: { isRead: true, readAt: new Date() },
+    });
+
+    return { items: items.reverse(), page, total, totalPages: Math.ceil(total / limit) };
+  },
+
+  async sendMessage(auth: AuthUser, conversationId: string, content: string) {
+    await this.assertParticipant(conversationId, auth.userId);
+
+    const [message] = await prisma.$transaction([
+      prisma.message.create({ data: { conversationId, senderId: auth.userId, content } }),
+      prisma.conversation.update({
+        where: { id: conversationId },
+        data: { lastMessageAt: new Date(), lastMessageText: content.slice(0, 200) },
+      }),
+    ]);
+
+    return message;
+  },
+
+  async unreadCount(auth: AuthUser) {
+    const count = await prisma.message.count({
+      where: {
+        senderId: { not: auth.userId },
+        isRead: false,
+        conversation: { OR: [{ userAId: auth.userId }, { userBId: auth.userId }] },
+      },
+    });
+    return { count };
+  },
+};

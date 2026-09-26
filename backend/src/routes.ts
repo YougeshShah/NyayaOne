@@ -11,6 +11,7 @@ import paymentVoucherRoutes from "./modules/payment-voucher/routes/payment-vouch
 import studentNoteRoutes from "./modules/student-note/routes/student-note.routes";
 import courseContentRoutes from "./modules/course-content/routes/course-content.routes";
 import aiAssistantRoutes from "./modules/ai-assistant/routes/ai-assistant.routes";
+import messagingRoutes from "./modules/messaging/routes/messaging.routes";
 import caseNoteRoutes from "./modules/case-note/routes/case-note.routes";
 import caseDeadlineRoutes from "./modules/case-deadline/routes/case-deadline.routes";
 import caseTaskRoutes from "./modules/case-task/routes/case-task.routes";
@@ -111,5 +112,6 @@ router.use("/writing-submissions", writingSubmissionRoutes);
 router.use("/chatbot", chatbotRoutes);
 router.use("/content-generator", contentGeneratorRoutes);
 router.use("/payment", paymentRoutes);
+router.use("/messaging", messagingRoutes);
 
 export default router;
