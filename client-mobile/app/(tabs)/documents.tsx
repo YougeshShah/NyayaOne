@@ -117,10 +117,10 @@ export default function DocumentsScreen() {
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.uploadButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: colors.primary }]}
-        onPress={() => router.push("/chatbot")}
+        onPress={() => router.push("/messages")}
       >
-        <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.primary} />
-        <Text style={[styles.uploadButtonText, { color: colors.primary }]}>Chat Assistant</Text>
+        <Ionicons name="chatbubbles-outline" size={18} color={colors.primary} />
+        <Text style={[styles.uploadButtonText, { color: colors.primary }]}>Messages</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.uploadButton} onPress={handlePickFile} disabled={uploadDocument.isPending}>
         <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
