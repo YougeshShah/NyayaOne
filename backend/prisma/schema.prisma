@@ -203,6 +203,7 @@ model LawFirm {
   approvedBy      String? // User id of company staff who approved
 
   tenantType      TenantType    @default(LAW_FIRM)
+  supportTickets  SupportTicket[]
   modulesEnabled  String[]      @default(["case_management"]) // e.g. ["case_management"], ["student_platform", "live_classes"]
   // For Education tenants — which course(s)/sectors this institution is
   // allowed to teach (e.g. only IELTS, or only Law). An institute that only
@@ -269,6 +270,8 @@ model User {
   conversationsAsUserA Conversation[] @relation("ConversationAsUserA")
   conversationsAsUserB Conversation[] @relation("ConversationAsUserB")
   sentMessages         Message[]      @relation("MessageSender")
+  ticketsCreated       SupportTicket[] @relation("TicketCreatedBy")
+  ticketComments       TicketComment[] @relation("TicketCommentAuthor")
 
   // Student-only — captured at registration ("what are you preparing
   // for?"), used purely to personalize the dashboard on first login.
@@ -1904,4 +1907,47 @@ model Message {
 
   @@index([conversationId, createdAt])
   @@index([senderId])
+}
+
+
+// ------------------------------------------------------------
+// SUPPORT TICKETS (async Institution/LawFirm <-> Company support,
+// replacing real-time chat for this one relationship)
+// ------------------------------------------------------------
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model SupportTicket {
+  id          String        @id @default(uuid())
+  lawFirmId   String
+  lawFirm     LawFirm       @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User          @relation("TicketCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  subject     String
+  description String
+  status      TicketStatus  @default(OPEN)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  comments    TicketComment[]
+
+  @@index([lawFirmId])
+  @@index([status])
+}
+
+model TicketComment {
+  id        String        @id @default(uuid())
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId  String
+  authorId  String
+  author    User          @relation("TicketCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
 }
