@@ -23,6 +23,7 @@ import { getAvatarUrl } from "../../api/profile.api";
 // replaced by real user-to-user messaging (MessagingWidget) in the same spot.
 // import { ChatWidget } from "../ChatWidget";
 import { MessagingWidget } from "../MessagingWidget";
+import { TicketWidget } from "../TicketWidget";
 
 const SIDEBAR_WIDTH = 260;
 
@@ -251,6 +252,7 @@ export function DashboardLayout() {
         <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: "auto" }}>
           <Outlet />
           <MessagingWidget />
+          <TicketWidget />
         </Box>
       </Box>
     </Box>
