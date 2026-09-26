@@ -1,15 +1,136 @@
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCases, useTodayHearings, useUpcomingHearings } from "../../src/hooks/useDomainData";
+import { institutionStudentApi } from "../../src/api/institutionStudent.api";
+import { liveClassApi } from "../../src/api/liveClass.api";
 import { useTranslation } from "../../src/i18n/LanguageContext";
 import { useAuthStore } from "../../src/store/authStore";
 import { Card } from "../../src/components/Card";
 import { StatusBadge } from "../../src/components/StatusBadge";
 import { colors, spacing } from "../../src/theme/theme";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function DashboardScreen() {
+  const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const isEducation = user?.tenantType === "EDUCATION";
+
+  return isEducation ? <InstitutionDashboard /> : <LawFirmDashboard />;
+}
+
+// ---------------------------------------------------------------------
+// Institution (EDUCATION tenant) dashboard -- students & live classes,
+// not cases/hearings which don't apply to this tenant type at all.
+// ---------------------------------------------------------------------
+function InstitutionDashboard() {
+  const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { data: allStudents } = useQuery({ queryKey: ["dash-students-all"], queryFn: () => institutionStudentApi.list() });
+  const { data: pendingStudents } = useQuery({
+    queryKey: ["dash-students-pending"],
+    queryFn: () => institutionStudentApi.list("PENDING_VERIFICATION"),
+  });
+  const { data: liveClasses } = useQuery({ queryKey: ["dash-live-classes"], queryFn: () => liveClassApi.myClasses() });
+
+  const todayClasses = (liveClasses ?? []).filter((c) => {
+    const d = new Date(c.scheduledAt);
+    const now = new Date();
+    return d.toDateString() === now.toDateString() && c.status !== "CANCELLED";
+  });
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await queryClient.invalidateQueries();
+    setRefreshing(false);
+  }, [queryClient]);
+
+  return (
+    <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <Text style={styles.greeting}>{t("welcomeBack")}</Text>
+      <Text style={styles.name}>{user?.fullName}</Text>
+      {user?.tenantName && (
+        <View style={styles.firmBadge}>
+          <Text style={styles.firmBadgeText}>{user.tenantName}</Text>
+        </View>
+      )}
+
+      <View style={styles.statsRow}>
+        <TouchableOpacity style={{ flex: 1 }} onPress={() => router.push("/students")}>
+          <Card style={styles.statCard}>
+            <Text style={styles.statValue}>{allStudents?.length ?? "—"}</Text>
+            <Text style={styles.statLabel}>Total Students</Text>
+          </Card>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1 }} onPress={() => router.push("/students")}>
+          <Card style={styles.statCard}>
+            <Text style={styles.statValue}>{pendingStudents?.length ?? "—"}</Text>
+            <Text style={styles.statLabel}>Pending Approval</Text>
+          </Card>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1 }} onPress={() => router.push("/live-classes")}>
+          <Card style={styles.statCard}>
+            <Text style={styles.statValue}>{todayClasses.length}</Text>
+            <Text style={styles.statLabel}>Today</Text>
+          </Card>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.sectionTitle}>Today's Live Classes</Text>
+      {todayClasses.length === 0 && (
+        <Card style={{ marginBottom: spacing.md }}>
+          <Text style={styles.emptyText}>No live classes scheduled today.</Text>
+        </Card>
+      )}
+      {todayClasses.map((c) => (
+        <TouchableOpacity key={c.id} onPress={() => router.push("/live-classes")}>
+          <Card style={{ marginBottom: spacing.sm }}>
+            <View style={styles.hearingRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.hearingTitle}>{c.title}</Text>
+                <Text style={styles.hearingSub}>
+                  {c.course?.name ?? "—"} — {new Date(c.scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+              <StatusBadge status={c.status} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+      ))}
+
+      <Text style={styles.sectionTitle}>Pending Student Approvals</Text>
+      {(!pendingStudents || pendingStudents.length === 0) && (
+        <Card style={{ marginBottom: spacing.md }}>
+          <Text style={styles.emptyText}>No students waiting for approval.</Text>
+        </Card>
+      )}
+      {pendingStudents?.slice(0, 5).map((s) => (
+        <TouchableOpacity key={s.id} onPress={() => router.push("/students")}>
+          <Card style={{ marginBottom: spacing.sm }}>
+            <View style={styles.hearingRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.hearingTitle}>{s.fullName}</Text>
+                <Text style={styles.hearingSub}>{s.email}</Text>
+              </View>
+              <StatusBadge status={s.status} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+      ))}
+
+      <View style={{ height: spacing.xl }} />
+    </ScrollView>
+  );
+}
+
+// ---------------------------------------------------------------------
+// Law firm dashboard -- unchanged behavior from before this fix.
+// ---------------------------------------------------------------------
+function LawFirmDashboard() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const router = useRouter();

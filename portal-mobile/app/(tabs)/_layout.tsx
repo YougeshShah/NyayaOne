@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { colors } from "../../src/theme/theme";
 import { useTranslation } from "../../src/i18n/LanguageContext";
 import { notificationApi } from "../../src/api/notification.api";
+import { useAuthStore } from "../../src/store/authStore";
 
 function NotificationBell() {
   const { data } = useQuery({ queryKey: ["my-notifications"], queryFn: () => notificationApi.myNotifications() });
@@ -28,6 +29,12 @@ const bellStyles = StyleSheet.create({
 
 export default function TabsLayout() {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  // Institution (EDUCATION tenant) accounts have no cases/hearings/clients --
+  // those tabs are law-firm-only. Institution admins reach their own
+  // screens (Students, Live Classes, Usage Limits) via the Profile menu,
+  // which already branches on tenantType.
+  const isEducation = user?.tenantType === "EDUCATION";
 
   return (
     <Tabs
@@ -51,6 +58,7 @@ export default function TabsLayout() {
         name="cases"
         options={{
           title: t("cases"),
+          href: isEducation ? null : undefined,
           tabBarIcon: ({ color, size }) => <Ionicons name="briefcase-outline" size={size} color={color} />,
         }}
       />
@@ -58,6 +66,7 @@ export default function TabsLayout() {
         name="hearings"
         options={{
           title: t("hearings"),
+          href: isEducation ? null : undefined,
           tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
         }}
       />
@@ -65,6 +74,7 @@ export default function TabsLayout() {
         name="clients"
         options={{
           title: t("clients"),
+          href: isEducation ? null : undefined,
           tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
         }}
       />
