@@ -18,10 +18,14 @@ import {
   Tab,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import { ticketApi, TicketSummary, TicketDetail, TicketStatus } from "../../api/ticket.api";
 import { useAuthStore } from "../../store/authStore";
+import { getStaticBaseUrl } from "../../api/profile.api";
 
 const POLL_INTERVAL_MS = 10000;
+const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
 
 const STATUS_COLOR: Record<TicketStatus, "warning" | "info" | "success" | "default"> = {
   OPEN: "warning",
@@ -38,6 +42,30 @@ const FILTERS: Array<{ label: string; value: TicketStatus | "ALL" }> = [
   { label: "Closed", value: "CLOSED" },
 ];
 
+function attachmentUrlFor(path: string) {
+  return `${getStaticBaseUrl()}/uploads/${path}`;
+}
+
+function AttachmentPreview({ url, type }: { url: string; type?: string | null }) {
+  const isImage = type?.startsWith("image/");
+  return isImage ? (
+    <a href={attachmentUrlFor(url)} target="_blank" rel="noreferrer">
+      <img src={attachmentUrlFor(url)} alt="attachment" style={{ maxWidth: 220, maxHeight: 180, borderRadius: 8, display: "block", marginBottom: 6 }} />
+    </a>
+  ) : (
+    <Chip
+      component="a"
+      href={attachmentUrlFor(url)}
+      target="_blank"
+      clickable
+      icon={<InsertDriveFileIcon fontSize="small" />}
+      label="File attachment"
+      size="small"
+      sx={{ mb: 0.5 }}
+    />
+  );
+}
+
 // Company-side inbox for support tickets opened by institution/law firm
 // admins. Async, page-refresh-on-interval -- not real-time chat.
 export function TicketInboxPage() {
@@ -49,8 +77,10 @@ export function TicketInboxPage() {
   const [loadingList, setLoadingList] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [replyFile, setReplyFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const replyFileInputRef = useRef<HTMLInputElement>(null);
 
   const loadTickets = useCallback(async (status: TicketStatus | "ALL") => {
     try {
@@ -89,18 +119,37 @@ export function TicketInboxPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [detail?.comments]);
 
+  const pickReplyFile = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      alert("File is too large. Maximum size is 8MB.");
+      return;
+    }
+    setReplyFile(file);
+  };
+
   const handleReply = async () => {
-    if (!replyText.trim() || !selectedId || submitting) return;
+    if ((!replyText.trim() && !replyFile) || !selectedId || submitting) return;
     const text = replyText;
+    const file = replyFile;
     setReplyText("");
+    setReplyFile(null);
     setSubmitting(true);
     try {
-      await ticketApi.addComment(selectedId, text);
+      let attachmentUrl: string | undefined;
+      let attachmentType: string | undefined;
+      if (file) {
+        const uploaded = await ticketApi.uploadAttachment(file);
+        attachmentUrl = uploaded.attachmentUrl;
+        attachmentType = uploaded.attachmentType;
+      }
+      await ticketApi.addComment(selectedId, text, attachmentUrl, attachmentType);
       await loadDetail(selectedId);
       await loadTickets(filter);
     } catch (err: any) {
       alert(err?.response?.data?.message || "Reply failed to send.");
       setReplyText(text);
+      setReplyFile(file);
     } finally {
       setSubmitting(false);
     }
@@ -203,9 +252,12 @@ export function TicketInboxPage() {
                     <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
                       {detail.createdBy.fullName} (opened this ticket)
                     </Typography>
-                    <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "#F9FAFB", display: "inline-block", maxWidth: "85%" }}>
-                      <Typography fontSize={14}>{detail.description}</Typography>
-                    </Paper>
+                    {detail.attachmentUrl && <AttachmentPreview url={detail.attachmentUrl} type={detail.attachmentType} />}
+                    {detail.description && (
+                      <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "#F9FAFB", display: "inline-block", maxWidth: "85%" }}>
+                        <Typography fontSize={14}>{detail.description}</Typography>
+                      </Paper>
+                    )}
                   </Box>
 
                   {detail.comments.map((c) => {
@@ -215,37 +267,60 @@ export function TicketInboxPage() {
                         <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
                           {isMine ? "You" : c.author.accountType === "COMPANY" ? "TechnoOne Support" : c.author.fullName}
                         </Typography>
-                        <Paper
-                          variant="outlined"
-                          sx={{
-                            p: 1.5,
-                            maxWidth: "85%",
-                            bgcolor: isMine ? "#0F172A" : "#F3F4F6",
-                            color: isMine ? "#fff" : "#111827",
-                          }}
-                        >
-                          <Typography fontSize={14}>{c.content}</Typography>
-                        </Paper>
+                        {c.attachmentUrl && <AttachmentPreview url={c.attachmentUrl} type={c.attachmentType} />}
+                        {c.content && (
+                          <Paper
+                            variant="outlined"
+                            sx={{
+                              p: 1.5,
+                              maxWidth: "85%",
+                              bgcolor: isMine ? "#0F172A" : "#F3F4F6",
+                              color: isMine ? "#fff" : "#111827",
+                            }}
+                          >
+                            <Typography fontSize={14}>{c.content}</Typography>
+                          </Paper>
+                        )}
                       </Box>
                     );
                   })}
                 </Box>
 
                 {detail.status !== "CLOSED" && (
-                  <Box sx={{ display: "flex", gap: 1, p: 2, borderTop: "1px solid #E5E7EB" }}>
-                    <TextField
-                      size="small"
-                      fullWidth
-                      placeholder="Reply..."
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleReply()}
-                      disabled={submitting}
-                    />
-                    <IconButton color="primary" onClick={handleReply} disabled={!replyText.trim() || submitting}>
-                      <SendIcon />
-                    </IconButton>
-                  </Box>
+                  <>
+                    {replyFile && (
+                      <Box sx={{ px: 2, pt: 1 }}>
+                        <Chip icon={<InsertDriveFileIcon fontSize="small" />} label={replyFile.name} size="small" onDelete={() => setReplyFile(null)} />
+                      </Box>
+                    )}
+                    <Box sx={{ display: "flex", gap: 1, p: 2, borderTop: "1px solid #E5E7EB", alignItems: "center" }}>
+                      <input
+                        ref={replyFileInputRef}
+                        type="file"
+                        accept="image/*,.pdf"
+                        hidden
+                        onChange={(e) => {
+                          pickReplyFile(e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                      <IconButton onClick={() => replyFileInputRef.current?.click()} disabled={submitting}>
+                        <AttachFileIcon />
+                      </IconButton>
+                      <TextField
+                        size="small"
+                        fullWidth
+                        placeholder="Reply..."
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleReply()}
+                        disabled={submitting}
+                      />
+                      <IconButton color="primary" onClick={handleReply} disabled={(!replyText.trim() && !replyFile) || submitting}>
+                        {submitting ? <CircularProgress size={20} /> : <SendIcon />}
+                      </IconButton>
+                    </Box>
+                  </>
                 )}
               </>
             )}
