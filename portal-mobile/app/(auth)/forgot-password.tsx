@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { emailVerificationApi } from "../../src/api/auth.api";
 
@@ -9,6 +10,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [institutionCode, setInstitutionCode] = useState("");
 
   const requestCode = useMutation({
@@ -51,7 +53,18 @@ export default function ForgotPasswordScreen() {
             value={code}
             onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, 6))}
           />
-          <TextInput style={styles.input} placeholder="New Password (min 8 characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
+          <View style={styles.passwordWrap}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="New Password (min 8 characters)"
+              secureTextEntry={!showPassword}
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+            <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.input}
             placeholder="Firm Code (only if you belong to more than one)"
@@ -86,6 +99,9 @@ const styles = StyleSheet.create({
   errorText: { color: "#FEE2E2", textAlign: "center", marginBottom: 12 },
   input: { backgroundColor: "#fff", borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 15 },
   codeInput: { textAlign: "center", letterSpacing: 8, fontSize: 22 },
+  passwordWrap: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 10, marginBottom: 12 },
+  passwordInput: { flex: 1, padding: 14, fontSize: 15 },
+  eyeButton: { paddingHorizontal: 14 },
   button: { backgroundColor: "#065F46", borderRadius: 10, padding: 16, alignItems: "center", marginTop: 8 },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   link: { marginTop: 24, alignItems: "center" },

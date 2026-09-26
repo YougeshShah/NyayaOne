@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { emailVerificationApi } from "../../src/api";
 
@@ -9,6 +10,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [institutionCode, setInstitutionCode] = useState("");
 
   const requestCode = useMutation({
@@ -37,7 +39,7 @@ export default function ForgotPasswordScreen() {
             onPress={() => requestCode.mutate()}
             disabled={requestCode.isPending || !email}
           >
-            {requestCode.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Code</Text>}
+           {requestCode.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Code</Text>}
           </TouchableOpacity>
         </>
       ) : (
@@ -51,7 +53,18 @@ export default function ForgotPasswordScreen() {
             value={code}
             onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, 6))}
           />
-          <TextInput style={styles.input} placeholder="New Password (min 8 characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
+          <View style={styles.passwordWrap}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="New Password (min 8 characters)"
+              secureTextEntry={!showPassword}
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+            <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.input}
             placeholder="Institution Code (only if you belong to more than one)"
@@ -86,6 +99,9 @@ const styles = StyleSheet.create({
   errorText: { color: "#DC2626", textAlign: "center", marginBottom: 12 },
   input: { borderWidth: 1, borderColor: "#D1D5DB", borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 16 },
   codeInput: { textAlign: "center", letterSpacing: 8, fontSize: 22 },
+  passwordWrap: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#D1D5DB", borderRadius: 10, marginBottom: 12 },
+  passwordInput: { flex: 1, padding: 14, fontSize: 16 },
+  eyeButton: { paddingHorizontal: 14 },
   button: { backgroundColor: "#2563EB", borderRadius: 10, padding: 14, alignItems: "center", marginTop: 8 },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },

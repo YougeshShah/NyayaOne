@@ -19,6 +19,7 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState(profile?.bio || "");
   const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const emailChanged = email.trim().toLowerCase() !== (user?.email || "").toLowerCase();
@@ -120,14 +121,19 @@ export default function EditProfileScreen() {
         {emailChanged && (
           <>
             <Text style={styles.label}>Current Password</Text>
-            <TextInput
-              style={styles.input}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-              placeholder="Required to confirm email change"
-              placeholderTextColor="#9CA3AF"
-            />
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                secureTextEntry={!showPassword}
+                placeholder="Required to confirm email change"
+                placeholderTextColor="#9CA3AF"
+              />
+              <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
           </>
         )}
 
@@ -159,7 +165,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#111827",
   },
-  bioInput: { minHeight: 70, textAlignVertical: "top" },
+ bioInput: { minHeight: 70, textAlignVertical: "top" },
+  passwordRow: { flexDirection: "row", alignItems: "center" },
+  eyeButton: { padding: 8 },
   saveButton: { backgroundColor: "#2563EB", borderRadius: 10, paddingVertical: 15, alignItems: "center", marginTop: 24 },
   saveButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
 });

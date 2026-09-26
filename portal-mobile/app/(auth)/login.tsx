@@ -10,6 +10,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const loginMutation = useLogin();
   const { t, language, setLanguage } = useTranslation();
 
@@ -19,7 +20,7 @@ export default function LoginScreen() {
       return;
     }
     loginMutation.mutate(
-      { email, password },
+      { email, password, rememberMe },
       {
         onError: (err: any) => {
           Alert.alert("Login failed", err?.response?.data?.message || err?.message || "Please try again.");
@@ -66,6 +67,15 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
+        <TouchableOpacity style={styles.rememberRow} onPress={() => setRememberMe((v) => !v)}>
+          <Ionicons
+            name={rememberMe ? "checkbox" : "square-outline"}
+            size={20}
+            color={rememberMe ? colors.primary : colors.textSecondary}
+          />
+          <Text style={styles.rememberText}>Remember Me</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loginMutation.isPending}>
           <Text style={styles.buttonText}>{loginMutation.isPending ? t("signingIn") : t("signIn")}</Text>
         </TouchableOpacity>
@@ -108,6 +118,8 @@ const styles = StyleSheet.create({
   },
   passwordRow: { flexDirection: "row", alignItems: "center" },
   eyeButton: { padding: spacing.sm },
+  rememberRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm },
+  rememberText: { fontSize: 13, color: colors.textPrimary, fontWeight: "600" },
   button: {
     backgroundColor: colors.primary,
     borderRadius: radius.sm,

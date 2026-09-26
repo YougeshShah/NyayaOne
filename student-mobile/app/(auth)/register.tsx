@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView } from "react-native";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useRegister, usePublicCourses } from "../../src/hooks";
 
 export default function RegisterScreen() {
@@ -8,6 +9,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [interestedCourseId, setInterestedCourseId] = useState<string | null>(null);
   const [institutionCode, setInstitutionCode] = useState("");
   const [showCoursePicker, setShowCoursePicker] = useState(false);
@@ -42,7 +44,18 @@ export default function RegisterScreen() {
         <TextInput style={styles.input} placeholder="Full Name" value={fullName} onChangeText={setFullName} />
         <TextInput style={styles.input} placeholder="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
         <TextInput style={styles.input} placeholder="Phone (optional)" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-        <TextInput style={styles.input} placeholder="Password (min 8 characters)" secureTextEntry value={password} onChangeText={setPassword} />
+        <View style={styles.passwordWrap}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password (min 8 characters)"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+            <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
         <TextInput
           style={styles.input}
           placeholder="Institution Code (optional -- given by your institute)"
@@ -71,7 +84,7 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             ))}
           </View>
-        )}
+       )}
 
         <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={register.isPending}>
           {register.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
@@ -92,6 +105,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800", color: "#fff", textAlign: "center", marginBottom: 4 },
   subtitle: { fontSize: 14, color: "#DBEAFE", textAlign: "center", marginBottom: 24 },
   input: { backgroundColor: "#fff", borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 15, justifyContent: "center" },
+  passwordWrap: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 10, marginBottom: 12 },
+  passwordInput: { flex: 1, padding: 14, fontSize: 15 },
+  eyeButton: { paddingHorizontal: 14 },
   courseList: { backgroundColor: "#fff", borderRadius: 10, marginTop: -6, marginBottom: 12, maxHeight: 200 },
   courseOption: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
   button: { backgroundColor: "#1E40AF", borderRadius: 10, padding: 16, alignItems: "center", marginTop: 8 },

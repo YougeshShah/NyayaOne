@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { emailVerificationApi } from "../../src/api/auth.api";
 import { colors, spacing, radius } from "../../src/theme/theme";
@@ -10,6 +11,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [institutionCode, setInstitutionCode] = useState("");
 
   const requestCode = useMutation({
@@ -33,7 +35,7 @@ export default function ForgotPasswordScreen() {
         <>
           {requestCode.isError && <Text style={styles.errorText}>Something went wrong. Please try again.</Text>}
           <TextInput style={styles.input} placeholder="Your Account Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
-          <TouchableOpacity
+         <TouchableOpacity
             style={[styles.button, (!email.trim() || requestCode.isPending) && { opacity: 0.5 }]}
             disabled={!email.trim() || requestCode.isPending}
             onPress={() => requestCode.mutate()}
@@ -52,7 +54,18 @@ export default function ForgotPasswordScreen() {
             value={code}
             onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, 6))}
           />
-          <TextInput style={styles.input} placeholder="New Password (min 8 characters)" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
+          <View style={styles.passwordWrap}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="New Password (min 8 characters)"
+              secureTextEntry={!showPassword}
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+            <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.input}
             placeholder="Firm Code (only if you belong to more than one)"
@@ -87,6 +100,9 @@ const styles = StyleSheet.create({
   errorText: { color: "#FEE2E2", textAlign: "center", marginBottom: 12 },
   input: { backgroundColor: "#fff", borderRadius: radius.md, padding: 14, marginBottom: 12, fontSize: 15 },
   codeInput: { textAlign: "center", letterSpacing: 8, fontSize: 22 },
+  passwordWrap: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: radius.md, marginBottom: 12 },
+  passwordInput: { flex: 1, padding: 14, fontSize: 15 },
+  eyeButton: { paddingHorizontal: 14 },
   button: { backgroundColor: colors.primary, borderRadius: radius.md, padding: 16, alignItems: "center", marginTop: 8 },
   buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   link: { marginTop: 24, alignItems: "center" },

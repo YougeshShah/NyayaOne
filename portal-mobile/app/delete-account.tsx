@@ -9,6 +9,7 @@ import { useAuthStore } from "../src/store/authStore";
 export default function DeleteAccountScreen() {
   const logout = useAuthStore((s) => s.logout);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const deleteAccount = useMutation({
     mutationFn: (pw: string) => authExtraApi.deleteAccount(pw),
@@ -23,7 +24,7 @@ export default function DeleteAccountScreen() {
         },
       ]);
     },
-    onError: (err: any) => {
+   onError: (err: any) => {
       Alert.alert("Error", err?.response?.data?.message || "Failed to delete account.");
     },
   });
@@ -50,14 +51,19 @@ export default function DeleteAccountScreen() {
       </View>
 
       <Text style={styles.label}>Enter your password to confirm</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="Password"
-        placeholderTextColor="#9CA3AF"
-      />
+      <View style={styles.passwordRow}>
+        <TextInput
+          style={[styles.input, { flex: 1 }]}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          placeholder="Password"
+          placeholderTextColor="#9CA3AF"
+        />
+        <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+          <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} disabled={deleteAccount.isPending}>
         <Text style={styles.deleteButtonText}>{deleteAccount.isPending ? "Deleting..." : "Delete My Account"}</Text>
@@ -75,7 +81,9 @@ const styles = StyleSheet.create({
   warningBox: { flexDirection: "row", backgroundColor: "#FEF2F2", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "#FECACA", marginBottom: 24 },
   warningText: { flex: 1, marginLeft: 12, color: "#991B1B", fontSize: 13, lineHeight: 19 },
   label: { fontSize: 13, fontWeight: "600", color: "#6B7280", marginBottom: 8 },
-  input: { backgroundColor: "#F9FAFB", borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: "#111827" },
+  passwordRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#F9FAFB", borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 10 },
+  input: { paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: "#111827" },
+  eyeButton: { paddingHorizontal: 12 },
   deleteButton: { backgroundColor: "#DC2626", borderRadius: 10, paddingVertical: 15, alignItems: "center", marginTop: 24 },
   deleteButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   cancelButton: { paddingVertical: 15, alignItems: "center", marginTop: 8 },

@@ -10,12 +10,12 @@ export function useLogin() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (payload: LoginPayload) => authApi.login(payload),
-    onSuccess: (data) => {
+    mutationFn: ({ rememberMe, ...credentials }: LoginPayload & { rememberMe?: boolean }) => authApi.login(credentials),
+    onSuccess: (data, variables) => {
       if (data.user.accountType !== "CLIENT") {
         throw new Error("This app is for clients only. Use the Lawyer app if you are a lawyer or staff member.");
       }
-      setSession(data);
+      setSession({ ...data, rememberMe: variables.rememberMe });
       router.replace("/(tabs)/dashboard");
       registerForPushNotifications().catch(() => {});
     },

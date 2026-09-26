@@ -23,7 +23,8 @@ interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
   hasHydrated: boolean;
-  setSession: (params: { accessToken: string; refreshToken: string; user: AuthUser }) => void;
+  rememberMe: boolean;
+  setSession: (params: { accessToken: string; refreshToken: string; user: AuthUser; rememberMe?: boolean }) => void;
   setAccessToken: (accessToken: string) => void;
   updateUser: (partial: Partial<AuthUser>) => void;
   logout: () => void;
@@ -38,9 +39,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       hasHydrated: false,
+      rememberMe: true,
 
-      setSession: ({ accessToken, refreshToken, user }) =>
-        set({ accessToken, refreshToken, user, isAuthenticated: true }),
+      setSession: ({ accessToken, refreshToken, user, rememberMe }) =>
+        set({ accessToken, refreshToken, user, isAuthenticated: true, rememberMe: rememberMe ?? true }),
 
       setAccessToken: (accessToken) => set({ accessToken }),
 
@@ -54,6 +56,11 @@ export const useAuthStore = create<AuthState>()(
       name: "technoone-student-auth",
       storage: createJSONStorage(() => secureStorage),
       onRehydrateStorage: () => (state) => {
+        // "Remember Me" was unchecked at login -- don't keep the user
+        // signed in across app restarts; send them back to the login screen.
+        if (state && state.rememberMe === false && state.isAuthenticated) {
+          state.logout();
+        }
         state?.setHasHydrated(true);
       },
     }

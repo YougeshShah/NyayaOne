@@ -6,8 +6,9 @@ import { ChatMessage } from "../types";
 export function useLogin() {
   const setSession = useAuthStore((s) => s.setSession);
   return useMutation({
-    mutationFn: authApi.login,
-    onSuccess: (data) => setSession(data),
+    mutationFn: ({ rememberMe, ...credentials }: { email: string; password: string; rememberMe?: boolean }) =>
+      authApi.login(credentials),
+    onSuccess: (data, variables) => setSession({ ...data, rememberMe: variables.rememberMe }),
   });
 }
 

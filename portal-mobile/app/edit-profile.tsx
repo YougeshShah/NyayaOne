@@ -23,6 +23,7 @@ export default function EditProfileScreen() {
   const [specialization, setSpecialization] = useState("");
   const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const emailChanged = email.trim().toLowerCase() !== (user?.email || "").toLowerCase();
@@ -130,14 +131,19 @@ export default function EditProfileScreen() {
         {emailChanged && (
           <>
             <Text style={styles.label}>Current Password</Text>
-            <TextInput
-              style={styles.input}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-              placeholder="Required to confirm email change"
-              placeholderTextColor="#9CA3AF"
-            />
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                secureTextEntry={!showPassword}
+                placeholder="Required to confirm email change"
+                placeholderTextColor="#9CA3AF"
+              />
+              <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
+                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
           </>
         )}
 
@@ -158,7 +164,7 @@ const styles = StyleSheet.create({
   cameraBadge: { position: "absolute", bottom: 0, right: 0, backgroundColor: colors.primary, borderRadius: 12, width: 24, height: 24, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: colors.background },
   uploadingText: { fontSize: 12, color: colors.textSecondary, marginBottom: 8 },
   card: { width: "100%", backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md, borderWidth: 1, borderColor: colors.border },
-  label: { fontSize: 13, fontWeight: "600", color: colors.textSecondary, marginTop: spacing.md, marginBottom: 6 },
+ label: { fontSize: 13, fontWeight: "600", color: colors.textSecondary, marginTop: spacing.md, marginBottom: 6 },
   input: {
     backgroundColor: colors.background,
     borderWidth: 1,
@@ -170,6 +176,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   bioInput: { minHeight: 70, textAlignVertical: "top" },
+  passwordRow: { flexDirection: "row", alignItems: "center" },
+  eyeButton: { padding: spacing.sm },
   saveButton: { backgroundColor: colors.primary, borderRadius: radius.sm, paddingVertical: 15, alignItems: "center", marginTop: spacing.xl },
   saveButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
 });
