@@ -12,7 +12,10 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { getAvatarUrl } from "../../api/profile.api";
-import { ChatWidget } from "./ChatWidget";
+// AI ChatWidget is kept in the codebase (src/components/common/ChatWidget.tsx)
+// but no longer rendered here -- replaced by real Student <-> Teacher/Staff
+// messaging (see src/components/MessagingWidget.tsx).
+import { MessagingWidget } from "../MessagingWidget";
 import { useMyNotifications } from "../../hooks/useNotifications";
 import { useMySubscriptions } from "../../hooks/useCourse";
 
@@ -112,7 +115,7 @@ export function DashboardLayout() {
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 3 } }}>
         <Outlet />
       </Container>
-      <ChatWidget />
+      <MessagingWidget />
 
       <Dialog open={precedentGateOpen} onClose={() => setPrecedentGateOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Subscribe to Access नजिर खोज</DialogTitle>
