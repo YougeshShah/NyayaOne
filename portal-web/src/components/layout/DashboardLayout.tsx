@@ -19,7 +19,10 @@ import { useAuthStore } from "../../store/authStore";
 import { useLogout } from "../../hooks/useAuth";
 import { useTranslation } from "../../i18n/LanguageContext";
 import { getAvatarUrl } from "../../api/profile.api";
-import { ChatWidget } from "../ChatWidget";
+// AI ChatWidget is kept in the codebase but no longer rendered here --
+// replaced by real user-to-user messaging (MessagingWidget) in the same spot.
+// import { ChatWidget } from "../ChatWidget";
+import { MessagingWidget } from "../MessagingWidget";
 
 const SIDEBAR_WIDTH = 260;
 
@@ -247,7 +250,7 @@ export function DashboardLayout() {
 
         <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, overflowX: "auto" }}>
           <Outlet />
-          <ChatWidget />
+          <MessagingWidget />
         </Box>
       </Box>
     </Box>
